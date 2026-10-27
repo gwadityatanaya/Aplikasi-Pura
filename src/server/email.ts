@@ -41,3 +41,15 @@ export async function sendEmail(to: string, subject: string, html: string, textB
   if (!emailConfigured()) throw new Error("EMAIL_NOT_CONFIGURED");
   await transport().sendMail({ from: process.env.EMAIL_FROM, to, subject, html, text: textBody });
 }
+
+/**
+ * Which ways of signing in this server offers. Email (SMTP) and Google are both OPTIONAL:
+ * without SMTP the email-link button is hidden and the daily digest is off; nothing else breaks.
+ * On a laptop (development) the email link is shown on screen instead of being sent.
+ */
+export function signInOptions() {
+  const google = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  const smtp = emailConfigured();
+  const devLinks = !smtp && process.env.NODE_ENV !== "production" && process.env.DEV_EMAIL_LINKS !== "false";
+  return { google, email: smtp || devLinks, emailDev: devLinks, digest: smtp };
+}

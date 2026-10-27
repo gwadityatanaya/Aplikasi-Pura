@@ -2,7 +2,7 @@ import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { db, schema } from "@/server/db";
 import { newToken, originOf, rateLimit, safeNext, sha256 } from "@/server/auth";
-import { emailConfigured, layout, sendEmail } from "@/server/email";
+import { emailConfigured, layout, sendEmail, signInOptions } from "@/server/email";
 import { ApiError, assertSameOrigin, clientIp, json, readJson, route } from "@/server/http";
 import { logActivity } from "@/server/log";
 
@@ -23,8 +23,7 @@ export const POST = route(async (req: Request) => {
     await logActivity({ actor: { id: user.id, name: user.name, email: i.email }, action: "Tautan masuk ditolak", entity: "session", detail: "Akun dinonaktifkan", req });
     return json({ ok: true });
   }
-  if (!emailConfigured() && process.env.NODE_ENV === "production")
-    throw new ApiError(503, "Pengiriman email belum diatur oleh pengelola. Silakan masuk dengan Google.");
+  if (!signInOptions().email) throw new ApiError(503, "Masuk lewat email belum diatur oleh pengelola. Silakan masuk dengan Google.");
 
   const token = newToken();
   await db.insert(schema.passwordTokens).values({

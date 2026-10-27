@@ -14,10 +14,10 @@ import { GoogleIcon } from "@/components/shared/auth-bits";
 const schema = z.object({ email: z.string().trim().email("Format email belum benar") });
 
 const ERRORS: Record<string, string> = {
-  "google-belum-diatur": "Masuk dengan Google belum diatur oleh pengelola. Silakan pakai tautan email.",
+  "google-belum-diatur": "Masuk dengan Google belum diatur oleh pengelola.",
   "google-dibatalkan": "Masuk dengan Google dibatalkan.",
   "google-sesi-habis": "Waktu masuk habis. Silakan coba lagi.",
-  "google-gagal": "Masuk dengan Google gagal. Coba lagi atau pakai tautan email.",
+  "google-gagal": "Masuk dengan Google gagal. Silakan coba lagi.",
 };
 
 function LoginForm() {
@@ -26,11 +26,14 @@ function LoginForm() {
   const requestLink = useStore((s) => s.requestEmailLink);
   const [sent, setSent] = useState<{ email: string; devLink?: string } | null>(null);
   const [setupNeeded, setSetupNeeded] = useState(false);
+  const [opts, setOpts] = useState<{ google: boolean; email: boolean; emailDev: boolean } | null>(null);
   const errorCode = params.get("error");
   const { register, handleSubmit, formState, setError } = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) });
 
   useEffect(() => {
     fetch("/api/setup").then((r) => r.json()).then((j) => setSetupNeeded(j.ok && !j.done)).catch(() => {});
+    // Email and Google are both optional — only show what the server has set up.
+    fetch("/api/auth/options").then((r) => r.json()).then((j) => setOpts(j.ok ? j : { google: true, email: false, emailDev: false })).catch(() => setOpts({ google: true, email: false, emailDev: false }));
   }, []);
 
   if (sent)
@@ -64,28 +67,43 @@ function LoginForm() {
         </Link>
       )}
 
-      <a href={`/api/auth/google${next ? `?next=${encodeURIComponent(next)}` : ""}`} className="press mt-7 flex h-14 w-full items-center justify-center gap-3 rounded-2xl border border-line bg-white text-[17px] font-bold text-charcoal shadow-soft hover:bg-ivory">
-        <GoogleIcon className="h-6 w-6" /> Masuk dengan Google
-      </a>
+      {!opts ? (
+        <div className="mt-7 h-14 animate-pulse rounded-2xl bg-stone-200" />
+      ) : (
+        <>
+          {opts.google && (
+            <a href={`/api/auth/google${next ? `?next=${encodeURIComponent(next)}` : ""}`} className="press mt-7 flex h-14 w-full items-center justify-center gap-3 rounded-2xl border border-line bg-white text-[17px] font-bold text-charcoal shadow-soft hover:bg-ivory">
+              <GoogleIcon className="h-6 w-6" /> Masuk dengan Google
+            </a>
+          )}
 
-      <div className="my-6 flex items-center gap-3 text-sm text-muted">
-        <span className="h-px flex-1 bg-line" /> atau lewat email <span className="h-px flex-1 bg-line" />
-      </div>
+          {opts.google && opts.email && (
+            <div className="my-6 flex items-center gap-3 text-sm text-muted">
+              <span className="h-px flex-1 bg-line" /> atau lewat email <span className="h-px flex-1 bg-line" />
+            </div>
+          )}
 
-      <form
-        className="space-y-4"
-        noValidate
-        onSubmit={handleSubmit(async (v) => {
-          const r = await requestLink(v.email, next || undefined);
-          if (!r.ok) return setError("email", { message: r.error });
-          setSent({ email: v.email, devLink: r.value.devLink });
-        })}
-      >
-        <Field label="Alamat email" htmlFor="email" error={formState.errors.email?.message}>
-          <Input id="email" type="email" autoComplete="email" inputMode="email" placeholder="nama@email.com" {...register("email")} />
-        </Field>
-        <Button type="submit" size="xl" variant="secondary" className="w-full" loading={formState.isSubmitting}>Kirim tautan masuk</Button>
-      </form>
+          {opts.email && (
+          <form
+            className={opts.google ? "space-y-4" : "mt-7 space-y-4"}
+            noValidate
+            onSubmit={handleSubmit(async (v) => {
+              const r = await requestLink(v.email, next || undefined);
+              if (!r.ok) return setError("email", { message: r.error });
+              setSent({ email: v.email, devLink: r.value.devLink });
+            })}
+          >
+            <Field label="Alamat email" htmlFor="email" error={formState.errors.email?.message}>
+              <Input id="email" type="email" autoComplete="email" inputMode="email" placeholder="nama@email.com" {...register("email")} />
+            </Field>
+            <Button type="submit" size="xl" variant="secondary" className="w-full" loading={formState.isSubmitting}>Kirim tautan masuk</Button>
+          </form>
+          )}
+          {!opts.google && !opts.email && (
+            <p className="mt-7 rounded-2xl bg-amber-50 p-4 text-[15px] text-amber-900" role="alert">Cara masuk belum diatur oleh pengelola (Google atau email). Hubungi Admin Utama.</p>
+          )}
+        </>
+      )}
 
       <p className="mt-6 flex items-start gap-2 rounded-2xl bg-mint/60 p-3.5 text-sm text-emerald-900">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />

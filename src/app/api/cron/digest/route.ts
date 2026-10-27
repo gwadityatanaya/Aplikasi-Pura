@@ -16,9 +16,10 @@ export const maxDuration = 60;
  * Pengurus Banjar are told about temples that have no Pengurus Pura yet.
  */
 export const GET = route(async (req: Request) => {
+  // Email is optional: without SMTP the digest is simply off (the badge in the dashboard stays).
+  if (!emailConfigured()) return json({ ok: true, sent: 0, note: "Email belum diatur — ringkasan harian nonaktif." });
   const secret = process.env.CRON_SECRET;
   if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) return json({ ok: false, error: "Tidak diizinkan." }, 401);
-  if (!emailConfigured()) return json({ ok: true, sent: 0, note: "Email belum diatur." });
 
   const cutoff = new Date(Date.now() - 20 * 3600_000);
   const staff = await db

@@ -1,4 +1,5 @@
 import { expect, request as pw, test } from "@playwright/test";
+import { execSync } from "child_process";
 import { command, publicData, receiptDataUrl, signInApi, signInUi as signInUiAs, today } from "./helpers";
 
 // Phase 3.1 checks. Runs before punia.spec.ts and uses its own amounts so the two do not collide.
@@ -191,4 +192,30 @@ test("Admin Utama: lihat semua pura, mengesahkan hanya lewat mode darurat dengan
   await page.goto("/app");
   await expect(page.getByText("Mode lihat — Admin Utama")).toBeVisible();
   await expect(page.getByRole("button", { name: /Mode darurat/ })).toBeVisible();
+});
+
+test("tanpa SMTP aplikasi tetap normal: tombol disesuaikan, ringkasan harian nonaktif, skrip darurat jalan", async ({ page }) => {
+  const opts = await (await page.request.get("/api/auth/options")).json();
+  expect(opts).toMatchObject({ ok: true, digest: false });
+  const digest = await page.request.get("/api/cron/digest");
+  expect(digest.status()).toBe(200);
+  expect((await digest.json()).sent).toBe(0);
+
+  // Server with Google but no email: only the Google button is shown.
+  await page.route("**/api/auth/options", (r) => r.fulfill({ json: { ok: true, google: true, email: false, emailDev: false, digest: false } }));
+  await page.goto("/masuk");
+  await expect(page.getByRole("link", { name: /Masuk dengan Google/ })).toBeVisible();
+  await expect(page.getByLabel("Alamat email")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Kirim tautan masuk/ })).toHaveCount(0);
+
+  // Emergency script for Admin Utama prints a one-time link that works without any email service.
+  const out = execSync("npm run -s admin:reset", { env: { ...process.env, DATABASE_URL: process.env.E2E_DATABASE_URL, APP_URL: BASE } }).toString();
+  const link = out.match(/https?:\/\/\S+\/masuk\/tautan\?token=\S+/)?.[0];
+  expect(link).toBeTruthy();
+  await page.unroute("**/api/auth/options");
+  await page.goto(link!);
+  await page.getByRole("button", { name: /Masuk sekarang/ }).click();
+  await page.waitForURL(/\/app/);
+  const st = (await (await page.request.get("/api/state")).json()).state;
+  expect(st.access.isSuperAdmin).toBe(true);
 });

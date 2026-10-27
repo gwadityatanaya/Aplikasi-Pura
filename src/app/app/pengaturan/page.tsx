@@ -24,6 +24,7 @@ import { cn, rupiah } from "@/lib/format";
 import type { Account, Category, CoverVariant, Temple } from "@/lib/types";
 import { InstallAppButton } from "@/components/pwa";
 import { templeLocation } from "@/lib/temple";
+import { useSignInOptions } from "@/lib/sign-in-options";
 import type { Result } from "@/lib/store";
 import { LogoutEverywhere } from "@/components/shared/logout-everywhere";
 
@@ -252,12 +253,19 @@ function NotifPrefs() {
   const setPrefs = useStore((s) => s.setPreferences);
   const updateUser = useStore((s) => s.updateUser);
   const n = prefs.notifications;
+  const opts = useSignInOptions();
   const set = (k: keyof typeof n, v: boolean) => { setPrefs({ notifications: { ...n, [k]: v } }); toast.success("Preferensi disimpan"); };
   return (
     <Card>
       <CardHeader title="Notifikasi" description="Pilih kabar yang ingin Anda terima." />
       <CardBody className="divide-y divide-line py-1">
-        <Switch checked={me?.emailDigest !== false} onChange={async (v) => done(await updateUser({ emailDigest: v }), "Preferensi email disimpan")} label="Email ringkasan punia (maks. sekali sehari)" description="Dikirim hanya jika ada punia yang menunggu verifikasi." />
+        <Switch
+          checked={opts?.digest !== false && me?.emailDigest !== false}
+          disabled={opts?.digest === false}
+          onChange={async (v) => done(await updateUser({ emailDigest: v }), "Preferensi email disimpan")}
+          label="Email ringkasan punia (maks. sekali sehari)"
+          description={opts?.digest === false ? "Tidak aktif: layanan email belum diatur oleh pengelola. Lencana jumlah punia menunggu di dashboard tetap ada." : "Dikirim hanya jika ada punia yang menunggu disahkan."}
+        />
         <Switch checked={n.donationPending} onChange={(v) => set("donationPending", v)} label="Punia baru menunggu verifikasi (di aplikasi)" />
         <Switch checked={n.campaignTarget} onChange={(v) => set("campaignTarget", v)} label="Target penggalangan tercapai" />
         <Switch checked={n.approvals} onChange={(v) => set("approvals", v)} label="Transaksi menunggu persetujuan" />
