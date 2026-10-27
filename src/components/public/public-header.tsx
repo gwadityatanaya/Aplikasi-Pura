@@ -3,78 +3,60 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { LayoutDashboard, Menu, X } from "lucide-react";
+import { HandHeart, LayoutDashboard, LogIn, Menu, Smartphone, X } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { buttonClass } from "@/components/ui/button";
-import { PrototypeNotice } from "@/components/shared/prototype-banner";
-import { DemoButton } from "@/components/demo/demo-tour";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/format";
 
 const links = [
-  { href: "/pura", label: "Direktori Pura" },
+  { href: "/pura", label: "Daftar Pura" },
   { href: "/donasi", label: "Penggalangan Dana" },
-  { href: "/#cara-kerja", label: "Cara Kerja" },
-  { href: "/#untuk-pengurus", label: "Untuk Pengurus" },
+  { href: "/#cara-kerja", label: "Cara Berpunia" },
+  { href: "/pasang", label: "Pasang di HP" },
 ];
 
 export function PublicHeader({ transparent }: { transparent?: boolean }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const loggedIn = useStore((s) => s.hydrated && !!s.session);
-  return (
-    <header
-      className={cn(
-        "sticky top-0 z-40 border-b backdrop-blur-xl",
-        transparent ? "border-transparent bg-ivory/70" : "border-line/70 bg-ivory/85"
-      )}
-    >
-      <div className="container flex h-16 items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Link href="/" aria-label="Beranda PURA">
-            <Logo />
+  const hydrated = useStore((s) => s.hydrated);
+  const me = useStore((s) => s.me);
+  const isStaff = useStore((s) => s.access.isStaff);
+  const loggedIn = hydrated && !!me;
+
+  const accountButtons = (full?: boolean) =>
+    loggedIn ? (
+      <>
+        <Link href="/umat" className={buttonClass(isStaff ? "outline" : "primary", full ? "lg" : "md", cn(full ? "w-full" : "h-10"))}>
+          <HandHeart className="h-4 w-4" /> Punia Saya
+        </Link>
+        {isStaff && (
+          <Link href="/app" className={buttonClass("primary", full ? "lg" : "md", cn(full ? "w-full" : "h-10"))}>
+            <LayoutDashboard className="h-4 w-4" /> Dashboard
           </Link>
-          <span className="hidden sm:inline-flex">
-            <PrototypeNotice />
-          </span>
-        </div>
+        )}
+      </>
+    ) : (
+      <Link href="/masuk" className={buttonClass("primary", full ? "lg" : "md", cn(full ? "w-full" : "h-10"))}>
+        <LogIn className="h-4 w-4" /> Masuk
+      </Link>
+    );
+
+  return (
+    <header className={cn("sticky top-0 z-40 border-b backdrop-blur-xl", transparent ? "border-transparent bg-ivory/70" : "border-line/70 bg-ivory/85")}>
+      <div className="container flex h-16 items-center justify-between gap-4">
+        <Link href="/" aria-label="Beranda PURA">
+          <Logo />
+        </Link>
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Navigasi utama">
           {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={cn(
-                "rounded-lg px-3 py-2 text-[15px] font-semibold text-charcoal/80 hover:bg-black/5 hover:text-charcoal",
-                pathname === l.href && "text-emerald-700"
-              )}
-            >
+            <Link key={l.href} href={l.href} className={cn("rounded-lg px-3 py-2 text-[15px] font-semibold text-charcoal/80 hover:bg-black/5 hover:text-charcoal", pathname === l.href && "text-emerald-700")}>
               {l.label}
             </Link>
           ))}
         </nav>
-        <div className="hidden items-center gap-2 lg:flex">
-          <DemoButton variant="dark" className="h-10" />
-          {loggedIn ? (
-            <Link href="/app" className={buttonClass("primary", "md", "h-10")}>
-              <LayoutDashboard className="h-4 w-4" /> Dashboard
-            </Link>
-          ) : (
-            <>
-              <Link href="/masuk" className={buttonClass("ghost", "md", "h-10")}>
-                Masuk
-              </Link>
-              <Link href="/daftar" className={buttonClass("primary", "md", "h-10")}>
-                Daftarkan Pura
-              </Link>
-            </>
-          )}
-        </div>
-        <button
-          className="press grid h-11 w-11 place-items-center rounded-xl hover:bg-black/5 lg:hidden"
-          onClick={() => setOpen(true)}
-          aria-label="Buka menu"
-          aria-expanded={open}
-        >
+        <div className="hidden items-center gap-2 lg:flex">{accountButtons()}</div>
+        <button className="press grid h-11 w-11 place-items-center rounded-xl hover:bg-black/5 lg:hidden" onClick={() => setOpen(true)} aria-label="Buka menu" aria-expanded={open}>
           <Menu className="h-6 w-6" />
         </button>
       </div>
@@ -99,28 +81,14 @@ export function PublicHeader({ transparent }: { transparent?: boolean }) {
               </div>
               <nav className="mt-6 flex flex-col gap-1" aria-label="Navigasi utama">
                 {links.map((l) => (
-                  <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="rounded-xl px-4 py-3.5 text-lg font-semibold hover:bg-black/5">
+                  <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-4 py-3.5 text-lg font-semibold hover:bg-black/5">
+                    {l.href === "/pasang" && <Smartphone className="h-5 w-5 text-emerald-700" />}
                     {l.label}
                   </Link>
                 ))}
               </nav>
-              <div className="mt-auto space-y-2.5">
-                <PrototypeNotice />
-                <DemoButton variant="dark" className="h-12 w-full" />
-                {loggedIn ? (
-                  <Link href="/app" className={buttonClass("primary", "lg", "w-full")}>
-                    Buka Dashboard
-                  </Link>
-                ) : (
-                  <>
-                    <Link href="/daftar" className={buttonClass("primary", "lg", "w-full")}>
-                      Daftarkan Pura
-                    </Link>
-                    <Link href="/masuk" className={buttonClass("outline", "lg", "w-full")}>
-                      Masuk Pengurus
-                    </Link>
-                  </>
-                )}
+              <div className="mt-auto space-y-2.5" onClick={() => setOpen(false)}>
+                {accountButtons(true)}
               </div>
             </motion.div>
           </motion.div>

@@ -3,9 +3,14 @@
 
 export type ID = string;
 
-export type Role = "ketua" | "bendahara" | "sekretaris" | "auditor" | "superadmin";
-/** Roles that can be assigned per temple. "superadmin" (Admin Utama) is an account-level flag. */
-export type MemberRole = Exclude<Role, "superadmin">;
+/**
+ * Effective role for one temple, strongest first:
+ * superadmin (Admin Utama) > pengurus (Pengurus Pura) > banjar (Pengurus Banjar) > pemeriksa (lihat saja).
+ * Users with none of these are Umat.
+ */
+export type Role = "superadmin" | "pengurus" | "banjar" | "pemeriksa";
+/** Roles that can be assigned per temple (through the Back Office). */
+export type MemberRole = "pengurus" | "pemeriksa";
 
 export interface User {
   id: ID;
@@ -17,7 +22,9 @@ export interface User {
   avatarColor: string;
   /** Admin Utama — set only through the secure setup step */
   isSuperAdmin?: boolean;
-  status?: "active" | "disabled";
+  status?: "active" | "disabled" | "deleted";
+  /** Daily "punia menunggu" email for pengurus */
+  emailDigest?: boolean;
   resetRequestedAt?: string;
   lastLoginAt?: string;
   createdAt: string;
@@ -51,6 +58,13 @@ export interface Temple {
   established?: string;
   status: "active" | "pending" | "rejected";
   createdAt: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankAccountHolder?: string;
+  /** Banjar Pengempon */
+  banjarIds?: ID[];
+  /** Number of active Pengurus Pura (0 = "Pengurus pura belum terdaftar") */
+  pengurusCount?: number;
   transparency: TransparencySettings;
   branding: ReportBranding;
 }
@@ -59,8 +73,38 @@ export interface TransparencySettings {
   showPublicProfile: boolean;
   showCampaigns: boolean;
   showPublishedSummaries: boolean;
+  /** Daftar punia terverifikasi */
   showDonorList: boolean;
   showBankAccount: boolean;
+  /** Posisi kas (berdasarkan pencatatan pengurus) */
+  showBalance?: boolean;
+  showRecentTransactions?: boolean;
+  /** 3–5 */
+  recentCount?: number;
+}
+
+export interface Banjar {
+  id: ID;
+  slug: string;
+  name: string;
+  village: string;
+  district: string;
+  regency: string;
+  province: string;
+  status: "active" | "inactive";
+  createdAt: string;
+}
+
+export interface TempleBanjar {
+  templeId: ID;
+  banjarId: ID;
+}
+
+export interface BanjarMember {
+  id: ID;
+  userId: ID;
+  banjarId: ID;
+  status: "active" | "disabled";
 }
 
 export interface ReportBranding {
@@ -182,10 +226,21 @@ export interface Campaign {
 export type DonorPrivacy = "public" | "anonymous" | "private";
 export type DonationStatus = "pending" | "verified" | "rejected";
 
+export type PuniaPurpose = "umum" | "odalan" | "pembangunan" | "lainnya";
+
 export interface Donation {
   id: ID;
   templeId: ID;
-  campaignId: ID;
+  campaignId?: ID;
+  activityId?: ID;
+  purpose?: PuniaPurpose;
+  transferDate?: string;
+  referenceNo?: string;
+  submittedBy?: ID;
+  submitterEmail?: string;
+  inputBy?: ID;
+  /** Computed by the server for pengurus: same amount + date as another punia */
+  possibleDuplicate?: boolean;
   donorName: string;
   amount: number;
   date: string;
@@ -193,7 +248,7 @@ export interface Donation {
   status: DonationStatus;
   message?: string;
   evidence?: string;
-  channel: "transfer" | "tunai" | "simulasi";
+  channel: "transfer" | "tunai" | "whatsapp" | "simulasi";
   simulated?: boolean;
   /** Public API only: number of private donations aggregated into this row */
   count?: number;
@@ -293,6 +348,9 @@ export interface DataState {
   users: User[];
   memberships: Membership[];
   temples: Temple[];
+  banjars: Banjar[];
+  templeBanjars: TempleBanjar[];
+  banjarMembers: BanjarMember[];
   accounts: Account[];
   categories: Category[];
   activities: Activity[];

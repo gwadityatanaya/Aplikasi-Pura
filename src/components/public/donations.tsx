@@ -11,7 +11,6 @@ import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { MoneyInput, QuickAmounts } from "@/components/ui/money-input";
 import { ImageUpload } from "@/components/ui/file-upload";
-import { SimulationTag } from "@/components/shared/prototype-banner";
 import { useStore } from "@/lib/store";
 import { cn, formatDateShort, initials, relativeTime, rupiah, todayISO } from "@/lib/format";
 import type { Campaign, Donation, DonorPrivacy } from "@/lib/types";
@@ -62,7 +61,6 @@ export function DonorList({ donations, limit = 8 }: { donations: Donation[]; lim
                 <p className="truncate font-semibold text-charcoal">{publicDonorName(d)}</p>
                 <p className="text-xs text-muted">
                   {formatDateShort(d.date)}
-                  {d.simulated && <SimulationTag className="ml-2 align-middle" />}
                 </p>
               </div>
               <p className="tabular font-bold text-charcoal">{rupiah(d.amount)}</p>
@@ -89,7 +87,7 @@ export function DonationFeed({ donations }: { donations: Donation[] }) {
   const items = useMemo(
     () =>
       donations
-        .filter((d) => (d.status === "verified" && !d.count) || (d.status === "pending" && d.simulated))
+        .filter((d) => d.status === "verified" && !d.count)
         .sort((a, b) => (b.verifiedAt ?? b.createdAt).localeCompare(a.verifiedAt ?? a.createdAt))
         .slice(0, 6),
     [donations]
@@ -115,7 +113,6 @@ export function DonationFeed({ donations }: { donations: Donation[] }) {
               </p>
               <p className="text-xs text-muted">
                 {d.status === "verified" ? `Terverifikasi · ${relativeTime(d.verifiedAt ?? d.createdAt)}` : "Menunggu verifikasi pengurus"}
-                {d.simulated && <SimulationTag className="ml-2 align-middle" />}
               </p>
             </div>
           </motion.li>
@@ -126,9 +123,8 @@ export function DonationFeed({ donations }: { donations: Donation[] }) {
 }
 
 const privacyOptions: { value: DonorPrivacy; title: string; desc: string }[] = [
-  { value: "public", title: "Tampilkan nama & nominal", desc: "Nama Anda muncul di daftar donatur publik." },
-  { value: "anonymous", title: "Sembunyikan nama", desc: "Ditampilkan sebagai Anonim, nominal tetap terlihat." },
-  { value: "private", title: "Rahasiakan sepenuhnya", desc: "Tidak muncul di daftar, hanya dihitung dalam total." },
+  { value: "public", title: "TAMPIL — tampilkan nama", desc: "Nama muncul di daftar punia pura." },
+  { value: "anonymous", title: "ANONIM — sembunyikan nama", desc: "Ditampilkan sebagai \"Anonim\". Nama asli hanya diketahui pengurus." },
 ];
 
 export function PrivacyPicker({ value, onChange }: { value: DonorPrivacy; onChange: (v: DonorPrivacy) => void }) {
@@ -159,84 +155,3 @@ export function PrivacyPicker({ value, onChange }: { value: DonorPrivacy; onChan
   );
 }
 
-const schema = z.object({
-  donorName: z.string().trim().min(2, "Tulis nama Anda (minimal 2 huruf)").max(80),
-  amount: z.number({ invalid_type_error: "Isi nominal" }).min(10_000, "Minimal Rp10.000"),
-  privacy: z.enum(["public", "anonymous", "private"]),
-  message: z.string().max(200).optional(),
-  evidence: z.string().optional(),
-});
-type FormValues = z.infer<typeof schema>;
-
-export function ConfirmDonationDialog({ campaign, open, onClose }: { campaign: Campaign; open: boolean; onClose: () => void }) {
-  const submit = useStore((s) => s.submitPublicDonation);
-  const [done, setDone] = useState(false);
-  const { register, control, handleSubmit, formState, reset } = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: { donorName: "", amount: 0, privacy: campaign.defaultPrivacy, message: "" },
-  });
-  function close() {
-    onClose();
-    setTimeout(() => {
-      setDone(false);
-      reset();
-    }, 300);
-  }
-  const onSubmit = handleSubmit(async (v) => {
-    const r = await submit({ campaignId: campaign.id, donorName: v.donorName, amount: v.amount, privacy: v.privacy, message: v.message || undefined, evidence: v.evidence });
-    if (!r.ok) return toast.error(r.error);
-    setDone(true);
-  });
-  return (
-    <Dialog
-      open={open}
-      onClose={close}
-      title={done ? undefined : "Konfirmasi Dana Punia"}
-      description={done ? undefined : "Sudah transfer? Kirim konfirmasi agar pengurus dapat memverifikasi."}
-      size="md"
-      footer={
-        done ? (
-          <Button size="lg" className="w-full" onClick={close}>Tutup</Button>
-        ) : (
-          <Button size="lg" className="w-full" onClick={onSubmit} loading={formState.isSubmitting}>
-            Kirim Konfirmasi
-          </Button>
-        )
-      }
-    >
-      {done ? (
-        <div className="flex flex-col items-center py-8 text-center">
-          <motion.div initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", bounce: 0.5 }} className="grid h-20 w-20 place-items-center rounded-full bg-mint text-emerald-700">
-            <Sparkles className="h-10 w-10" />
-          </motion.div>
-          <h3 className="mt-5 text-xl font-bold">Suksma! Konfirmasi terkirim</h3>
-          <p className="mt-2 max-w-sm text-[15px] text-muted">
-            Pengurus pura akan mencocokkan dengan mutasi rekening. Punia Anda masuk ke total setelah terverifikasi.
-          </p>
-          <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
-            Konfirmasi ini belum dihitung sebelum dicocokkan dengan mutasi rekening pura.
-          </p>
-        </div>
-      ) : (
-        <form className="space-y-4" onSubmit={onSubmit}>
-          <Field label="Nominal yang ditransfer" required error={formState.errors.amount?.message}>
-            <Controller control={control} name="amount" render={({ field }) => <MoneyInput value={field.value} onChange={field.onChange} invalid={!!formState.errors.amount} />} />
-          </Field>
-          <Controller control={control} name="amount" render={({ field }) => <QuickAmounts onPick={field.onChange} />} />
-          <Field label="Nama donatur" htmlFor="donorName" required error={formState.errors.donorName?.message} hint="Contoh: I Made Surya atau Keluarga Wayan Adi">
-            <Input id="donorName" {...register("donorName")} aria-invalid={!!formState.errors.donorName} />
-          </Field>
-          <Field label="Bagaimana nama Anda ditampilkan?">
-            <Controller control={control} name="privacy" render={({ field }) => <PrivacyPicker value={field.value} onChange={field.onChange} />} />
-          </Field>
-          <Field label="Pesan / doa (opsional)" htmlFor="message">
-            <Textarea id="message" rows={2} {...register("message")} placeholder="Rahajeng Piodalan…" />
-          </Field>
-          <Field label="Bukti transfer (opsional)" hint="Jangan unggah foto kartu ATM atau PIN.">
-            <Controller control={control} name="evidence" render={({ field }) => <ImageUpload value={field.value} onChange={(v) => field.onChange(v)} allowCamera={false} label="Bukti transfer" compact />} />
-          </Field>
-        </form>
-      )}
-    </Dialog>
-  );
-}

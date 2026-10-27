@@ -10,7 +10,7 @@ import { CheckCircle2, Crown, Settings2 } from "lucide-react";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { PageSkeleton } from "@/components/ui/skeleton";
-import { PasswordInput, SecureNote, StrengthBar } from "@/components/shared/auth-bits";
+import { PasswordInput } from "@/components/shared/auth-bits";
 import { useStore } from "@/lib/store";
 
 const schema = z
@@ -18,16 +18,13 @@ const schema = z
     token: z.string().trim().min(16, "Kode setup minimal 16 karakter"),
     name: z.string().trim().min(3, "Tulis nama lengkap"),
     email: z.string().trim().email("Format email belum benar"),
-    password: z.string().min(10, "Untuk Admin Utama, minimal 10 karakter").regex(/\d/, "Sertakan angka").regex(/[A-Za-z]/, "Sertakan huruf"),
-    confirm: z.string(),
-  })
-  .refine((v) => v.password === v.confirm, { message: "Kata sandi tidak sama", path: ["confirm"] });
+  });
 
 export default function SetupPage() {
   const router = useRouter();
   const setupAdmin = useStore((s) => s.setupAdmin);
   const [status, setStatus] = useState<{ done: boolean; configured: boolean } | null>(null);
-  const { register, handleSubmit, formState, watch, setError } = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) });
+  const { register, handleSubmit, formState, setError } = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) });
   useEffect(() => {
     fetch("/api/setup").then((r) => r.json()).then((j) => setStatus({ done: j.done, configured: j.configured })).catch(() => setStatus({ done: false, configured: false }));
   }, []);
@@ -57,15 +54,15 @@ export default function SetupPage() {
     <div>
       <div className="grid h-14 w-14 place-items-center rounded-2xl bg-charcoal text-gold-light"><Crown className="h-7 w-7" /></div>
       <h1 className="mt-5 text-3xl font-extrabold text-forest">Buat Akun Admin Utama</h1>
-      <p className="mt-2 text-[17px] text-muted">Langkah ini hanya bisa dilakukan <strong>satu kali</strong>. Masukkan kode setup dari pengaturan server (SETUP_TOKEN) dan email yang sama dengan ADMIN_EMAIL.</p>
+      <p className="mt-2 text-[17px] text-muted">Langkah ini hanya bisa dilakukan <strong>satu kali</strong>. Masukkan kode setup dari pengaturan server (SETUP_TOKEN) dan email yang sama dengan ADMIN_EMAIL. Email dicocokkan tanpa membedakan huruf besar-kecil.</p>
       <form
         className="mt-7 space-y-4"
         noValidate
         onSubmit={handleSubmit(async (v) => {
-          const r = await setupAdmin({ token: v.token, name: v.name, email: v.email, password: v.password });
+          const r = await setupAdmin({ token: v.token, name: v.name, email: v.email });
           if (!r.ok) return setError("token", { message: r.error });
           toast.success("Admin Utama berhasil dibuat");
-          router.push("/onboarding");
+          router.push("/app/admin");
         })}
       >
         <Field label="Kode setup (SETUP_TOKEN)" htmlFor="token" error={formState.errors.token?.message}>
@@ -73,14 +70,9 @@ export default function SetupPage() {
         </Field>
         <Field label="Nama lengkap" htmlFor="name" error={formState.errors.name?.message}><Input id="name" autoComplete="name" {...register("name")} /></Field>
         <Field label="Email Admin Utama" htmlFor="email" error={formState.errors.email?.message}><Input id="email" type="email" autoComplete="username" {...register("email")} /></Field>
-        <Field label="Kata sandi" htmlFor="password" error={formState.errors.password?.message} hint="Minimal 10 karakter, berisi huruf dan angka. Jangan pakai kata sandi yang sama dengan akun lain.">
-          <PasswordInput id="password" autoComplete="new-password" {...register("password")} />
-        </Field>
-        <StrengthBar password={watch("password") ?? ""} />
-        <Field label="Ulangi kata sandi" htmlFor="confirm" error={formState.errors.confirm?.message}><PasswordInput id="confirm" autoComplete="new-password" {...register("confirm")} /></Field>
         <Button type="submit" size="xl" className="w-full" loading={formState.isSubmitting}>Buat Admin Utama</Button>
       </form>
-      <div className="mt-6"><SecureNote /></div>
+      <p className="mt-6 rounded-2xl bg-mint/60 p-3.5 text-sm text-emerald-900">Tidak ada kata sandi. Setelah ini, Admin Utama masuk dengan <strong>Google</strong> atau <strong>tautan email</strong> memakai email di atas.</p>
     </div>
   );
 }

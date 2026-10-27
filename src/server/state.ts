@@ -1,27 +1,66 @@
 import "server-only";
 import { and, desc, eq, inArray, ne } from "drizzle-orm";
 import { db, schema } from "./db";
-import { accessibleTemples, type Ctx } from "./context";
+import { banjarIdsOf, templeAccess, type Ctx } from "./context";
 import * as m from "./map";
-import type { DataState, Role, Session, User } from "@/lib/types";
+import type { DataState, Donation, Role, Session, User } from "@/lib/types";
 
 export interface ServerState {
   me: User;
   role: Role | undefined;
+  access: { isSuperAdmin: boolean; isStaff: boolean; banjarIds: string[] };
   session: Session;
   data: DataState;
-  registrationOpen: boolean;
 }
 
-/** Everything the signed-in user may see for their active temple. Never includes password hashes or tokens. */
+/** Flags punia that share amount + transfer date with another non-rejected punia of the same temple. */
+export function markDuplicates(list: Donation[]) {
+  const seen = new Map<string, number>();
+  for (const d of list) {
+    if (d.status === "rejected" || !d.transferDate) continue;
+    const k = `${d.amount}|${d.transferDate}`;
+    seen.set(k, (seen.get(k) ?? 0) + 1);
+  }
+  return list.map((d) => (d.status !== "rejected" && d.transferDate && (seen.get(`${d.amount}|${d.transferDate}`) ?? 0) > 1 ? { ...d, possibleDuplicate: true } : d));
+}
+
+/**
+ * Everything the signed-in user may see. Staff get the full workspace of their active temple;
+ * Umat get only their own account (their punia history comes from /api/umat). Never includes
+ * password hashes, Google ids or tokens.
+ */
 export async function loadState(ctx: Ctx): Promise<ServerState> {
-  const templeId = ctx.templeId;
-  const temples = await accessibleTemples(ctx.user);
-  const empty = { users: [], memberships: [], accounts: [], categories: [], activities: [], transactions: [], campaigns: [], donations: [], reports: [], notifications: [], audit: [] };
-  let scoped: Omit<DataState, "version" | "temples" | "counters" | "resetRequests"> = { ...empty };
+  const access = await templeAccess(ctx.user);
+  const banjarIds = ctx.user.isSuperAdmin ? [] : await banjarIdsOf(ctx.user.id);
+  const templeIds = Array.from(access.keys());
+  const templeId = ctx.templeId && access.has(ctx.templeId) ? ctx.templeId : null;
+
+  const [templeRows, tbRows, pengurusRows] = templeIds.length
+    ? await Promise.all([
+        db.select().from(schema.temples).where(inArray(schema.temples.id, templeIds)),
+        db.select().from(schema.templeBanjars).where(inArray(schema.templeBanjars.templeId, templeIds)),
+        db.select().from(schema.memberships).where(and(inArray(schema.memberships.templeId, templeIds), eq(schema.memberships.role, "pengurus"), eq(schema.memberships.status, "active"))),
+      ])
+    : [[], [], []];
+  const relevantBanjarIds = Array.from(new Set([...tbRows.map((r) => r.banjarId), ...banjarIds]));
+  const banjarRows = relevantBanjarIds.length ? await db.select().from(schema.banjars).where(inArray(schema.banjars.id, relevantBanjarIds)) : [];
+  const temples = templeRows
+    .map((t) => ({
+      ...m.toTemple(t),
+      banjarIds: tbRows.filter((r) => r.templeId === t.id).map((r) => r.banjarId),
+      pengurusCount: pengurusRows.filter((p) => p.templeId === t.id).length,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const empty = { users: [], memberships: [], accounts: [], categories: [], activities: [], transactions: [], campaigns: [], donations: [], reports: [], notifications: [], audit: [], banjarMembers: [] };
+  let scoped: Omit<DataState, "version" | "temples" | "banjars" | "templeBanjars" | "counters" | "resetRequests"> = { ...empty };
   if (templeId) {
-    const [members, accounts, categories, activities, txs, campaigns, donations, reports, notifications, audit] = await Promise.all([
+    const templeBanjarIds = tbRows.filter((r) => r.templeId === templeId).map((r) => r.banjarId);
+    const [members, banjarMembers, accounts, categories, activities, txs, campaigns, donations, reports, notifications, audit] = await Promise.all([
       db.select({ m: schema.memberships, u: schema.users }).from(schema.memberships).innerJoin(schema.users, eq(schema.users.id, schema.memberships.userId)).where(eq(schema.memberships.templeId, templeId)),
+      templeBanjarIds.length
+        ? db.select({ b: schema.banjarMembers, u: schema.users }).from(schema.banjarMembers).innerJoin(schema.users, eq(schema.users.id, schema.banjarMembers.userId)).where(inArray(schema.banjarMembers.banjarId, templeBanjarIds))
+        : Promise.resolve([]),
       db.select().from(schema.accounts).where(eq(schema.accounts.templeId, templeId)),
       db.select().from(schema.categories).where(eq(schema.categories.templeId, templeId)),
       db.select().from(schema.activities).where(eq(schema.activities.templeId, templeId)),
@@ -30,21 +69,25 @@ export async function loadState(ctx: Ctx): Promise<ServerState> {
       db.select().from(schema.donations).where(eq(schema.donations.templeId, templeId)),
       db.select().from(schema.reports).where(eq(schema.reports.templeId, templeId)).orderBy(desc(schema.reports.publishedAt)),
       db.select().from(schema.notifications).where(eq(schema.notifications.templeId, templeId)).orderBy(desc(schema.notifications.date)).limit(100),
-      // Temple audit trail (business actions only — login records stay in the Admin Utama log).
+      // Riwayat Audit Pura: business actions only — login records stay in the Admin Utama log.
       db.select().from(schema.activityLog).where(and(eq(schema.activityLog.templeId, templeId), ne(schema.activityLog.entity, "session"))).orderBy(desc(schema.activityLog.at)).limit(300),
     ]);
-    // Names of people who created transactions but are no longer members.
-    const extraIds = Array.from(new Set(txs.map((t) => t.createdBy))).filter((id) => !members.some((x) => x.u.id === id));
-    const extra = extraIds.length ? await db.select().from(schema.users).where(inArray(schema.users.id, extraIds)) : [];
+    const people = new Map<string, User>();
+    members.forEach((x) => people.set(x.u.id, m.toUser(x.u)));
+    banjarMembers.forEach((x) => people.set(x.u.id, m.toUser(x.u)));
+    // Names of people who recorded entries but are no longer staff.
+    const extraIds = Array.from(new Set([...txs.map((t) => t.createdBy), ...donations.map((d) => d.verifiedBy).filter(Boolean)] as string[])).filter((id) => !people.has(id));
+    if (extraIds.length) (await db.select().from(schema.users).where(inArray(schema.users.id, extraIds))).forEach((u) => people.set(u.id, m.toUser(u)));
     scoped = {
-      users: [...members.map((x) => m.toUser(x.u)), ...extra.map(m.toUser)],
+      users: Array.from(people.values()),
       memberships: members.map((x) => m.toMembership(x.m)),
+      banjarMembers: banjarMembers.map((x) => m.toBanjarMember(x.b)),
       accounts: accounts.map(m.toAccount),
       categories: categories.map(m.toCategory),
       activities: activities.map(m.toActivity),
       transactions: txs.map(m.toTx),
       campaigns: campaigns.map(m.toCampaign),
-      donations: donations.map(m.toDonation),
+      donations: markDuplicates(donations.map(m.toDonation)),
       reports: reports.map(m.toReport),
       notifications: notifications.map(m.toNotification),
       audit: audit.map(m.toAudit),
@@ -52,15 +95,20 @@ export async function loadState(ctx: Ctx): Promise<ServerState> {
   }
   const me = m.toUser(ctx.user);
   if (!scoped.users.some((x) => x.id === me.id)) scoped.users.push(me);
-  // The user's own memberships (for the temple switcher).
-  const own = await db.select().from(schema.memberships).where(eq(schema.memberships.userId, ctx.user.id));
-  for (const o of own) if (!scoped.memberships.some((x) => x.id === o.id)) scoped.memberships.push(m.toMembership(o));
 
   return {
     me,
-    role: ctx.role,
+    role: templeId ? access.get(templeId) : undefined,
+    access: { isSuperAdmin: ctx.user.isSuperAdmin, isStaff: ctx.user.isSuperAdmin || access.size > 0, banjarIds },
     session: { userId: ctx.user.id, activeTempleId: templeId ?? undefined, startedAt: ctx.session.createdAt.toISOString() },
-    registrationOpen: process.env.ALLOW_REGISTRATION === "true",
-    data: { version: 0, temples: temples.map(m.toTemple), counters: { tx: 0 }, resetRequests: [], ...scoped },
+    data: {
+      version: 0,
+      temples,
+      banjars: banjarRows.map(m.toBanjar),
+      templeBanjars: tbRows.map((r) => ({ templeId: r.templeId, banjarId: r.banjarId })),
+      counters: { tx: 0 },
+      resetRequests: [],
+      ...scoped,
+    },
   };
 }

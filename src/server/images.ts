@@ -2,6 +2,13 @@ import "server-only";
 import { db, schema, type Tx } from "./db";
 import { ApiError } from "./http";
 import { uid } from "@/lib/format";
+import { createHash } from "crypto";
+
+/** SHA-256 of the decoded image bytes — used to spot the same proof uploaded twice. */
+export function imageHash(dataUrl: string | null | undefined) {
+  const m = dataUrl ? /^data:image\/[a-z+]+;base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl) : null;
+  return m ? createHash("sha256").update(Buffer.from(m[1], "base64")).digest("hex") : null;
+}
 
 const ALLOWED: Record<string, (b: Buffer) => boolean> = {
   "image/jpeg": (b) => b[0] === 0xff && b[1] === 0xd8,

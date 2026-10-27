@@ -1,9 +1,9 @@
 import "server-only";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db, schema } from "./db";
 import { ApiError } from "./http";
 import { requireCurrent, type CurrentSession } from "./auth";
-import { can, type Permission } from "@/lib/permissions";
+import { ROLE_RANK, can, type Permission } from "@/lib/permissions";
 import type { Role } from "@/lib/types";
 import { logActivity } from "./log";
 
@@ -14,43 +14,71 @@ export interface Ctx extends CurrentSession {
   actor: { id: string; name: string; email: string };
 }
 
-/** Temples this user may open: every temple for Admin Utama, otherwise active memberships. */
-export async function accessibleTemples(user: CurrentSession["user"]) {
-  if (user.isSuperAdmin) return db.select().from(schema.temples).orderBy(schema.temples.name);
+type UserRow = CurrentSession["user"];
+
+/** Active banjar ids where the user is Pengurus Banjar. */
+export async function banjarIdsOf(userId: string) {
   const rows = await db
-    .select({ temple: schema.temples })
-    .from(schema.memberships)
-    .innerJoin(schema.temples, eq(schema.temples.id, schema.memberships.templeId))
-    .where(and(eq(schema.memberships.userId, user.id), eq(schema.memberships.status, "active")));
-  return rows.map((r) => r.temple).sort((a, b) => a.name.localeCompare(b.name));
+    .select({ banjarId: schema.banjarMembers.banjarId })
+    .from(schema.banjarMembers)
+    .innerJoin(schema.banjars, eq(schema.banjars.id, schema.banjarMembers.banjarId))
+    .where(and(eq(schema.banjarMembers.userId, userId), eq(schema.banjarMembers.status, "active"), eq(schema.banjars.status, "active")));
+  return rows.map((r) => r.banjarId);
 }
 
-export async function roleFor(user: CurrentSession["user"], templeId: string | null): Promise<Role | undefined> {
-  if (user.isSuperAdmin) return "superadmin";
-  if (!templeId) return undefined;
-  const [m] = await db
+/**
+ * Every temple this user may open, with the strongest role for each:
+ * Admin Utama → all temples; Pengurus Pura/Pemeriksa → own memberships;
+ * Pengurus Banjar → every temple the banjar supports (including temples shared with another banjar).
+ */
+export async function templeAccess(user: UserRow): Promise<Map<string, Role>> {
+  const map = new Map<string, Role>();
+  const put = (templeId: string, role: Role) => {
+    const cur = map.get(templeId);
+    if (!cur || ROLE_RANK[role] > ROLE_RANK[cur]) map.set(templeId, role);
+  };
+  if (user.isSuperAdmin) {
+    const all = await db.select({ id: schema.temples.id }).from(schema.temples);
+    all.forEach((t) => put(t.id, "superadmin"));
+    return map;
+  }
+  const mems = await db
     .select()
     .from(schema.memberships)
-    .where(and(eq(schema.memberships.userId, user.id), eq(schema.memberships.templeId, templeId), eq(schema.memberships.status, "active")))
-    .limit(1);
-  return m?.role as Role | undefined;
+    .where(and(eq(schema.memberships.userId, user.id), eq(schema.memberships.status, "active")));
+  mems.forEach((m) => put(m.templeId, m.role as Role));
+  const banjarIds = await banjarIdsOf(user.id);
+  if (banjarIds.length) {
+    const tb = await db.select().from(schema.templeBanjars).where(inArray(schema.templeBanjars.banjarId, banjarIds));
+    tb.forEach((r) => put(r.templeId, "banjar"));
+  }
+  return map;
+}
+
+export async function accessibleTemples(user: UserRow) {
+  const access = await templeAccess(user);
+  if (!access.size) return [];
+  const rows = await db.select().from(schema.temples).where(inArray(schema.temples.id, Array.from(access.keys())));
+  return rows.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function roleFor(user: UserRow, templeId: string | null): Promise<Role | undefined> {
+  if (!templeId) return undefined;
+  if (user.isSuperAdmin) return "superadmin";
+  return (await templeAccess(user)).get(templeId);
 }
 
 export async function getCtx(req: Request): Promise<Ctx> {
   const cur = await requireCurrent();
+  const access = await templeAccess(cur.user);
   let templeId = cur.session.activeTempleId;
-  let role = await roleFor(cur.user, templeId);
-  if (!role && !cur.user.isSuperAdmin) {
-    // Active temple no longer accessible — fall back to the first one available.
-    const list = await accessibleTemples(cur.user);
-    templeId = list[0]?.id ?? null;
-    role = await roleFor(cur.user, templeId);
-    await db.update(schema.sessions).set({ activeTempleId: templeId }).where(eq(schema.sessions.id, cur.session.id));
+  if (!templeId || !access.has(templeId)) {
+    // Active temple no longer accessible (or never chosen) — fall back to the first one available.
+    templeId = Array.from(access.keys())[0] ?? null;
+    if (templeId !== cur.session.activeTempleId)
+      await db.update(schema.sessions).set({ activeTempleId: templeId }).where(eq(schema.sessions.id, cur.session.id));
   }
-  if (cur.user.isSuperAdmin && !templeId) {
-    const list = await accessibleTemples(cur.user);
-    templeId = list[0]?.id ?? null;
-  }
+  const role = templeId ? access.get(templeId) : undefined;
   return { ...cur, req, templeId, role, actor: { id: cur.user.id, name: cur.user.name, email: cur.user.email } };
 }
 
@@ -58,6 +86,13 @@ export async function requirePerm(ctx: Ctx, perm: Permission, what = "melakukan 
   if (!can(ctx.role, perm)) {
     await logActivity({ actor: ctx.actor, action: "Akses ditolak", entity: "session", detail: `Mencoba ${what} tanpa izin (${perm})`, templeId: ctx.templeId, req: ctx.req });
     throw new ApiError(403, `Peran Anda tidak diizinkan untuk ${what}.`);
+  }
+}
+
+export async function requireSuperAdmin(ctx: Ctx, what: string) {
+  if (!ctx.user.isSuperAdmin) {
+    await logActivity({ actor: ctx.actor, action: "Akses ditolak", entity: "session", detail: `Mencoba ${what} (khusus Admin Utama)`, req: ctx.req });
+    throw new ApiError(403, `Hanya Admin Utama yang dapat ${what}.`);
   }
 }
 

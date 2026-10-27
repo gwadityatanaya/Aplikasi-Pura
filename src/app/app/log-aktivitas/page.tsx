@@ -20,7 +20,7 @@ const KINDS = [
   { value: "donation", label: "Donasi" },
   { value: "campaign", label: "Campaign" },
   { value: "user", label: "Pengguna & peran" },
-  { value: "settings", label: "Pengaturan & pura" },
+  { value: "settings", label: "Banjar, pura & rekening" },
   { value: "report", label: "Laporan" },
   { value: "backup", label: "Cadangan data" },
 ];
@@ -55,7 +55,6 @@ function Changes({ value }: { value: unknown }) {
 
 export default function ActivityLogPage() {
   const can = useCan();
-  const isDemo = useStore((s) => s.mode === "demo");
   const temples = useStore((s) => s.data.temples);
   const [filters, setFilters] = useState({ kind: "all", q: "", from: "", to: "", temple: "" });
   const [entries, setEntries] = useState<AuditEntry[] | null>(null);
@@ -85,13 +84,12 @@ export default function ActivityLogPage() {
   );
 
   useEffect(() => {
-    if (!isDemo && can("log.view")) {
+    if (can("log.view")) {
       const t = setTimeout(() => load(), 250);
       return () => clearTimeout(t);
     }
-  }, [load, isDemo, can]);
+  }, [load, can]);
 
-  if (isDemo) return <Card><EmptyState icon={ScrollText} title="Tidak tersedia di mode demo" description="Log Aktivitas hanya mencatat kegiatan pada data sungguhan." /></Card>;
   if (!can("log.view")) return <NoAccess what="Log Aktivitas" />;
 
   function exportCsv() {

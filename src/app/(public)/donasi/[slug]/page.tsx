@@ -8,25 +8,21 @@ import { toast } from "sonner";
 import { TempleCover } from "@/components/brand/temple-cover";
 import { OrnamentDivider } from "@/components/brand/ornament";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonClass } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AnimatedRupiah } from "@/components/ui/animated-number";
 import { CampaignStatusBadge, daysLeftLabel } from "@/components/shared/campaign-card";
 import { ShareActions } from "@/components/shared/share";
-import { ConfirmDonationDialog, DonationFeed, DonorList } from "@/components/public/donations";
+import { DonationFeed, DonorList } from "@/components/public/donations";
 import { usePublicData } from "@/lib/public";
-import { useStore } from "@/lib/store";
 import { campaignStats } from "@/lib/ledger";
 import { formatDate, formatDateShort, formatPercent, rupiah } from "@/lib/format";
 
 export default function CampaignPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { hydrated, temples, campaigns, donations, accounts } = usePublicData();
-  const simulate = useStore((s) => s.simulateDonation);
-  const isDemo = useStore((s) => s.mode === "demo");
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const { hydrated, temples, campaigns, donations } = usePublicData();
   const campaign = campaigns.find((c) => c.slug === slug);
   const temple = temples.find((t) => t.id === campaign?.templeId);
 
@@ -46,8 +42,8 @@ export default function CampaignPage() {
 
   const own = donations.filter((d) => d.campaignId === campaign.id);
   const s = campaignStats(campaign, own);
-  const bank = accounts.find((a) => a.id === campaign.accountId);
-  const showBank = temple.transparency.showBankAccount && bank?.type === "bank";
+  const showBank = temple.acceptsPunia;
+  const puniaHref = `/pura/${temple.slug}/punia?campaign=${campaign.id}`;
   const showDonors = campaign.showDonorList && temple.transparency.showDonorList;
   const shareMsg = `🙏 ${campaign.title}\n${temple.name}\nTerkumpul ${rupiah(s.collected)} dari ${rupiah(campaign.target)} (${formatPercent(s.progress)}). Mari berpunia bersama:`;
 
@@ -113,9 +109,13 @@ export default function CampaignPage() {
                 <Stat value={campaign.status === "completed" ? "Selesai" : daysLeftLabel(campaign.endDate).replace(" lagi", "")} label={campaign.status === "completed" ? "" : "tersisa"} />
               </div>
               {campaign.status === "active" && (
-                <Button size="xl" className="mt-5 w-full" onClick={() => setConfirmOpen(true)}>
-                  <HandHeart className="h-5 w-5" /> Saya sudah berpunia
-                </Button>
+                showBank ? (
+                  <Link href={puniaHref} className={buttonClass("primary", "xl", "mt-5 w-full")}>
+                    <HandHeart className="h-5 w-5" /> Saya sudah transfer — unggah bukti
+                  </Link>
+                ) : (
+                  <p className="mt-5 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Info rekening pura belum tersedia.</p>
+                )
               )}
             </div>
             {showBank && campaign.status === "active" && (
@@ -123,21 +123,21 @@ export default function CampaignPage() {
                 <h2 className="font-bold">Cara berpunia</h2>
                 <p className="mt-1 text-[15px] leading-relaxed text-charcoal/80">{campaign.instructions}</p>
                 <div className="mt-3 rounded-2xl bg-gradient-to-br from-emerald-600 to-forest p-4 text-white">
-                  <p className="flex items-center gap-2 text-sm text-white/80"><Landmark className="h-4 w-4" /> {bank!.bankName}</p>
-                  <p className="tabular mt-2 text-xl font-bold tracking-wider">{bank!.accountNumber}</p>
-                  <p className="text-sm text-white/80">a.n. {bank!.accountHolder}</p>
+                  <p className="flex items-center gap-2 text-sm text-white/80"><Landmark className="h-4 w-4" /> {temple.bankName}</p>
+                  <p className="tabular mt-2 text-xl font-bold tracking-wider">{temple.bankAccountNumber}</p>
+                  <p className="text-sm text-white/80">a.n. {temple.bankAccountHolder}</p>
                 </div>
                 <Button
                   variant="outline"
                   className="mt-2 w-full"
                   onClick={() => {
-                    navigator.clipboard?.writeText((bank!.accountNumber ?? "").replace(/\s/g, ""));
+                    navigator.clipboard?.writeText((temple.bankAccountNumber ?? "").replace(/\D/g, ""));
                     toast.success("Nomor rekening disalin");
                   }}
                 >
                   <Copy className="h-4 w-4" /> Salin nomor rekening
                 </Button>
-                <p className="mt-2 text-xs text-muted">{isDemo ? "Mode demo: rekening fiktif — jangan mentransfer uang." : "Pastikan nama penerima sesuai sebelum mentransfer."}</p>
+                <p className="mt-2 text-xs text-muted">Pastikan nama penerima sesuai sebelum mentransfer.</p>
               </div>
             )}
           </Card>
@@ -146,23 +146,6 @@ export default function CampaignPage() {
             <CardHeader title="Aktivitas terbaru" />
             <CardBody>
               <DonationFeed donations={own} />
-              {campaign.status === "active" && isDemo && (
-                <div className="mt-5 rounded-2xl border border-dashed border-amber-300 bg-amber-50/60 p-4">
-                  <p className="flex items-center gap-2 text-sm font-bold text-amber-900"><FlaskConical className="h-4 w-4" /> Mode demo</p>
-                  <p className="mt-1 text-sm text-amber-900/80">Kirim donasi simulasi untuk melihat alur verifikasi. Bukan pembayaran sungguhan.</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-3 border-amber-300 bg-white"
-                    onClick={() => {
-                      const d = simulate(campaign.id);
-                      if (d) toast("Donasi simulasi dikirim", { description: `${d.donorName} — ${rupiah(d.amount)}. Menunggu verifikasi pengurus.` });
-                    }}
-                  >
-                    Simulasikan donasi masuk
-                  </Button>
-                </div>
-              )}
             </CardBody>
           </Card>
 
@@ -182,11 +165,10 @@ export default function CampaignPage() {
               <p className="tabular truncate text-sm font-extrabold text-forest">{rupiah(s.collected)} <span className="font-medium text-muted">· {formatPercent(s.progress)}</span></p>
               <Progress value={s.progress} className="mt-1.5" height="h-1.5" label="Progres penggalangan" />
             </div>
-            <Button size="lg" onClick={() => setConfirmOpen(true)}><HandHeart className="h-5 w-5" /> Berpunia</Button>
+            <Link href={puniaHref} className={buttonClass("primary", "lg")}><HandHeart className="h-5 w-5" /> Berpunia</Link>
           </div>
         </div>
       )}
-      <ConfirmDonationDialog campaign={campaign} open={confirmOpen} onClose={() => setConfirmOpen(false)} />
     </div>
   );
 }

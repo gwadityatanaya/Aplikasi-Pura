@@ -22,7 +22,6 @@ import { useCurrentUser, useStore } from "@/lib/store";
 import { accountBalance } from "@/lib/ledger";
 import { cn, rupiah } from "@/lib/format";
 import type { Account, Category, CoverVariant, Temple } from "@/lib/types";
-import { PasswordInput, StrengthBar } from "@/components/shared/auth-bits";
 import { InstallAppButton } from "@/components/pwa";
 import type { Result } from "@/lib/store";
 
@@ -36,11 +35,10 @@ function done(r: Result<unknown>, msg: string) {
 const TABS = [
   { key: "profil-pura", label: "Profil pura", icon: Building2 },
   { key: "profil-admin", label: "Profil saya", icon: UserRound },
-  { key: "pengguna", label: "Pengurus & peran", icon: Users },
   { key: "kategori", label: "Kategori keuangan", icon: Tags },
-  { key: "rekening", label: "Kas & rekening", icon: Landmark },
+  { key: "rekening", label: "Kas & saldo awal", icon: Landmark },
   { key: "notifikasi", label: "Notifikasi", icon: Bell },
-  { key: "transparansi", label: "Transparansi publik", icon: Eye },
+  { key: "transparansi", label: "Tampilan untuk umat", icon: Eye },
   { key: "keamanan", label: "Keamanan", icon: KeyRound },
   { key: "branding", label: "Kop laporan", icon: FileText },
   { key: "tampilan", label: "Tampilan", icon: Palette },
@@ -53,7 +51,6 @@ function Settings() {
   const [tab, setTab] = useState<TabKey | null>((params.get("tab") as TabKey) ?? null);
   useEffect(() => setTab((params.get("tab") as TabKey) ?? null), [params]);
   const go = (k: TabKey | null) => {
-    if (k === "pengguna") return router.push("/app/pengguna");
     router.replace(k ? `/app/pengaturan?tab=${k}` : "/app/pengaturan", { scroll: false });
     setTab(k);
   };
@@ -96,6 +93,7 @@ function ReadOnlyNote() {
 function TempleProfile() {
   const { temple } = useWorkspace();
   const can = useCan();
+  const banjars = useStore((s) => s.data.banjars);
   const update = useStore((s) => s.updateTemple);
   const [f, setF] = useState(temple!);
   const [confirm, setConfirm] = useState(false);
@@ -103,18 +101,16 @@ function TempleProfile() {
   const covers: CoverVariant[] = ["emerald", "gold", "forest", "ocean", "dusk"];
   return (
     <Card>
-      <CardHeader title="Profil pura" description="Tampil di halaman publik pura." />
+      <CardHeader title="Profil pura" description="Tampil di halaman pura untuk umat." />
       <CardBody className="space-y-4">
         {ro && <ReadOnlyNote />}
-        <Field label="Nama pura" htmlFor="t-name"><Input id="t-name" disabled={ro} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
-        <Field label="Deskripsi" htmlFor="t-desc"><Textarea id="t-desc" disabled={ro} rows={4} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Provinsi" htmlFor="t-prov"><Input id="t-prov" disabled={ro} value={f.province} onChange={(e) => setF({ ...f, province: e.target.value })} /></Field>
-          <Field label="Kabupaten / Kota" htmlFor="t-reg"><Input id="t-reg" disabled={ro} value={f.regency} onChange={(e) => setF({ ...f, regency: e.target.value })} /></Field>
-          <Field label="Kecamatan" htmlFor="t-dist"><Input id="t-dist" disabled={ro} value={f.district} onChange={(e) => setF({ ...f, district: e.target.value })} /></Field>
-          <Field label="Desa / Kelurahan" htmlFor="t-vil"><Input id="t-vil" disabled={ro} value={f.village} onChange={(e) => setF({ ...f, village: e.target.value })} /></Field>
+        <div className="rounded-2xl bg-ivory p-4 text-[15px]">
+          <p className="font-bold">{temple!.name}</p>
+          <p className="text-muted">{temple!.address} · {temple!.village}, {temple!.district}, {temple!.regency}</p>
+          <p className="mt-1 text-muted">Banjar Pengempon: {banjars.filter((b) => temple!.banjarIds?.includes(b.id)).map((b) => b.name).join(", ") || "—"}</p>
+          <p className="mt-2 text-sm text-muted">Nama, lokasi, banjar pengempon dan rekening diatur Admin Utama di Back Office.</p>
         </div>
-        <Field label="Alamat" htmlFor="t-addr"><Textarea id="t-addr" disabled={ro} rows={2} value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} /></Field>
+        <Field label="Deskripsi" htmlFor="t-desc"><Textarea id="t-desc" disabled={ro} rows={4} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Telepon / WhatsApp" htmlFor="t-phone"><Input id="t-phone" disabled={ro} value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>
           <Field label="Email" htmlFor="t-email"><Input id="t-email" disabled={ro} value={f.email ?? ""} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
@@ -131,7 +127,7 @@ function TempleProfile() {
         </Field>
         {!ro && <div className="flex justify-end"><Button size="lg" onClick={() => setConfirm(true)}>Simpan perubahan</Button></div>}
       </CardBody>
-      <ConfirmDialog open={confirm} onClose={() => setConfirm(false)} title="Simpan profil pura?" description="Perubahan langsung tampil di halaman publik pura." onConfirm={async () => { const r = await update({ name: f.name, description: f.description, province: f.province, regency: f.regency, district: f.district, village: f.village, address: f.address, phone: f.phone, email: f.email, cover: f.cover, photo: f.photo ?? null } as Partial<Temple>); setConfirm(false); done(r, "Profil pura disimpan"); }} />
+      <ConfirmDialog open={confirm} onClose={() => setConfirm(false)} title="Simpan profil pura?" description="Perubahan langsung tampil di halaman pura untuk umat." onConfirm={async () => { const r = await update({ description: f.description, phone: f.phone, email: f.email, cover: f.cover, photo: f.photo ?? null } as Partial<Temple>); setConfirm(false); done(r, "Profil pura disimpan"); }} />
     </Card>
   );
 }
@@ -147,7 +143,7 @@ function AdminProfile() {
         <Field label="Nama lengkap" htmlFor="u-name"><Input id="u-name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
         <Field label="Nama sapaan" htmlFor="u-call" hint='Dipakai pada sapaan dashboard, mis. "Pak Made".'><Input id="u-call" value={f.callName} onChange={(e) => setF({ ...f, callName: e.target.value })} /></Field>
         <Field label="Nomor WhatsApp" htmlFor="u-phone"><Input id="u-phone" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>
-        <Field label="Email" htmlFor="u-email" hint="Email dipakai untuk masuk. Hubungi Admin Utama bila perlu diganti."><Input id="u-email" disabled value={user?.email ?? ""} /></Field>
+        <Field label="Email" htmlFor="u-email" hint="Email dipakai untuk masuk (Google atau tautan email). Hubungi Admin Utama bila perlu diganti."><Input id="u-email" disabled value={user?.email ?? ""} /></Field>
         <div className="flex justify-end"><Button size="lg" disabled={f.name.trim().length < 3} onClick={async () => done(await update(f), "Profil disimpan")}>Simpan</Button></div>
       </CardBody>
     </Card>
@@ -208,36 +204,38 @@ function Accounts() {
   const [edit, setEdit] = useState<Partial<Account> | null>(null);
   const ro = !can("settings.manage");
   const hasTx = (id?: string) => !!id && ws.transactions.some((t) => t.accountId === id || t.toAccountId === id);
+  const t = ws.temple!;
   return (
     <Card>
-      <CardHeader title="Kas & rekening" description="Saldo dihitung dari saldo awal ditambah semua transaksi — tidak pernah diketik manual." action={!ro && <Button size="sm" onClick={() => setEdit({ type: "bank", name: "", openingBalance: 0, openingDate: `${new Date().getFullYear()}-01-01` })}><Plus className="h-4 w-4" /> Tambah</Button>} />
+      <CardHeader title="Kas & saldo awal" description="Saldo dihitung dari saldo awal ditambah semua transaksi — tidak pernah diketik manual." action={!ro && <Button size="sm" onClick={() => setEdit({ type: "cash", name: "", openingBalance: 0, openingDate: `${new Date().getFullYear()}-01-01` })}><Plus className="h-4 w-4" /> Tambah</Button>} />
       <CardBody className="space-y-3">
+        <div className="rounded-2xl border border-emerald-200 bg-mint/40 p-4">
+          <p className="flex items-center gap-2 font-bold"><Landmark className="h-5 w-5 text-emerald-700" /> Rekening resmi untuk punia</p>
+          {t.bankAccountNumber ? (
+            <p className="mt-1 text-[15px]">{t.bankName} · <span className="tabular font-semibold">{t.bankAccountNumber}</span> · a.n. {t.bankAccountHolder}</p>
+          ) : (
+            <p className="mt-1 text-[15px] text-amber-800">Belum diisi — umat belum bisa berpunia lewat aplikasi.</p>
+          )}
+          <p className="mt-1 text-sm text-muted">Hanya Admin Utama yang dapat mengubah rekening ini (tercatat di Log Aktivitas).</p>
+        </div>
         {ws.accounts.map((a) => (
           <div key={a.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-line p-4">
-            <span className="grid h-11 w-11 place-items-center rounded-xl bg-mint text-emerald-700"><Landmark className="h-5 w-5" /></span>
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-ivory text-emerald-700"><Landmark className="h-5 w-5" /></span>
             <div className="min-w-0 flex-1">
-              <p className="font-bold">{a.name} {a.isPublic && <Badge tone="emerald">Rekening resmi publik</Badge>}</p>
-              <p className="text-sm text-muted">{a.type === "cash" ? "Kas tunai" : `${a.bankName} · ${a.accountNumber}`} · saldo awal {rupiah(a.openingBalance)}</p>
+              <p className="font-bold">{a.name}</p>
+              <p className="text-sm text-muted">{a.type === "cash" ? "Kas tunai" : "Rekening bank"} · saldo awal {rupiah(a.openingBalance)}</p>
             </div>
-            <div className="text-right"><p className="text-xs text-muted">Saldo kini</p><p className="tabular font-extrabold">{rupiah(accountBalance(a, ws.transactions))}</p></div>
+            <div className="text-right"><p className="text-xs text-muted">Saldo menurut catatan</p><p className="tabular font-extrabold">{rupiah(accountBalance(a, ws.transactions))}</p></div>
             {!ro && <Button variant="ghost" size="icon" onClick={() => setEdit(a)} aria-label={`Ubah ${a.name}`}><Pencil className="h-4 w-4" /></Button>}
           </div>
         ))}
-        <p className="text-sm text-muted">Cukup isi nama bank dan nomor rekening. Jangan pernah memasukkan PIN, kata sandi internet banking, atau data kartu.</p>
+        <p className="text-sm text-muted">Isi <strong>saldo awal</strong> sesuai uang yang ada saat mulai memakai PURA. Saldo awal terkunci setelah ada transaksi.</p>
       </CardBody>
-      <Dialog open={!!edit} onClose={() => setEdit(null)} title={edit?.id ? "Ubah kas/rekening" : "Kas/rekening baru"} footer={<Button size="lg" className="w-full" disabled={(edit?.name ?? "").trim().length < 3} onClick={async () => { const r = await save({ ...(edit as Account), name: edit!.name!.trim() }); if (done(r, "Tersimpan")) setEdit(null); }}>Simpan</Button>}>
+      <Dialog open={!!edit} onClose={() => setEdit(null)} title={edit?.id ? "Ubah kas" : "Kas baru"} footer={<Button size="lg" className="w-full" disabled={(edit?.name ?? "").trim().length < 3} onClick={async () => { const r = await save({ ...(edit as Account), name: edit!.name!.trim() }); if (done(r, "Tersimpan")) setEdit(null); }}>Simpan</Button>}>
         {edit && (
           <div className="space-y-4">
-            <Field label="Nama" htmlFor="ac-name"><Input id="ac-name" value={edit.name ?? ""} onChange={(e) => setEdit({ ...edit, name: e.target.value })} /></Field>
+            <Field label="Nama" htmlFor="ac-name"><Input id="ac-name" value={edit.name ?? ""} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder="Kas Tunai Pura" /></Field>
             <Field label="Jenis" htmlFor="ac-type"><Select id="ac-type" value={edit.type} disabled={hasTx(edit.id)} onChange={(e) => setEdit({ ...edit, type: e.target.value as Account["type"] })}><option value="cash">Kas tunai</option><option value="bank">Rekening bank</option></Select></Field>
-            {edit.type === "bank" && (
-              <>
-                <Field label="Nama bank" htmlFor="ac-bank"><Input id="ac-bank" value={edit.bankName ?? ""} onChange={(e) => setEdit({ ...edit, bankName: e.target.value })} /></Field>
-                <Field label="Nomor rekening" htmlFor="ac-no"><Input id="ac-no" inputMode="numeric" value={edit.accountNumber ?? ""} onChange={(e) => setEdit({ ...edit, accountNumber: e.target.value })} /></Field>
-                <Field label="Atas nama" htmlFor="ac-holder"><Input id="ac-holder" value={edit.accountHolder ?? ""} onChange={(e) => setEdit({ ...edit, accountHolder: e.target.value })} /></Field>
-                <Switch checked={!!edit.isPublic} onChange={(v) => setEdit({ ...edit, isPublic: v })} label="Tampilkan sebagai rekening resmi di halaman publik" />
-              </>
-            )}
             <Field label="Saldo awal" hint={hasTx(edit.id) ? "Saldo awal terkunci karena sudah ada transaksi. Gunakan transaksi koreksi bila perlu." : "Jumlah uang saat mulai memakai PURA."}>
               {hasTx(edit.id) ? <Input disabled value={rupiah(edit.openingBalance ?? 0)} /> : <MoneyInput value={edit.openingBalance ?? 0} onChange={(v) => setEdit({ ...edit, openingBalance: v })} />}
             </Field>
@@ -251,19 +249,20 @@ function Accounts() {
 
 function NotifPrefs() {
   const prefs = useStore((s) => s.prefs);
+  const me = useStore((s) => s.me);
   const setPrefs = useStore((s) => s.setPreferences);
+  const updateUser = useStore((s) => s.updateUser);
   const n = prefs.notifications;
   const set = (k: keyof typeof n, v: boolean) => { setPrefs({ notifications: { ...n, [k]: v } }); toast.success("Preferensi disimpan"); };
   return (
     <Card>
-      <CardHeader title="Notifikasi" description="Pilih kabar yang ingin Anda terima di aplikasi." />
+      <CardHeader title="Notifikasi" description="Pilih kabar yang ingin Anda terima." />
       <CardBody className="divide-y divide-line py-1">
-        <Switch checked={n.donationPending} onChange={(v) => set("donationPending", v)} label="Donasi baru menunggu verifikasi" />
-        <Switch checked={n.campaignTarget} onChange={(v) => set("campaignTarget", v)} label="Target campaign tercapai" />
-        <Switch checked={n.campaignEnding} onChange={(v) => set("campaignEnding", v)} label="Campaign segera berakhir" />
+        <Switch checked={me?.emailDigest !== false} onChange={async (v) => done(await updateUser({ emailDigest: v }), "Preferensi email disimpan")} label="Email ringkasan punia (maks. sekali sehari)" description="Dikirim hanya jika ada punia yang menunggu verifikasi." />
+        <Switch checked={n.donationPending} onChange={(v) => set("donationPending", v)} label="Punia baru menunggu verifikasi (di aplikasi)" />
+        <Switch checked={n.campaignTarget} onChange={(v) => set("campaignTarget", v)} label="Target penggalangan tercapai" />
         <Switch checked={n.approvals} onChange={(v) => set("approvals", v)} label="Transaksi menunggu persetujuan" />
-        <Switch checked={n.reportReady} onChange={(v) => set("reportReady", v)} label="Laporan siap / dipublikasikan" />
-        <Switch checked={n.weeklySummary} onChange={(v) => set("weeklySummary", v)} label="Ringkasan mingguan via WhatsApp" description="Belum tersedia — direncanakan untuk versi berikutnya." disabled />
+        <Switch checked={n.reportReady} onChange={(v) => set("reportReady", v)} label="Laporan dipublikasikan" />
       </CardBody>
     </Card>
   );
@@ -273,71 +272,50 @@ function Transparency() {
   const { temple } = useWorkspace();
   const can = useCan();
   const update = useStore((s) => s.updateTemple);
-  const [pending, setPending] = useState<{ k: keyof NonNullable<typeof temple>["transparency"]; v: boolean } | null>(null);
-  const t = temple!.transparency;
+  const t = { showBalance: true, showRecentTransactions: true, recentCount: 5, ...temple!.transparency };
   const ro = !can("settings.manage");
-  const LABELS: Record<keyof typeof t, [string, string]> = {
-    showPublicProfile: ["Tampilkan profil pura di direktori publik", "Jika dimatikan, seluruh halaman publik pura disembunyikan."],
-    showCampaigns: ["Tampilkan penggalangan dana", "Campaign yang diterbitkan tampil di portal publik."],
-    showPublishedSummaries: ["Tampilkan laporan yang dipublikasikan", "Hanya ringkasan yang Anda publikasikan secara eksplisit."],
-    showDonorList: ["Tampilkan daftar donatur", "Tetap mengikuti izin privasi tiap donatur."],
-    showBankAccount: ["Tampilkan rekening resmi", "Nomor rekening untuk berpunia."],
-  };
+  const save = async (patch: Partial<typeof t>) => done(await update({ transparency: { ...t, ...patch } }), "Pengaturan tampilan umat disimpan");
+  const toggles: { k: "showBalance" | "showRecentTransactions" | "showDonorList" | "showCampaigns" | "showPublishedSummaries" | "showPublicProfile"; label: string; desc: string }[] = [
+    { k: "showBalance", label: "Tampilkan posisi kas", desc: "Saldo berdasarkan pencatatan pengurus (bukan saldo bank)." },
+    { k: "showRecentTransactions", label: "Tampilkan transaksi terakhir", desc: "Pemasukan dan pengeluaran terbaru." },
+    { k: "showDonorList", label: "Tampilkan daftar punia", desc: "Punia terverifikasi. Donatur anonim tetap tampil sebagai \"Anonim\"." },
+    { k: "showCampaigns", label: "Tampilkan penggalangan dana", desc: "Kegiatan/odalan yang dipublikasikan." },
+    { k: "showPublishedSummaries", label: "Tampilkan laporan yang dipublikasikan", desc: "Hanya laporan yang Anda publikasikan." },
+    { k: "showPublicProfile", label: "Tampilkan pura di daftar pura", desc: "Jika dimatikan, halaman pura disembunyikan dari umat." },
+  ];
   return (
     <Card>
-      <CardHeader title="Transparansi publik" description="Data keuangan internal tidak pernah tampil otomatis. Anda yang menentukan apa yang dibuka." />
-      <CardBody className="divide-y divide-line py-1">
-        {(Object.keys(LABELS) as (keyof typeof t)[]).map((k) => (
-          <Switch key={k} checked={t[k]} disabled={ro} onChange={(v) => setPending({ k, v })} label={LABELS[k][0]} description={LABELS[k][1]} />
-        ))}
+      <CardHeader title="Tampilan untuk umat" description="Atur apa saja yang terlihat di halaman pura. Nilai awal: semua tampil." />
+      <CardBody className="py-1">
+        {ro && <ReadOnlyNote />}
+        <div className="divide-y divide-line">
+          {toggles.map((x) => (
+            <Switch key={x.k} checked={t[x.k] !== false} disabled={ro} onChange={(v) => save({ [x.k]: v })} label={x.label} description={x.desc} />
+          ))}
+        </div>
+        <div className="border-t border-line py-4">
+          <p className="font-semibold">Jumlah transaksi terakhir yang tampil</p>
+          <div className="mt-2"><Segmented value={String(t.recentCount ?? 5) as "3" | "4" | "5"} onChange={(v) => !ro && save({ recentCount: Number(v) })} ariaLabel="Jumlah transaksi" options={[{ value: "3", label: "3" }, { value: "4", label: "4" }, { value: "5", label: "5" }]} /></div>
+        </div>
       </CardBody>
-      <div className="border-t border-line p-5"><Link href={`/pura/${temple!.slug}`} target="_blank" className={buttonClass("outline")}><Eye className="h-4 w-4" /> Lihat halaman publik</Link></div>
-      <ConfirmDialog open={!!pending} onClose={() => setPending(null)} title={pending?.v ? "Tampilkan ke publik?" : "Sembunyikan dari publik?"} description={pending && LABELS[pending.k][0]} onConfirm={async () => { if (!pending) return; const r = await update({ transparency: { ...t, [pending.k]: pending.v } }); setPending(null); done(r, "Pengaturan transparansi disimpan"); }} />
+      <div className="border-t border-line p-5"><Link href={`/pura/${temple!.slug}`} target="_blank" className={buttonClass("outline")}><Eye className="h-4 w-4" /> Lihat halaman pura</Link></div>
     </Card>
   );
 }
 
 function Security() {
   const session = useStore((s) => s.session);
-  const isDemo = useStore((s) => s.mode === "demo");
-  const changePassword = useStore((s) => s.changePassword);
   const [confirm, setConfirm] = useState(false);
-  const [pw, setPw] = useState({ current: "", next: "", again: "" });
-  const [busy, setBusy] = useState(false);
   const router = useRouter();
-  const mismatch = pw.again.length > 0 && pw.next !== pw.again;
   return (
     <Card>
       <CardHeader title="Keamanan" />
       <CardBody className="space-y-5">
-        <div className="rounded-2xl border border-line p-4">
-          <p className="font-semibold">Ganti kata sandi</p>
-          <p className="text-sm text-muted">Setelah diganti, perangkat lain yang masih masuk akan dikeluarkan otomatis.</p>
-          <div className="mt-4 space-y-3">
-            <Field label="Kata sandi sekarang" htmlFor="pw-cur"><PasswordInput id="pw-cur" autoComplete="current-password" value={pw.current} onChange={(e) => setPw({ ...pw, current: e.target.value })} /></Field>
-            <Field label="Kata sandi baru" htmlFor="pw-new" hint="Minimal 8 karakter, berisi huruf dan angka"><PasswordInput id="pw-new" autoComplete="new-password" value={pw.next} onChange={(e) => setPw({ ...pw, next: e.target.value })} /></Field>
-            <StrengthBar password={pw.next} />
-            <Field label="Ulangi kata sandi baru" htmlFor="pw-again" error={mismatch ? "Kata sandi tidak sama" : undefined}><PasswordInput id="pw-again" autoComplete="new-password" value={pw.again} onChange={(e) => setPw({ ...pw, again: e.target.value })} /></Field>
-            <Button
-              size="lg"
-              disabled={isDemo || !pw.current || pw.next.length < 8 || mismatch || !pw.again}
-              loading={busy}
-              onClick={async () => {
-                setBusy(true);
-                const r = await changePassword(pw.current, pw.next);
-                setBusy(false);
-                if (done(r, "Kata sandi berhasil diganti")) setPw({ current: "", next: "", again: "" });
-              }}
-            >
-              Simpan kata sandi baru
-            </Button>
-          </div>
-        </div>
         <div className="rounded-2xl bg-mint/50 p-4 text-sm text-emerald-900">
           <ul className="list-disc space-y-1 pl-5">
-            <li>Kata sandi disimpan dalam bentuk hash (bcrypt) — tidak bisa dibaca siapa pun.</li>
-            <li>Setelah 5 kali salah kata sandi, login dikunci 15 menit.</li>
-            <li>Sesi login berakhir otomatis setelah 30 hari tidak dipakai.</li>
+            <li>Masuk tanpa kata sandi: lewat Google atau tautan email sekali pakai (berlaku 15 menit).</li>
+            <li>Terlalu banyak percobaan gagal membuat login dikunci 15 menit.</li>
+            <li>Sesi berakhir otomatis setelah 30 hari tidak dipakai. Akun yang dinonaktifkan langsung keluar.</li>
             <li>Semua login dan perubahan data tercatat di Log Aktivitas.</li>
           </ul>
         </div>
@@ -381,9 +359,7 @@ function Branding() {
 function Appearance() {
   const prefs = useStore((s) => s.prefs);
   const setPrefs = useStore((s) => s.setPreferences);
-  const resetData = useStore((s) => s.resetData);
-  const isDemo = useStore((s) => s.mode === "demo");
-  const [confirm, setConfirm] = useState(false);
+
   const router = useRouter();
   return (
     <Card>
@@ -399,13 +375,7 @@ function Appearance() {
           <p className="text-sm text-muted">Tambahkan PURA ke layar utama agar bisa dibuka seperti aplikasi biasa.</p>
           <div className="mt-3"><InstallAppButton /></div>
         </div>
-        {isDemo && <div className="rounded-2xl border border-line p-4">
-          <p className="font-semibold">Data demo</p>
-          <p className="text-sm text-muted">Kembalikan seluruh data prototipe ke kondisi awal.</p>
-          <Button variant="outline" className="mt-3" onClick={() => setConfirm(true)}><RotateCcw className="h-4 w-4" /> Atur ulang data demo</Button>
-        </div>}
       </CardBody>
-      <ConfirmDialog open={confirm} onClose={() => setConfirm(false)} tone="danger" title="Atur ulang data demo?" description="Semua perubahan Anda akan dibuang dan diganti dengan data contoh awal." confirmLabel="Ya, atur ulang" onConfirm={() => { resetData(); setConfirm(false); toast.success("Data demo diatur ulang"); router.push("/app"); }} />
     </Card>
   );
 }

@@ -1,7 +1,8 @@
 import "server-only";
 import type { schema } from "./db";
 import type {
-  Account, Activity, AppNotification, AuditEntry, Campaign, Category, Donation, Membership, PublishedReport, Temple, Transaction, User,
+  Account, Activity, AppNotification, AuditEntry, Banjar, BanjarMember, Campaign, Category, Donation, Membership, PublishedReport, Temple,
+  Transaction, TransparencySettings, User,
 } from "@/lib/types";
 
 type Row<T extends { $inferSelect: unknown }> = T["$inferSelect"];
@@ -17,15 +18,32 @@ export const toUser = (r: Row<typeof schema.users>): User => ({
   avatarColor: r.avatarColor,
   isSuperAdmin: r.isSuperAdmin,
   status: r.status as User["status"],
+  emailDigest: r.emailDigest,
   resetRequestedAt: iso(r.resetRequestedAt),
   lastLoginAt: iso(r.lastLoginAt),
   createdAt: r.createdAt.toISOString(),
 });
 
+export const DEFAULT_TRANSPARENCY: Required<TransparencySettings> = {
+  showPublicProfile: true, showCampaigns: true, showPublishedSummaries: true, showDonorList: true, showBankAccount: true,
+  showBalance: true, showRecentTransactions: true, recentCount: 5,
+};
+
 export const toTemple = (r: Row<typeof schema.temples>): Temple => ({
   id: r.id, slug: r.slug, name: r.name, province: r.province, regency: r.regency, district: r.district, village: r.village,
   address: r.address, description: r.description, phone: r.phone, email: u(r.email), cover: r.cover as Temple["cover"], photo: u(r.photo),
-  established: u(r.established), status: r.status as Temple["status"], createdAt: r.createdAt.toISOString(), transparency: r.transparency, branding: r.branding,
+  established: u(r.established), status: r.status as Temple["status"], createdAt: r.createdAt.toISOString(),
+  transparency: { ...DEFAULT_TRANSPARENCY, ...r.transparency }, branding: r.branding,
+  bankName: u(r.bankName), bankAccountNumber: u(r.bankAccountNumber), bankAccountHolder: u(r.bankAccountHolder),
+});
+
+export const toBanjar = (r: Row<typeof schema.banjars>): Banjar => ({
+  id: r.id, slug: r.slug, name: r.name, village: r.village, district: r.district, regency: r.regency, province: r.province,
+  status: r.status as Banjar["status"], createdAt: r.createdAt.toISOString(),
+});
+
+export const toBanjarMember = (r: Row<typeof schema.banjarMembers>): BanjarMember => ({
+  id: r.id, userId: r.userId, banjarId: r.banjarId, status: r.status as BanjarMember["status"],
 });
 
 export const toMembership = (r: Row<typeof schema.memberships>): Membership => ({
@@ -63,7 +81,9 @@ export const toCampaign = (r: Row<typeof schema.campaigns>): Campaign => ({
 });
 
 export const toDonation = (r: Row<typeof schema.donations>): Donation => ({
-  id: r.id, templeId: r.templeId, campaignId: r.campaignId, donorName: r.donorName, amount: r.amount, date: r.date,
+  id: r.id, templeId: r.templeId, campaignId: u(r.campaignId), activityId: u(r.activityId), purpose: r.purpose as Donation["purpose"],
+  transferDate: u(r.transferDate), referenceNo: u(r.referenceNo), submittedBy: u(r.submittedBy), submitterEmail: u(r.submitterEmail),
+  inputBy: u(r.inputBy), donorName: r.donorName, amount: r.amount, date: r.date,
   privacy: r.privacy as Donation["privacy"], status: r.status as Donation["status"], message: u(r.message), evidence: u(r.evidence),
   channel: r.channel as Donation["channel"], transactionId: u(r.transactionId), verifiedAt: iso(r.verifiedAt), verifiedBy: u(r.verifiedBy),
   rejectedReason: u(r.rejectedReason), createdAt: r.createdAt.toISOString(),

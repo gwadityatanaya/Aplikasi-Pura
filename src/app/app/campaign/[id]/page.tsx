@@ -25,7 +25,7 @@ import { AnimatedRupiah } from "@/components/ui/animated-number";
 import { TempleCover } from "@/components/brand/temple-cover";
 import { CampaignStatusBadge, daysLeftLabel } from "@/components/shared/campaign-card";
 import { ShareActions } from "@/components/shared/share";
-import { SimulationTag } from "@/components/shared/prototype-banner";
+import { ManualPuniaDialog } from "@/components/app/manual-punia";
 import { PrivacyPicker } from "@/components/public/donations";
 import { useStore } from "@/lib/store";
 import { campaignStats } from "@/lib/ledger";
@@ -39,10 +39,10 @@ function CampaignAdmin() {
   const params = useSearchParams();
   const ws = useWorkspace();
   const can = useCan();
-  const verify = useStore((s) => s.verifyDonation);
-  const reject = useStore((s) => s.rejectDonation);
-  const simulate = useStore((s) => s.simulateDonation);
-  const isDemo = useStore((s) => s.mode === "demo");
+  const verifyMany = useStore((s) => s.verifyPunia);
+  const reject = useStore((s) => s.rejectPunia);
+  const me = useStore((s) => s.me);
+  const isMine = (d: Donation) => !!me && (d.submittedBy === me.id || (!!d.submitterEmail && d.submitterEmail.toLowerCase() === me.email.toLowerCase()));
   const setStatus = useStore((s) => s.setCampaignStatus);
   const addUpdate = useStore((s) => s.addCampaignUpdate);
   const [tab, setTab] = useState<"ringkasan" | "verifikasi" | "donasi" | "kabar">((params.get("tab") as "verifikasi") || "ringkasan");
@@ -104,23 +104,7 @@ function CampaignAdmin() {
         <div className="space-y-3">
           {manage && c.status === "active" && (
             <>
-              <Button size="lg" className="w-full" onClick={() => setManual(true)}><Plus className="h-5 w-5" /> Catat donasi manual</Button>
-              {isDemo && (
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full border-amber-300 bg-amber-50/60 text-amber-900 hover:bg-amber-50"
-                onClick={() => {
-                  const d = simulate(c.id);
-                  if (d) {
-                    toast("Donasi baru masuk (simulasi)", { description: `${d.donorName} — ${rupiah(d.amount)}` });
-                    setTab("verifikasi");
-                  }
-                }}
-              >
-                <FlaskConical className="h-5 w-5" /> Simulasikan donasi masuk
-              </Button>
-              )}
+              <Button size="lg" className="w-full" onClick={() => setManual(true)}><Plus className="h-5 w-5" /> Input punia manual</Button>
             </>
           )}
           {c.status !== "draft" && (
@@ -177,8 +161,8 @@ function CampaignAdmin() {
                     <div className="flex flex-wrap items-start gap-3">
                       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-800"><HandCoins className="h-5 w-5" /></span>
                       <div className="min-w-0 flex-1">
-                        <p className="font-bold">{d.donorName} {d.simulated && <SimulationTag className="ml-1 align-middle" />}</p>
-                        <p className="text-sm text-muted">{formatDateShort(d.date)} · {d.channel === "tunai" ? "Tunai" : d.channel === "simulasi" ? "Simulasi" : "Transfer"} · {PRIVACY_LABEL[d.privacy]}</p>
+                        <p className="font-bold">{d.donorName}</p>
+                        <p className="text-sm text-muted">{formatDateShort(d.date)} · {d.channel === "tunai" ? "Tunai" : d.channel === "whatsapp" ? "WhatsApp" : "Transfer"} · {PRIVACY_LABEL[d.privacy]}</p>
                         {d.message && <p className="mt-1 text-sm italic text-charcoal/70">&ldquo;{d.message}&rdquo;</p>}
                         {d.evidence && <button onClick={() => setEvidence(d)} className="mt-1 text-sm font-semibold text-emerald-700 hover:underline">Lihat bukti transfer</button>}
                       </div>
@@ -186,7 +170,7 @@ function CampaignAdmin() {
                     </div>
                     {manage && (
                       <div className="mt-3 flex gap-2">
-                        <Button className="flex-1" onClick={() => setVerifying(d)}><CheckCircle2 className="h-4 w-4" /> Verifikasi</Button>
+                        <Button className="flex-1" disabled={isMine(d)} title={isMine(d) ? "Punia Anda sendiri — harus disetujui pengurus lain" : undefined} onClick={() => setVerifying(d)}><CheckCircle2 className="h-4 w-4" /> {isMine(d) ? "Punia Anda" : "Verifikasi"}</Button>
                         <Button variant="outline" className="flex-1 text-expense" onClick={() => { setRejecting(d); setRejectReason(""); }}><XCircle className="h-4 w-4" /> Tolak</Button>
                       </div>
                     )}
@@ -208,7 +192,7 @@ function CampaignAdmin() {
                 <tbody className="divide-y divide-line">
                   {own.map((d) => (
                     <tr key={d.id}>
-                      <td className="px-4 py-3 font-semibold">{d.donorName} {d.simulated && <SimulationTag className="ml-1" />}</td>
+                      <td className="px-4 py-3 font-semibold">{d.donorName}</td>
                       <td className="px-4 py-3 text-muted">{formatDateShort(d.date)}</td>
                       <td className="px-4 py-3 text-sm text-muted">{PRIVACY_LABEL[d.privacy]}</td>
                       <td className="px-4 py-3">
@@ -252,9 +236,9 @@ function CampaignAdmin() {
         confirmLabel="Ya, sudah diterima"
         onConfirm={async () => {
           if (!verifying) return;
-          const r = await verify(verifying.id);
+          const r = await verifyMany([verifying.id]);
           setVerifying(null);
-          r.ok ? toast.success("Donasi terverifikasi", { description: `Tercatat sebagai ${r.value.number}. Dashboard & halaman publik diperbarui.` }) : toast.error(r.error);
+          r.ok ? toast.success("Punia terverifikasi", { description: "Tercatat di buku kas. Dashboard & halaman umat diperbarui." }) : toast.error(r.error);
         }}
       />
       <Dialog
@@ -329,64 +313,8 @@ function CampaignAdmin() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {evidence?.evidence && <img src={evidence.evidence} alt="Bukti transfer" className="mx-auto max-h-[70dvh] rounded-xl" />}
       </Dialog>
-      <ManualDonationDialog open={manual} onClose={() => setManual(false)} campaignId={c.id} defaultPrivacy={c.defaultPrivacy} />
+      <ManualPuniaDialog open={manual} onClose={() => setManual(false)} campaignId={c.id} />
     </div>
-  );
-}
-
-const manualSchema = z.object({
-  donorName: z.string().trim().min(2, "Isi nama donatur"),
-  amount: z.number().min(1_000, "Isi nominal"),
-  date: z.string().min(1).refine((d) => d <= todayISO(), "Tanggal tidak boleh di masa depan"),
-  channel: z.enum(["transfer", "tunai"]),
-  privacy: z.enum(["public", "anonymous", "private"]),
-  evidence: z.string().optional(),
-  verifyNow: z.boolean(),
-  consent: z.literal(true, { errorMap: () => ({ message: "Konfirmasi bahwa pilihan privasi sesuai persetujuan donatur" }) }),
-});
-
-function ManualDonationDialog({ open, onClose, campaignId, defaultPrivacy }: { open: boolean; onClose: () => void; campaignId: string; defaultPrivacy: Donation["privacy"] }) {
-  const addDonation = useStore((s) => s.addDonation);
-  const { register, control, handleSubmit, formState, reset, watch } = useForm<z.infer<typeof manualSchema>>({
-    resolver: zodResolver(manualSchema),
-    defaultValues: { donorName: "", amount: 0, date: todayISO(), channel: "tunai", privacy: defaultPrivacy, verifyNow: false },
-  });
-  const verifyNow = watch("verifyNow");
-  const onSubmit = handleSubmit(async (v) => {
-    const r = await addDonation({ campaignId, donorName: v.donorName, amount: v.amount, date: v.date, channel: v.channel, privacy: v.privacy, evidence: v.evidence, verifyNow: v.verifyNow });
-    if (!r.ok) return toast.error(r.error);
-    toast.success(v.verifyNow ? "Donasi dicatat & diverifikasi" : "Donasi dicatat, menunggu verifikasi");
-    reset();
-    onClose();
-  });
-  return (
-    <Dialog open={open} onClose={onClose} title="Catat donasi manual" footer={<Button size="lg" className="w-full" onClick={onSubmit}>{verifyNow ? "Simpan & verifikasi" : "Simpan sebagai menunggu"}</Button>}>
-      <form className="space-y-4" onSubmit={onSubmit}>
-        <Field label="Nominal" required error={formState.errors.amount?.message}>
-          <Controller control={control} name="amount" render={({ field }) => <MoneyInput value={field.value} onChange={field.onChange} />} />
-        </Field>
-        <Field label="Nama donatur" htmlFor="m-name" required error={formState.errors.donorName?.message}><Input id="m-name" {...register("donorName")} /></Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Tanggal" htmlFor="m-date" error={formState.errors.date?.message}><Input id="m-date" type="date" max={todayISO()} {...register("date")} /></Field>
-          <Field label="Diterima melalui" htmlFor="m-ch"><Select id="m-ch" {...register("channel")}><option value="tunai">Tunai</option><option value="transfer">Transfer</option></Select></Field>
-        </div>
-        <Field label="Privasi (sesuai persetujuan donatur)">
-          <Controller control={control} name="privacy" render={({ field }) => <PrivacyPicker value={field.value} onChange={field.onChange} />} />
-        </Field>
-        <Field label="Bukti (opsional)">
-          <Controller control={control} name="evidence" render={({ field }) => <ImageUpload value={field.value} onChange={(v) => field.onChange(v)} label="Bukti donasi" compact />} />
-        </Field>
-        <label className="flex items-start gap-3 rounded-2xl border border-line p-3.5">
-          <input type="checkbox" className="mt-1 h-5 w-5 accent-emerald-600" {...register("verifyNow")} />
-          <span><span className="block font-semibold">Langsung verifikasi</span><span className="block text-sm text-muted">Centang jika uang sudah diterima dan dicek.</span></span>
-        </label>
-        <label className="flex items-start gap-3 text-[15px]">
-          <input type="checkbox" className="mt-1 h-5 w-5 accent-emerald-600" {...register("consent")} />
-          <span>Pilihan privasi di atas sesuai dengan persetujuan donatur.</span>
-        </label>
-        {formState.errors.consent && <p className="text-sm font-medium text-expense">{formState.errors.consent.message}</p>}
-      </form>
-    </Dialog>
   );
 }
 

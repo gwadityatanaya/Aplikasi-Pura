@@ -23,7 +23,6 @@ import { CampaignCard } from "@/components/shared/campaign-card";
 import { buttonClass } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { DemoButton } from "@/components/demo/demo-tour";
 import { usePublicData } from "@/lib/public";
 import { campaignStats } from "@/lib/ledger";
 import { formatPercent, rupiah } from "@/lib/format";
@@ -75,9 +74,11 @@ export default function HomePage() {
               <button className={buttonClass("primary", "md")} type="submit">Cari</button>
             </form>
             <div className="mt-5 flex flex-wrap items-center gap-3">
-              <DemoButton variant="dark" className="h-12 px-5" />
-              <Link href="/daftar" className={buttonClass("outline", "lg", "h-12")}>
-                Daftarkan Pura Anda <ArrowRight className="h-4 w-4" />
+              <Link href="/pura" className={buttonClass("primary", "lg", "h-12")}>
+                <HandCoins className="h-5 w-5" /> Berpunia ke pura
+              </Link>
+              <Link href="/masuk" className={buttonClass("outline", "lg", "h-12")}>
+                Masuk / Daftar <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </motion.div>
@@ -230,13 +231,13 @@ export default function HomePage() {
         <div className="relative overflow-hidden rounded-[2rem] bg-forest px-6 py-12 text-white md:px-12">
           <PatternBg />
           <div className="relative">
-            <p className="text-sm font-bold uppercase tracking-wider text-gold">Cara kerja</p>
-            <h2 className="mt-1 text-3xl font-extrabold">Tiga langkah menuju kas yang transparan</h2>
+            <p className="text-sm font-bold uppercase tracking-wider text-gold">Cara berpunia</p>
+            <h2 className="mt-1 text-3xl font-extrabold">Cara berpunia lewat PURA</h2>
             <div className="mt-10 grid gap-8 md:grid-cols-3">
               {[
-                { icon: Smartphone, n: "01", title: "Catat", body: "Pengurus mencatat pemasukan dan pengeluaran dari ponsel, lengkap dengan foto nota." },
-                { icon: HandCoins, n: "02", title: "Verifikasi", body: "Donasi diverifikasi dengan mutasi rekening. Hanya donasi terverifikasi yang masuk ke total." },
-                { icon: Users, n: "03", title: "Bagikan", body: "Laporan dipublikasikan ke halaman pura dan dibagikan ke grup WhatsApp krama." },
+                { icon: Smartphone, n: "01", title: "Transfer & unggah bukti", body: "Umat mentransfer punia lewat m-banking ke rekening resmi pura, lalu mengunggah foto bukti di aplikasi." },
+                { icon: HandCoins, n: "02", title: "Pengurus memverifikasi", body: "Pengurus mencocokkan dengan mutasi rekening. Hanya punia terverifikasi yang dihitung. Aplikasi tidak memegang uang." },
+                { icon: Users, n: "03", title: "Semua bisa melihat", body: "Punia, posisi kas, dan laporan tampil di halaman pura — menggantikan broadcast di grup WhatsApp." },
               ].map((s) => (
                 <div key={s.n}>
                   <div className="flex items-center gap-3">
@@ -258,14 +259,14 @@ export default function HomePage() {
       <section id="untuk-pengurus" className="container mt-24 scroll-mt-24">
         <div className="grid items-center gap-8 rounded-[2rem] border border-gold/30 bg-gradient-to-br from-gold-light to-white p-8 md:grid-cols-[1.4fr_1fr] md:p-12">
           <div>
-            <h2 className="text-3xl font-extrabold text-forest">Untuk Ketua, Bendahara &amp; Sekretaris pura</h2>
+            <h2 className="text-3xl font-extrabold text-forest">Untuk Pengurus Pura &amp; Pengurus Banjar</h2>
             <p className="mt-3 max-w-xl text-lg text-charcoal/75">
-              Daftarkan pura Anda dalam 5 menit. Undang pengurus lain dengan peran masing-masing, dan mulai mencatat hari ini juga.
+              Pengurus didaftarkan oleh Admin Utama lewat email. Setelah itu, cukup masuk dengan Google atau tautan email — dashboard pura langsung terbuka.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row md:flex-col lg:flex-row">
-            <Link href="/daftar" className={buttonClass("primary", "xl", "flex-1")}>Daftarkan Pura</Link>
-            <Link href="/masuk" className={buttonClass("outline", "xl", "flex-1")}>Masuk Pengurus</Link>
+            <Link href="/masuk" className={buttonClass("primary", "xl", "flex-1")}>Masuk</Link>
+            <Link href="/pasang" className={buttonClass("outline", "xl", "flex-1")}>Pasang di HP</Link>
           </div>
         </div>
       </section>

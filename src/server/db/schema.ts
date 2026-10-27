@@ -1,5 +1,5 @@
 // Database schema (PostgreSQL). Column names are snake_case in the database and camelCase in code.
-import { bigint, bigserial, boolean, customType, date, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { bigint, bigserial, boolean, customType, date, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import type { CampaignUpdate, PublishedReport, ReportBranding, TransparencySettings } from "@/lib/types";
 
@@ -14,9 +14,14 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   phone: text("phone"),
   avatarColor: text("avatar_color").notNull().default("#087F6D"),
+  /** Legacy (Phase 2). Login now uses Google or one-time email links; no passwords are stored. */
   passwordHash: text("password_hash"),
+  googleSub: text("google_sub").unique(),
   isSuperAdmin: boolean("is_super_admin").notNull().default(false),
-  status: text("status").notNull().default("active"), // active | disabled
+  status: text("status").notNull().default("active"), // active | disabled | deleted
+  emailDigest: boolean("email_digest").notNull().default(true),
+  lastDigestAt: ts("last_digest_at"),
+  deletedAt: ts("deleted_at"),
   resetRequestedAt: ts("reset_requested_at"),
   lastLoginAt: ts("last_login_at"),
   createdAt: ts("created_at").notNull().defaultNow(),
@@ -33,10 +38,12 @@ export const sessions = pgTable("sessions", {
   userAgent: text("user_agent"),
 }, (t) => [index("sessions_user").on(t.userId)]);
 
+/** One-time sign-in links (stored only as a SHA-256 hash). */
 export const passwordTokens = pgTable("password_tokens", {
   tokenHash: text("token_hash").primaryKey(),
-  userId: text("user_id").notNull().references(() => users.id),
-  purpose: text("purpose").notNull(), // activation | reset
+  userId: text("user_id").references(() => users.id),
+  email: text("email"),
+  purpose: text("purpose").notNull(), // login (Phase 3); activation | reset are legacy
   expiresAt: ts("expires_at").notNull(),
   usedAt: ts("used_at"),
   createdBy: text("created_by"),
@@ -70,14 +77,44 @@ export const temples = pgTable("temples", {
   transparency: jsonb("transparency").$type<TransparencySettings>().notNull(),
   branding: jsonb("branding").$type<ReportBranding>().notNull(),
   txCounter: integer("tx_counter").notNull().default(0),
+  /** Official account for punia transfers — editable by Admin Utama only. */
+  bankName: text("bank_name"),
+  bankAccountNumber: text("bank_account_number"),
+  bankAccountHolder: text("bank_account_holder"),
   createdAt: ts("created_at").notNull().defaultNow(),
 });
+
+/** Banjar Pengempon. A temple can be supported by one or more banjar. */
+export const banjars = pgTable("banjars", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  village: text("village").notNull().default(""),
+  district: text("district").notNull().default(""),
+  regency: text("regency").notNull().default(""),
+  province: text("province").notNull().default(""),
+  status: text("status").notNull().default("active"),
+  createdAt: ts("created_at").notNull().defaultNow(),
+});
+
+export const templeBanjars = pgTable("temple_banjars", {
+  templeId: text("temple_id").notNull().references(() => temples.id),
+  banjarId: text("banjar_id").notNull().references(() => banjars.id),
+}, (t) => [primaryKey({ columns: [t.templeId, t.banjarId] }), index("temple_banjars_banjar").on(t.banjarId)]);
+
+/** Pengurus Banjar: may open and verify punia at every temple the banjar supports. */
+export const banjarMembers = pgTable("banjar_members", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  banjarId: text("banjar_id").notNull().references(() => banjars.id),
+  status: text("status").notNull().default("active"),
+}, (t) => [uniqueIndex("banjar_member_unique").on(t.userId, t.banjarId)]);
 
 export const memberships = pgTable("memberships", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => users.id),
   templeId: text("temple_id").notNull().references(() => temples.id),
-  role: text("role").notNull(), // ketua | bendahara | sekretaris | auditor
+  role: text("role").notNull(), // pengurus | pemeriksa
   status: text("status").notNull().default("active"),
 }, (t) => [uniqueIndex("membership_unique").on(t.userId, t.templeId)]);
 
@@ -176,7 +213,9 @@ export const campaigns = pgTable("campaigns", {
 export const donations = pgTable("donations", {
   id: text("id").primaryKey(),
   templeId: text("temple_id").notNull().references(() => temples.id),
-  campaignId: text("campaign_id").notNull().references(() => campaigns.id),
+  campaignId: text("campaign_id").references(() => campaigns.id),
+  activityId: text("activity_id"),
+  purpose: text("purpose").notNull().default("umum"), // umum | odalan | pembangunan | lainnya
   donorName: text("donor_name").notNull(),
   amount: money("amount").notNull(),
   date: date("date", { mode: "string" }).notNull(),
@@ -189,8 +228,21 @@ export const donations = pgTable("donations", {
   verifiedAt: ts("verified_at"),
   verifiedBy: text("verified_by"),
   rejectedReason: text("rejected_reason"),
+  transferDate: date("transfer_date", { mode: "string" }),
+  referenceNo: text("reference_no"),
+  /** Umat account that sent this punia (null for manual entries) */
+  submittedBy: text("submitted_by"),
+  submitterEmail: text("submitter_email"),
+  /** Pengurus who typed in a manual (cash/WhatsApp) entry */
+  inputBy: text("input_by"),
+  evidenceHash: text("evidence_hash"),
   createdAt: ts("created_at").notNull().defaultNow(),
-}, (t) => [index("donations_campaign").on(t.campaignId)]);
+}, (t) => [
+  index("donations_campaign").on(t.campaignId),
+  index("donations_temple_status").on(t.templeId, t.status),
+  index("donations_evidence_hash").on(t.evidenceHash),
+  index("donations_submitted_by").on(t.submittedBy),
+]);
 
 export const reports = pgTable("reports", {
   id: text("id").primaryKey(),

@@ -1,63 +1,61 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { ChevronRight, FlaskConical, KeyRound } from "lucide-react";
+import { ChevronRight, KeyRound, MailCheck, ShieldCheck } from "lucide-react";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
-import { Dialog } from "@/components/ui/dialog";
-import { PasswordInput, SecureNote } from "@/components/shared/auth-bits";
 import { useStore } from "@/lib/store";
-import { ROLE_LABEL, ROLE_TONE } from "@/lib/permissions";
-import { cn, initials } from "@/lib/format";
-import type { Role } from "@/lib/types";
+import { GoogleIcon } from "@/components/shared/auth-bits";
 
-const schema = z.object({
-  email: z.string().trim().email("Format email belum benar"),
-  password: z.string().min(1, "Isi kata sandi"),
-});
+const schema = z.object({ email: z.string().trim().email("Format email belum benar") });
 
-const DEMO: { id: string; name: string; role: Role; color: string }[] = [
-  { id: "u_made", name: "I Made Wirata", role: "ketua", color: "#087F6D" },
-  { id: "u_ayu", name: "Ni Ketut Ayu Rahayu", role: "bendahara", color: "#C9A86A" },
-  { id: "u_wayan", name: "I Wayan Sudiarta", role: "sekretaris", color: "#3F6FB5" },
-  { id: "u_nyoman", name: "I Nyoman Gede Artha", role: "auditor", color: "#8A5CB8" },
-  { id: "u_platform", name: "Admin Utama (Demo)", role: "superadmin", color: "#17212B" },
-];
+const ERRORS: Record<string, string> = {
+  "google-belum-diatur": "Masuk dengan Google belum diatur oleh pengelola. Silakan pakai tautan email.",
+  "google-dibatalkan": "Masuk dengan Google dibatalkan.",
+  "google-sesi-habis": "Waktu masuk habis. Silakan coba lagi.",
+  "google-gagal": "Masuk dengan Google gagal. Coba lagi atau pakai tautan email.",
+};
 
-export default function LoginPage() {
-  const router = useRouter();
-  const login = useStore((s) => s.login);
-  const enterDemo = useStore((s) => s.enterDemo);
-  const [demoOpen, setDemoOpen] = useState(false);
+function LoginForm() {
+  const params = useSearchParams();
+  const next = params.get("next") ?? "";
+  const requestLink = useStore((s) => s.requestEmailLink);
+  const [sent, setSent] = useState<{ email: string; devLink?: string } | null>(null);
   const [setupNeeded, setSetupNeeded] = useState(false);
+  const errorCode = params.get("error");
   const { register, handleSubmit, formState, setError } = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema) });
 
   useEffect(() => {
     fetch("/api/setup").then((r) => r.json()).then((j) => setSetupNeeded(j.ok && !j.done)).catch(() => {});
   }, []);
 
-  const onSubmit = handleSubmit(async (v) => {
-    const r = await login(v.email, v.password);
-    if (!r.ok) {
-      setError("password", { message: r.error });
-      return;
-    }
-    const s = useStore.getState();
-    const me = s.data.users.find((u) => u.id === s.session?.userId);
-    toast.success(`Selamat datang, ${me?.callName ?? ""}!`);
-    router.push(s.session?.activeTempleId ? "/app" : "/onboarding");
-  });
+  if (sent)
+    return (
+      <div className="text-center">
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-mint text-emerald-700"><MailCheck className="h-8 w-8" /></div>
+        <h1 className="mt-5 text-2xl font-extrabold text-forest">Periksa email Anda</h1>
+        <p className="mt-2 text-[17px] text-muted">Kami mengirim tautan masuk ke <strong className="text-charcoal">{sent.email}</strong>. Buka email itu lalu ketuk tombol <strong>Masuk ke PURA</strong>. Tautan berlaku 15 menit.</p>
+        <p className="mt-3 text-sm text-muted">Tidak ada di Kotak Masuk? Periksa folder <strong>Spam</strong> atau <strong>Promosi</strong>.</p>
+        {sent.devLink && (
+          <div className="mt-6 rounded-2xl border border-dashed border-gold bg-gold-light/50 p-4 text-left text-sm text-gold-dark">
+            <p className="font-bold">Mode pengembangan: email belum diatur.</p>
+            <a href={sent.devLink} className={buttonClass("gold", "md", "mt-3 w-full")}>Buka tautan masuk</a>
+          </div>
+        )}
+        <button onClick={() => setSent(null)} className="mt-6 font-semibold text-emerald-700 hover:underline">Pakai email lain</button>
+      </div>
+    );
 
   return (
     <div>
-      <h1 className="text-3xl font-extrabold text-forest">Masuk Pengurus</h1>
-      <p className="mt-2 text-[17px] text-muted">Kelola kas dan dana punia pura Anda.</p>
+      <h1 className="text-3xl font-extrabold text-forest">{params.get("daftar") ? "Daftar / Masuk" : "Masuk"}</h1>
+      <p className="mt-2 text-[17px] text-muted">Untuk umat dan pengurus. Belum punya akun? Cukup masuk — akun umat dibuat otomatis.</p>
 
+      {errorCode && <p className="mt-5 rounded-2xl bg-red-50 p-3.5 text-[15px] font-medium text-red-700" role="alert">{ERRORS[errorCode] ?? errorCode}</p>}
       {setupNeeded && (
         <Link href="/setup" className="mt-5 flex items-center gap-3 rounded-2xl border border-gold/50 bg-gold-light/60 p-4 text-gold-dark hover:bg-gold-light">
           <KeyRound className="h-5 w-5 shrink-0" />
@@ -66,55 +64,41 @@ export default function LoginPage() {
         </Link>
       )}
 
-      <form className="mt-7 space-y-4" onSubmit={onSubmit} noValidate>
-        <Field label="Email" htmlFor="email" error={formState.errors.email?.message}>
-          <Input id="email" type="email" autoComplete="username" placeholder="nama@email.com" {...register("email")} aria-invalid={!!formState.errors.email} />
-        </Field>
-        <Field label="Kata sandi" htmlFor="password" error={formState.errors.password?.message}>
-          <PasswordInput id="password" autoComplete="current-password" {...register("password")} aria-invalid={!!formState.errors.password} />
-        </Field>
-        <div className="flex justify-end">
-          <Link href="/lupa-sandi" className="text-sm font-semibold text-emerald-700 hover:underline">Lupa kata sandi?</Link>
-        </div>
-        <Button type="submit" size="xl" className="w-full" loading={formState.isSubmitting}>Masuk</Button>
-      </form>
-      <div className="mt-6"><SecureNote /></div>
+      <a href={`/api/auth/google${next ? `?next=${encodeURIComponent(next)}` : ""}`} className="press mt-7 flex h-14 w-full items-center justify-center gap-3 rounded-2xl border border-line bg-white text-[17px] font-bold text-charcoal shadow-soft hover:bg-ivory">
+        <GoogleIcon className="h-6 w-6" /> Masuk dengan Google
+      </a>
 
-      <div className="mt-8 rounded-2xl border border-dashed border-line p-4">
-        <p className="flex items-center gap-2 font-semibold"><FlaskConical className="h-4 w-4 text-gold-dark" /> Ingin mencoba dulu?</p>
-        <p className="mt-1 text-sm text-muted">Mode demo memakai data contoh di perangkat ini saja dan tidak menyentuh data pura sungguhan.</p>
-        <Button variant="outline" className="mt-3 w-full" onClick={() => setDemoOpen(true)}>Coba mode demo</Button>
+      <div className="my-6 flex items-center gap-3 text-sm text-muted">
+        <span className="h-px flex-1 bg-line" /> atau lewat email <span className="h-px flex-1 bg-line" />
       </div>
-      <p className="mt-6 text-center text-[15px] text-muted">
-        Belum punya akun? <Link href="/daftar" className="font-semibold text-emerald-700 hover:underline">Daftar</Link>
-      </p>
 
-      <Dialog open={demoOpen} onClose={() => setDemoOpen(false)} title="Masuk ke mode demo sebagai…" description="Pilih peran untuk melihat apa yang bisa dilakukan tiap pengurus.">
-        <ul className="space-y-2 pb-2">
-          {DEMO.map((d) => (
-            <li key={d.id}>
-              <button
-                type="button"
-                onClick={() => {
-                  enterDemo(d.id);
-                  setDemoOpen(false);
-                  toast("Mode demo aktif", { description: "Data contoh — tidak tersimpan ke server." });
-                  router.push("/app");
-                }}
-                className="press flex w-full items-center gap-3 rounded-2xl border border-line bg-white p-3 text-left hover:border-emerald-300 hover:shadow-soft"
-              >
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-bold text-white" style={{ background: d.color }}>{initials(d.name)}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold">{d.name}</span>
-                  <span className={cn("mt-0.5 inline-block rounded-full px-2 py-0.5 text-xs font-semibold", ROLE_TONE[d.role])}>{ROLE_LABEL[d.role]}</span>
-                </span>
-                <ChevronRight className="h-5 w-5 text-muted" />
-              </button>
-            </li>
-          ))}
-        </ul>
-        <Link href="/" className={buttonClass("ghost", "md", "mt-1 w-full")}>Batal</Link>
-      </Dialog>
+      <form
+        className="space-y-4"
+        noValidate
+        onSubmit={handleSubmit(async (v) => {
+          const r = await requestLink(v.email, next || undefined);
+          if (!r.ok) return setError("email", { message: r.error });
+          setSent({ email: v.email, devLink: r.value.devLink });
+        })}
+      >
+        <Field label="Alamat email" htmlFor="email" error={formState.errors.email?.message}>
+          <Input id="email" type="email" autoComplete="email" inputMode="email" placeholder="nama@email.com" {...register("email")} />
+        </Field>
+        <Button type="submit" size="xl" variant="secondary" className="w-full" loading={formState.isSubmitting}>Kirim tautan masuk</Button>
+      </form>
+
+      <p className="mt-6 flex items-start gap-2 rounded-2xl bg-mint/60 p-3.5 text-sm text-emerald-900">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+        <span>Tanpa kata sandi. Pengurus yang sudah didaftarkan Admin Utama otomatis masuk ke dashboard. Lihat <Link href="/kebijakan-privasi" className="font-semibold underline">Kebijakan Privasi</Link>.</span>
+      </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

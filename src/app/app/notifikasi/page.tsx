@@ -29,8 +29,6 @@ export default function NotificationsPage() {
   const router = useRouter();
   const markRead = useStore((s) => s.markNotificationRead);
   const markAll = useStore((s) => s.markAllNotificationsRead);
-  const push = useStore((s) => s.pushNotification);
-  const isDemo = useStore((s) => s.mode === "demo");
   const [tab, setTab] = useState<"all" | "unread">("all");
   const prefs = useStore((s) => s.prefs.notifications);
   const visible = ws.notifications.filter((n) => notificationVisible(n.kind, prefs));
@@ -44,8 +42,7 @@ export default function NotificationsPage() {
         description={unread ? `${unread} belum dibaca` : "Semua sudah dibaca"}
         actions={
           <>
-            {isDemo && <Button variant="outline" onClick={() => { push({ kind: "campaign_ending", title: "Campaign segera berakhir (simulasi)", body: "Pengingat contoh: periksa campaign yang akan berakhir dalam 7 hari.", href: "/app/campaign" }); toast("Notifikasi simulasi ditambahkan"); }}>Simulasikan</Button>}
-            {unread > 0 && <Button variant="secondary" onClick={markAll}><CheckCheck className="h-4 w-4" /> Tandai semua dibaca</Button>}
+                        {unread > 0 && <Button variant="secondary" onClick={markAll}><CheckCheck className="h-4 w-4" /> Tandai semua dibaca</Button>}
           </>
         }
       />

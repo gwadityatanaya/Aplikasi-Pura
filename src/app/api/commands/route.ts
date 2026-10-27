@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { getCtx } from "@/server/context";
-import { commands, housekeeping } from "@/server/commands";
+import { housekeeping } from "@/server/commands";
+import { commands } from "@/server/registry";
 import { ApiError, assertSameOrigin, json, readJson, route } from "@/server/http";
 import { loadState } from "@/server/state";
 

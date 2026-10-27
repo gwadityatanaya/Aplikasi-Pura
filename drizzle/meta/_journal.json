@@ -15,6 +15,20 @@
       "when": 1793100922317,
       "tag": "0001_integrity_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793104239135,
+      "tag": "0002_phase3_banjar_punia",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793104242362,
+      "tag": "0003_phase3_role_mapping",
+      "breakpoints": true
     }
   ]
 }
