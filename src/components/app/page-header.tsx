@@ -37,7 +37,7 @@ export function NoAccess({ what = "halaman ini" }: { what?: string }) {
   return (
     <div className="rounded-3xl border border-dashed border-line bg-white p-10 text-center">
       <p className="text-lg font-bold">Peran Anda belum memiliki akses ke {what}</p>
-      <p className="mt-1 text-muted">Hubungi Ketua Pengempon untuk meminta akses. (Prototipe: ganti peran melalui menu profil.)</p>
+      <p className="mt-1 text-muted">Hubungi Admin Utama jika Anda memerlukan akses ini.</p>
     </div>
   );
 }

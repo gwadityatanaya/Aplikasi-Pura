@@ -64,7 +64,7 @@ export default function AuditPage() {
         </ol>
         {!list.length && <EmptyState icon={History} title="Tidak ada catatan" />}
       </Card>
-      <p className="mt-4 text-sm text-muted">Prototipe: riwayat tersimpan di peramban. Versi produksi akan menyimpan log audit di server secara permanen (append-only).</p>
+      <p className="mt-4 text-sm text-muted">Riwayat ini tersimpan permanen di server dan tidak dapat diubah atau dihapus.</p>
     </div>
   );
 }

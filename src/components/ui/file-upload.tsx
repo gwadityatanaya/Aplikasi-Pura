@@ -50,7 +50,7 @@ export function ImageUpload({
   async function handle(file?: File) {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      toast.error("Untuk prototipe ini, unggah file gambar (JPG/PNG). PDF belum didukung.");
+      toast.error("Unggah foto atau tangkapan layar (JPG/PNG). PDF belum didukung.");
       return;
     }
     if (file.size > 12 * 1024 * 1024) {

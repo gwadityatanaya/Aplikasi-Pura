@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Check, Eye, Landmark, PartyPopper, Rocket } from "lucide-react";
@@ -31,7 +31,6 @@ function Wizard() {
   const save = useStore((s) => s.saveCampaign);
   const editId = params.get("edit");
   const editing = ws.campaigns.find((c) => c.id === editId);
-  const demo = params.get("demo") === "1";
   const bank = ws.accounts.find((a) => a.type === "bank") ?? ws.accounts[0];
   const [step, setStep] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -61,18 +60,6 @@ function Wizard() {
     setErrors((e) => ({ ...e, [k]: "" }));
   };
 
-  useEffect(() => {
-    if (!demo) return;
-    const t: ReturnType<typeof setTimeout>[] = [];
-    const title = "Punia Penjor Galungan Banjar (Demo)";
-    for (let i = 1; i <= title.length; i++) t.push(setTimeout(() => setF((p) => ({ ...p, title: title.slice(0, i) })), 200 + i * 28));
-    t.push(setTimeout(() => setF((p) => ({ ...p, description: "Penggalangan dana untuk penjor dan banten Hari Raya Galungan di pura.", cover: "gold", activityId: "a_operasional" })), 1400));
-    t.push(setTimeout(() => setStep(1), 2400));
-    t.push(setTimeout(() => setF((p) => ({ ...p, target: 5_000_000, endDate: "2026-12-20", purpose: "Penjor dan banten Galungan" })), 3000));
-    t.push(setTimeout(() => setStep(2), 4400));
-    t.push(setTimeout(() => setStep(3), 6000));
-    return () => t.forEach(clearTimeout);
-  }, [demo]);
 
   if (!can("campaign.manage")) return <NoAccess what="pembuatan campaign" />;
 
@@ -203,7 +190,7 @@ function Wizard() {
                   <Switch checked={f.manualVerification} onChange={(v) => set("manualVerification", v)} label="Verifikasi manual oleh bendahara" description="Donasi baru dihitung setelah dicocokkan dengan mutasi rekening. (Disarankan)" />
                   <Switch checked={f.showDonorList} onChange={(v) => set("showDonorList", v)} label="Tampilkan daftar donatur" description="Nama ditampilkan sesuai izin masing-masing donatur." />
                 </div>
-                <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Prototipe: tidak ada integrasi pembayaran. Donasi dicatat manual atau melalui simulasi.</p>
+                <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Aplikasi tidak memegang uang. Umat mentransfer langsung ke rekening pura lalu mengunggah bukti; pengurus memverifikasi.</p>
               </>
             )}
             {step === 3 && (

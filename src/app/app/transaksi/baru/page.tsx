@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDownLeft, ArrowLeft, ArrowLeftRight, ArrowUpRight, Banknote, Check, CheckCircle2, Landmark, Pencil } from "lucide-react";
@@ -47,7 +47,6 @@ function TxForm() {
   const editId = params.get("edit");
   const editing = editId ? ws.transactions.find((t) => t.id === editId && t.status === "draft") : undefined;
   const type = (editing?.type ?? (params.get("type") as TxType)) || "expense";
-  const demo = params.get("demo") === "1";
   const meta = TYPE_META[type] ?? TYPE_META.expense;
   const idemKey = useRef(uid("idem"));
   const [step, setStep] = useState(0);
@@ -79,21 +78,6 @@ function TxForm() {
   const activities = ws.activities.filter((a) => a.status !== "done");
   const steps = type === "transfer" ? ["Nominal", "Rekening", "Periksa"] : ["Nominal", "Keperluan", "Kas & bukti", "Periksa"];
 
-  // Demo mode: fill the form visibly, step by step (nothing is saved here).
-  useEffect(() => {
-    if (!demo) return;
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    const target = 425_000;
-    for (let i = 1; i <= 10; i++) timers.push(setTimeout(() => setF((p) => ({ ...p, amount: Math.round((target * i) / 10 / 1000) * 1000 })), 300 + i * 70));
-    timers.push(setTimeout(() => setStep(1), 1900));
-    timers.push(setTimeout(() => setF((p) => ({ ...p, categoryId: ws.categories.find((c) => c.name === "Upakara & Banten")?.id ?? "" })), 2600));
-    const desc = "Bunga, janur & buah untuk banten Piodalan";
-    for (let i = 1; i <= desc.length; i++) timers.push(setTimeout(() => setF((p) => ({ ...p, description: desc.slice(0, i) })), 3000 + i * 30));
-    timers.push(setTimeout(() => setF((p) => ({ ...p, activityId: "a_piodalan" })), 4400));
-    timers.push(setTimeout(() => setStep(2), 5200));
-    timers.push(setTimeout(() => setStep(3), 6800));
-    return () => timers.forEach(clearTimeout);
-  }, [demo, ws.categories]);
 
   if (!can("tx.create") && !can("tx.draft")) return <NoAccess what="pencatatan transaksi" />;
   const draftOnly = !can("tx.create");
@@ -225,7 +209,7 @@ function TxForm() {
             {steps[step] === "Nominal" && (
               <>
                 <Field label={type === "income" ? "Berapa uang yang diterima?" : type === "expense" ? "Berapa uang yang dikeluarkan?" : "Berapa yang dipindahkan?"} htmlFor="amount" error={errors.amount}>
-                  <MoneyInput id="amount" large autoFocus={!demo} value={f.amount} onChange={(v) => set("amount", v)} invalid={!!errors.amount} />
+                  <MoneyInput id="amount" large autoFocus value={f.amount} onChange={(v) => set("amount", v)} invalid={!!errors.amount} />
                 </Field>
                 <QuickAmounts onPick={(v) => set("amount", v)} />
                 <Field label="Tanggal" htmlFor="date" error={errors.date} hint={f.date ? formatDateLong(f.date) : undefined}>
