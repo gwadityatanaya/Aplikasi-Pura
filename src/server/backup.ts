@@ -4,7 +4,7 @@ import type { PgDatabase } from "drizzle-orm/pg-core";
 
 /** Tables in restore order (parents before children). Sessions, tokens and rate limits are never backed up. */
 export const BACKUP_TABLES = [
-  "users", "temples", "memberships", "accounts", "categories", "activities", "campaigns", "transactions",
+  "users", "banjars", "temples", "temple_banjars", "banjar_members", "memberships", "accounts", "categories", "activities", "campaigns", "transactions",
   "donations", "reports", "notifications", "attachments", "activity_log",
 ] as const;
 
@@ -31,7 +31,7 @@ export async function exportDatabase(opts: { includeImages: boolean }, database?
     version: 1,
     createdAt: new Date().toISOString(),
     includesImages: opts.includeImages,
-    note: "File ini berisi data keuangan dan hash kata sandi. Simpan di tempat yang aman dan jangan dibagikan.",
+    note: "File ini berisi data keuangan dan data pribadi umat (nama, email). Simpan di tempat yang aman dan jangan dibagikan.",
     tables,
   };
 }

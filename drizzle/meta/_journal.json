@@ -29,6 +29,13 @@
       "when": 1793104242362,
       "tag": "0003_phase3_role_mapping",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793106445122,
+      "tag": "0004_phase3_anonymize",
+      "breakpoints": true
     }
   ]
 }

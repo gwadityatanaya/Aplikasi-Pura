@@ -2,123 +2,81 @@
 
 > *"Semudah menulis di buku, sekuat sistem keuangan modern."*
 
-📘 **Panduan lengkap berbahasa Indonesia (setup, deploy, backup): [docs/PANDUAN.md](docs/PANDUAN.md)**
+📘 **Panduan lengkap berbahasa Indonesia (setup, Google, email, deploy, backup): [docs/PANDUAN.md](docs/PANDUAN.md)**
+🗒️ **Keputusan yang masih terbuka & persiapan BDDN: [docs/KEPUTUSAN.md](docs/KEPUTUSAN.md)**
 
-PURA is a mobile-first treasury and donation-transparency app for Hindu temples (Pura) in Indonesia. It has two experiences:
+PURA is a mobile-first treasury and punia (donation) transparency app for Balinese Hindu temples. It **only records** — it never holds or moves money. Umat transfer by m-banking to the temple's official account and upload the proof; pengurus verify it against the bank statement. It replaces WhatsApp broadcasts of the temple's cash position.
 
-- **Public portal** (no login): homepage, temple directory, temple profiles, fundraising campaign pages, published financial reports.
-- **Temple administration** (secure login): dashboard, transactions, activities, campaigns and donation verification, reports and exports, presentation mode, users and roles, settings, notifications, temple audit trail — plus an **Admin Utama** panel and an immutable **Log Aktivitas**.
+## Roles
+
+| Role | Scope |
+|---|---|
+| **Admin Utama** (one, protected by DB triggers) | Everything: banjar, temples, temple bank accounts, staff, Log Aktivitas, backups |
+| **Pengurus Banjar** | Dashboard + punia verification for every temple its banjar supports (`temple_banjars`), incl. temples without pengurus. No bank or user management |
+| **Pengurus Pura** | Own temple(s): verification, manual punia, expenses, reports, public-view settings, Riwayat Audit Pura |
+| **Pemeriksa** | Read-only for a temple |
+| **Umat** | Self-registered; own punia history and account only |
+
+Access is computed server-side in `src/server/context.ts` (`templeAccess`). Staff roles are only ever granted in the Back Office.
 
 ## Quick start (local)
 
-Requirements: **Node.js 18.18+** (20 LTS recommended) and a PostgreSQL database (free [Neon](https://neon.tech) project, or a local Postgres).
+Requirements: Node.js 20 LTS and PostgreSQL (free [Neon](https://neon.tech) or local).
 
 ```bash
 npm install
-cp .env.example .env       # fill DATABASE_URL, ADMIN_EMAIL, SETUP_TOKEN
-npm run db:migrate         # create tables + integrity guards
-npm run dev                # http://localhost:3000 → open /setup once
+cp .env.example .env              # DATABASE_URL, ADMIN_EMAIL, SETUP_TOKEN (SMTP optional locally)
+npm run db:migrate                # tables + integrity triggers
+npm run db:seed-demo -- --ya      # optional: fictional demo data (empty DB only)
+npm run dev                       # http://localhost:3000 → /setup once
 ```
+
+Without `SMTP_HOST`, the email sign-in link is shown on screen in development (disabled in production).
 
 | Script | What it does |
 |---|---|
-| `npm run db:migrate` | Creates/updates tables (safe to run repeatedly) |
-| `npm run backup` | Full JSON backup incl. photos → `cadangan/` |
-| `npm run restore -- <file>` | Restores a backup into an **empty** database |
-| `npm run admin:reset` | Emergency one-time reset link for Admin Utama (requires DB access) |
+| `npm run db:migrate` | Creates/updates tables (idempotent) |
+| `npm run db:seed-demo -- --ya` | Fictional data: 2 banjar, 6 temples (one shared, one without pengurus), staff, umat. Refuses a non-empty DB |
+| `npm run test:e2e` | Playwright end-to-end tests. Needs `E2E_DATABASE_URL` pointing to a throw-away DB whose name contains `test`/`e2e` |
+| `npm run backup` / `npm run restore -- <file>` | Full JSON backup incl. photos / restore into an empty DB |
+| `npm run admin:reset` | Emergency one-time sign-in link for Admin Utama (requires DB access) |
 | `npm run typecheck` / `npm run lint` | Checks |
 
-Deploy: import the repo in Vercel and set the environment variables from `.env.example`. `vercel.json` runs migrations before every build. See the guide for click-by-click steps.
+Deploy: import the repo in Vercel, set the variables from `.env.example`. `vercel.json` runs migrations before every build and schedules the daily digest cron.
 
-## Architecture (production)
+## Architecture
 
-- **Database:** PostgreSQL via Drizzle ORM (`src/server/db/schema.ts`, migrations in `drizzle/`). Works with Neon (pooled URL), Supabase or any Postgres.
-- **API:** Next.js route handlers in `src/app/api`. Every change goes through `POST /api/commands`; each command validates input (Zod), checks the role server-side, runs in a DB transaction, and appends to the activity log in the same transaction.
-- **Auth:** bcrypt (cost 12) password hashes; random session tokens stored only as SHA-256 in `sessions`, sent as `HttpOnly; SameSite=Lax; Secure` cookies; same-origin check on all POSTs; login throttling (5 failures/email or 20/IP per 15 min); one-time activation/reset links (stored hashed). No email service is required — admins share links via WhatsApp.
-- **Admin Utama:** created only through `/setup`, which needs `SETUP_TOKEN` + `ADMIN_EMAIL` from the server environment and locks forever afterwards. Database triggers forbid deleting, demoting or disabling it, and a unique index allows only one.
-- **Immutability (database triggers):** `activity_log` rejects UPDATE/DELETE/TRUNCATE; confirmed transactions cannot be edited or deleted (corrections are reversal entries).
-- **Public data:** `/api/public` returns only what each temple has published; private donors are aggregated per campaign (no names or individual amounts); evidence images and messages never leave the server.
-- **Attachments:** images are validated by magic bytes (JPEG/PNG/WEBP, no SVG), stored in Postgres, and served with access checks.
-- **PWA:** `app/manifest.ts`, `public/sw.js` (never caches `/api/*`), offline page, install prompt.
-- **Demo mode:** the original in-browser engine (`src/lib/demo-engine.ts`) runs on fictional seed data for presentations and never talks to the server.
+- **Database:** PostgreSQL via Drizzle ORM (`src/server/db/schema.ts`, migrations in `drizzle/`).
+- **API:** every change goes through `POST /api/commands` (`src/server/registry.ts` → `commands*.ts`): Zod validation, server-side role check, one DB transaction, activity-log row in the same transaction.
+- **Sign-in:** Google OAuth (authorization code + PKCE, `id_token` claims checked) or a one-time email link (hashed token, 15 min, consumed by POST so mail scanners can't burn it). Email via SMTP (Brevo recommended). Emails are matched case-insensitively. Session tokens are stored only as SHA-256; `HttpOnly; SameSite=Lax; Secure` cookies; same-origin check on POSTs; sign-in throttling and lockout.
+- **Database triggers:**
+  - `activity_log` is append-only;
+  - Admin Utama cannot be deleted/demoted/disabled, and only one may exist;
+  - confirmed transactions are immutable (the only allowed change is anonymising a punia entry when its donor deletes their account);
+  - `pura_guard_donation`: a punia cannot be verified by its own submitter (by user id or email), and verified punia cannot change amount/status/temple/date.
+- **Public data:** built only in `src/server/public.ts`. Anonymous donors become "Anonim" on the server; real names, emails, messages and proofs never leave it. Per-temple toggles for balance, recent transactions and punia list.
+- **Attachments:** magic-byte validated images stored in Postgres, served with access checks (temple staff, related Pengurus Banjar, Admin Utama, or the uploader).
+- **Duplicates:** same file hash, or same amount + date + reference, is refused; same amount + date is flagged for pengurus.
+- **Digest:** `/api/cron/digest` (Vercel Cron, daily, `CRON_SECRET`) emails each pengurus at most once a day when punia are waiting.
+- **PWA:** `app/manifest.ts`, `public/sw.js` (never caches `/api/*`), offline page, `/pasang` install guide.
 
----
+## Main routes
+
+| Who | Routes |
+|---|---|
+| Public | `/`, `/pura`, `/pura/[slug]`, `/pura/[slug]/laporan/[id]`, `/donasi/[slug]`, `/pasang`, `/kebijakan-privasi` |
+| Umat | `/umat`, `/umat/punia`, `/umat/akun`, `/pura/[slug]/punia` |
+| Auth | `/masuk`, `/masuk/tautan`, `/setup`, `/keluar` |
+| Staff | `/app` (dashboard), `/app/punia` (verification + manual input), `/app/banjar`, `/app/transaksi`, `/app/kegiatan`, `/app/campaign`, `/app/laporan`, `/app/presentasi`, `/app/pengguna`, `/app/audit`, `/app/pengaturan`, `/app/notifikasi` |
+| Admin Utama | `/app/admin` (Back Office), `/app/log-aktivitas` |
+
+## Accounting rules
+
+- Balances are derived (`opening balance + Σ confirmed entries`), never stored.
+- Confirmed entries are never edited or deleted; mistakes are fixed with reversal entries.
+- Verifying a punia creates exactly one income entry (idempotent key `donation:<id>`), categorised by purpose (umum / odalan / pembangunan / lainnya).
+- Activities and campaigns are reporting dimensions on one temple ledger, so nothing is double-counted.
 
 ## Tech stack
 
-Next.js 14 (App Router) · TypeScript · Tailwind CSS · shadcn-style hand-written UI primitives (`src/components/ui`) · Lucide icons · Framer Motion · Recharts · React Hook Form + Zod · PostgreSQL + Drizzle ORM · bcryptjs · Zustand (client state; only preferences and demo data are kept in LocalStorage) · jsPDF + autotable (PDF) · SheetJS (Excel) · qrcode.react · Sonner (toasts).
-
-> shadcn/ui is a copy-in component pattern, not a runtime dependency. The app uses its own small set of shadcn-style components (Button, Dialog/BottomSheet, Field, Switch, Segmented, Progress, Skeleton…) so it doesn't need the shadcn CLI or Radix.
-
-## Project structure
-
-```
-src/
-  app/
-    (public)/            Public portal: /, /pura, /pura/[slug], /pura/[slug]/laporan/[id], /donasi, /donasi/[slug]
-    (auth)/              /masuk, /daftar, /lupa-sandi, /atur-ulang-sandi, /keluar, /onboarding
-    app/                 Admin (guarded): dashboard, transaksi, kegiatan, campaign, laporan,
-                         presentasi, notifikasi, pengguna, audit, pengaturan, platform
-  components/
-    ui/                  Design-system primitives
-    brand/               Logo, temple cover illustration (candi bentar / meru), patra pattern, dividers
-    app/                 Admin shell (sidebar, bottom nav + FAB, switchers), transaction rows, forms
-    public/              Public header/footer, donor list, donation feed, donation confirmation
-    shared/              Campaign card, charts, share (WhatsApp, copy link, QR)
-    demo/                Guided demo tour
-  server/                Server only: db schema/client, auth, commands, public data, backup
-  lib/
-    types.ts             Domain model
-    seed.ts              Fictional seed data (consistent ledger)
-    ledger.ts            Pure accounting functions (balances, summaries, series)
-    store.ts             Client state; sends every change to the server (or demo engine)
-    permissions.ts       Role → permission matrix
-    reports.ts           Seven report types → one document model
-    demo-engine.ts       In-browser engine used only by demo mode
-    export.ts            PDF / XLSX / CSV / Web Share
-    format.ts            Rupiah and Indonesian date formatting, helpers
-```
-
-## Accounting rules (as implemented)
-
-- **Balances are derived, never stored.** `balance = opening balance + Σ effect(confirmed entries)` (`lib/ledger.ts`). 
-- **Drafts never affect totals.** Only `confirmed` entries count. Drafts can be edited, confirmed or deleted.
-- **Confirmed entries are never edited or deleted.** Mistakes are fixed with a **reversal entry** (`reversalOf`), which cancels the original's effect. Both entries remain visible for audit.
-- **Internal transfers** (cash → bank) change account balances but are excluded from income and expense.
-- **Duplicate-submit protection.** Each form instance has an idempotency key, so a double tap returns the original entry instead of creating a second one.
-- **Unique IDs** plus human-readable numbers (`TRX-2026-0042`).
-- **Audit history.** Every significant action appends to an audit log (actor, action, detail, time).
-- **Activities are reporting dimensions, not separate ledgers.** All money lives in one temple ledger, so nothing is double-counted. Activities are marked as **general** or **restricted** funds, and the dashboard shows how much of the balance is restricted.
-- **Donations.** Only `verified` donations count toward campaign totals. Verifying creates **exactly one** linked income entry (idempotent: `donation:<id>`). Rejected donations never count.
-- **Separate workspaces.** Each temple has its own accounts, categories, activities and ledger. One user can belong to several temples with different roles.
-
-## Feature map
-
-| Area | Where |
-|---|---|
-| Homepage, directory with search and location filter | `/`, `/pura` |
-| Temple profile (contacts, campaigns, published summaries, reports, QR, bank info) | `/pura/[slug]` |
-| Campaign page (animated progress, consent-aware donor list, activity feed, updates, WhatsApp, copy link, QR, donation confirmation, simulated donations) | `/donasi/[slug]` |
-| Register → 3-step temple onboarding → new workspace | `/daftar`, `/onboarding` |
-| Forgot/reset password (simulated link shown on screen) | `/lupa-sandi`, `/atur-ulang-sandi` |
-| Dashboard (balance card, cash vs bank, restricted funds, quick actions, weekly/monthly/yearly chart, pending items) | `/app` |
-| Step-by-step income/expense/transfer form with receipt upload and camera capture | `/app/transaksi/baru` |
-| Transaction list (search, date/category/activity/account/status filters, sorting) and detail (receipt preview, confirm, correction, history) | `/app/transaksi` |
-| Activities with budget usage and related transactions | `/app/kegiatan` |
-| Campaign list, 4-step wizard, verification queue, manual donations, campaign updates, close/publish | `/app/campaign` |
-| Reports: 7 types, presets and filters, PDF/Excel/CSV, WhatsApp text + Web Share PDF, publish snapshot to public | `/app/laporan` |
-| Full-screen presentation (keyboard ←/→, F for fullscreen) | `/app/presentasi` |
-| Users and roles with permission matrix, invitations | `/app/pengguna` |
-| Settings: temple profile, my profile, categories, cash/bank accounts, notifications, transparency, security, report letterhead, appearance (large text, reduced motion) | `/app/pengaturan` |
-| Notification center, audit log, platform admin | `/app/notifikasi`, `/app/audit`, `/app/platform` |
-
-## Design notes
-
-- **Palette:** emerald `#087F6D`, forest `#064E3B`, mint, warm ivory, gold accents. Body "muted" text is darkened to `#5F6B7A` (instead of `#718096`) to meet WCAG AA contrast on ivory.
-- **Charts:** income/expense use emerald `#0A8A74` and amber `#E0904A`. This pair passed a colour-vision-deficiency check, which the brand red/green pair failed. Category distributions use ranked bars instead of pies.
-- **Cultural elements:** an original candi-bentar / meru silhouette illustration, a patra-inspired lattice texture and gold ornament dividers, used sparingly.
-- **Accessibility:** semantic landmarks, labelled controls, focus rings, focus-trapped dialogs, large touch targets, `prefers-reduced-motion` plus an in-app "Kurangi animasi" switch, and a large-text option.
-
-## Demo mode
-
-On the login page, **Coba mode demo** (or **Jalankan Demo** for the guided 11-step tour) loads fictional seed data in the browser only — handy for presentations. Exiting demo mode returns to the real data, which is never touched.
+Next.js 14 (App Router) · TypeScript · Tailwind CSS · hand-written shadcn-style UI · Lucide · Framer Motion · Recharts · React Hook Form + Zod · PostgreSQL + Drizzle ORM · nodemailer · Zustand (only display preferences persist on the device) · jsPDF + autotable · SheetJS · Playwright.

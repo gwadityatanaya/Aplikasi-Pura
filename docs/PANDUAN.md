@@ -2,338 +2,352 @@
 
 Panduan ini untuk Anda yang **bukan programmer**. Ikuti langkahnya berurutan. Tiap langkah menjelaskan **apa yang dilakukan** dan **kenapa**.
 
-Waktu yang dibutuhkan: sekitar **30–45 menit** untuk pertama kali.
+Waktu yang dibutuhkan: sekitar **60 menit** untuk pertama kali (termasuk mengatur Google dan email).
 
 ---
 
 ## Daftar isi
 
 1. [Gambaran singkat](#1-gambaran-singkat)
-2. [Yang perlu disiapkan](#2-yang-perlu-disiapkan)
-3. [Langkah 1 — Membuat database gratis di Neon](#langkah-1--membuat-database-gratis-di-neon)
-4. [Langkah 2 — Membuat kode setup rahasia](#langkah-2--membuat-kode-setup-rahasia)
-5. [Langkah 3 — Memasang aplikasi di Vercel](#langkah-3--memasang-aplikasi-di-vercel)
-6. [Langkah 4 — Membuat akun Admin Utama (sekali saja)](#langkah-4--membuat-akun-admin-utama-sekali-saja)
-7. [Langkah 5 — Menyelesaikan pengaturan](#langkah-5--menyelesaikan-pengaturan)
-8. [Langkah 6 — Menambahkan pura dan pengurus](#langkah-6--menambahkan-pura-dan-pengurus)
-9. [Memasang aplikasi di HP](#memasang-aplikasi-di-hp)
-10. [Mencadangkan (backup) data](#mencadangkan-backup-data)
-11. [Memulihkan data](#memulihkan-data)
-12. [Menjalankan di komputer sendiri (opsional)](#menjalankan-di-komputer-sendiri-opsional)
-13. [Memperbarui aplikasi](#memperbarui-aplikasi)
-14. [Keamanan: kebiasaan baik](#keamanan-kebiasaan-baik)
-15. [Masalah yang sering terjadi](#masalah-yang-sering-terjadi)
+2. [Siapa melakukan apa (peran)](#2-siapa-melakukan-apa-peran)
+3. [Yang perlu disiapkan](#3-yang-perlu-disiapkan)
+4. [Langkah 1 — Database gratis di Neon](#langkah-1--database-gratis-di-neon)
+5. [Langkah 2 — Kode rahasia](#langkah-2--kode-rahasia)
+6. [Langkah 3 — Email tautan masuk dengan Brevo](#langkah-3--email-tautan-masuk-dengan-brevo)
+7. [Langkah 4 — Pasang aplikasi di Vercel](#langkah-4--pasang-aplikasi-di-vercel)
+8. [Langkah 5 — Login Google](#langkah-5--login-google)
+9. [Langkah 6 — Akun Admin Utama (sekali saja)](#langkah-6--akun-admin-utama-sekali-saja)
+10. [Langkah 7 — Banjar, pura, rekening, dan pengurus](#langkah-7--banjar-pura-rekening-dan-pengurus)
+11. [Alur punia sehari-hari](#alur-punia-sehari-hari)
+12. [Memasang aplikasi di HP](#memasang-aplikasi-di-hp)
+13. [Cadangan data mingguan](#cadangan-data-mingguan)
+14. [Memulihkan data](#memulihkan-data)
+15. [Menjalankan di laptop](#menjalankan-di-laptop)
+16. [Memperbarui aplikasi](#memperbarui-aplikasi)
+17. [Keamanan: kebiasaan baik](#keamanan-kebiasaan-baik)
+18. [Masalah yang sering terjadi](#masalah-yang-sering-terjadi)
 
 ---
 
 ## 1. Gambaran singkat
 
-Aplikasi PURA terdiri dari tiga bagian:
+PURA menggantikan siaran WhatsApp tentang kas dan punia pura. **Aplikasi ini hanya mencatat — tidak memegang atau memindahkan uang.** Umat mentransfer punia lewat m-banking langsung ke rekening pura, lalu mengunggah bukti transfer di aplikasi. Pengurus mencocokkan bukti itu dengan mutasi rekening dan menekan **Setuju**.
 
 | Bagian | Fungsinya | Layanan (gratis) |
 |---|---|---|
 | **Kode aplikasi** | "Resep" aplikasinya | GitHub — repo `gwadityatanaya/Aplikasi-Pura` |
-| **Database** | Tempat semua data disimpan (transaksi, donasi, pengguna) | **Neon** |
-| **Server web** | Menjalankan aplikasi agar bisa dibuka di internet | **Vercel** |
+| **Database** | Tempat semua data disimpan | **Neon** |
+| **Server web** | Menjalankan aplikasi di internet | **Vercel** |
+| **Email** | Mengirim tautan masuk & ringkasan harian | **Brevo** |
+| **Login Google** | Masuk dengan satu ketukan | **Google Cloud** |
 
-Cara kerjanya: Anda membuka alamat aplikasi (mis. `https://pura-anda.vercel.app`). Vercel menjalankan aplikasinya, lalu aplikasi menyimpan dan membaca data dari database Neon.
+**Tidak ada lagi kata sandi.** Semua orang masuk dengan **Google** atau **tautan email** (tautan sekali pakai yang dikirim ke email, berlaku 15 menit). Jadi tidak ada kata sandi yang bisa bocor atau terlupa.
 
-### Apa yang berubah dari versi prototipe?
-
-- **Data tersimpan di database sungguhan**, bukan lagi di peramban. Semua HP dan laptop melihat data yang sama.
-- **Login aman.** Kata sandi disimpan dalam bentuk *hash* (diacak satu arah), jadi tidak ada orang yang bisa membacanya, termasuk Anda dan programmer. Setelah 5 kali salah kata sandi, login dikunci 15 menit.
-- **Admin Utama** (akun Anda) dapat:
-  - melihat semua data dan laporan dari semua pura,
-  - menambah, menonaktifkan, dan mengatur peran pengguna lain.
-
-  Akun Admin Utama **tidak bisa dihapus, diturunkan, atau dinonaktifkan** oleh siapa pun. Aturan ini dijaga langsung oleh database.
-- **Log Aktivitas** (khusus Admin Utama) mencatat siapa yang login, siapa yang mencatat, mengubah, atau menghapus transaksi, dan kapan. Log ini **tidak bisa diedit atau dihapus**, bahkan oleh Admin Utama.
-- **Bisa dipasang di HP** seperti aplikasi biasa (PWA).
-- **Mode demo** tetap ada untuk presentasi. Mode ini memakai data contoh dan tidak menyentuh data sungguhan.
-
-> **Tentang "menghapus transaksi":** demi kejujuran pembukuan, transaksi yang sudah **dikonfirmasi** tidak bisa dihapus atau diubah. Kesalahan diperbaiki dengan **entri koreksi** (pembatalan). Yang bisa dihapus hanya **draf**. Semua tindakan ini tercatat di Log Aktivitas.
+Pengaman yang tetap berlaku:
+- Admin Utama **tidak bisa** dihapus, diturunkan, atau dinonaktifkan — dijaga langsung oleh database.
+- **Log Aktivitas** tidak bisa diedit atau dihapus, bahkan oleh Admin Utama.
+- Transaksi yang sudah dikonfirmasi dan punia yang sudah diverifikasi **tidak bisa diubah**. Kesalahan diperbaiki dengan entri koreksi.
+- Pengurus **tidak bisa** memverifikasi punia yang dikirim dari emailnya sendiri — dijaga di server **dan** di database.
+- Nama umat yang memilih **ANONIM** tidak pernah dikirim ke halaman publik (yang terkirim hanya tulisan "Anonim").
+- Foto bukti dan nota hanya bisa dibuka oleh pengurus pura terkait, Pengurus Banjar pengemponnya, Admin Utama, dan pengunggahnya sendiri.
+- Terlalu sering gagal masuk → dikunci sementara.
 
 ---
 
-## 2. Yang perlu disiapkan
+## 2. Siapa melakukan apa (peran)
 
-- [ ] **Akun GitHub.** Sudah ada, dan kode sudah tersimpan di repo `Aplikasi-Pura`.
-- [ ] **Email Anda:** `wiraaditya452@gmail.com`. Email ini akan menjadi akun Admin Utama.
-- [ ] Sekitar 30 menit tanpa gangguan, dan sebuah laptop/komputer (lebih mudah daripada HP untuk langkah awal).
-- [ ] Sebuah tempat aman untuk menyimpan catatan rahasia, misalnya buku catatan pribadi atau pengelola kata sandi.
+| Peran | Bisa melakukan | Diberikan oleh |
+|---|---|---|
+| **Admin Utama** (Anda) | Semuanya: banjar, pura, **rekening pura**, mendaftarkan/mencabut pengurus, Log Aktivitas, cadangan. | Langkah setup |
+| **Pengurus Banjar** | Melihat dashboard dan memverifikasi punia di **semua pura yang diempon banjarnya**. Memverifikasi punia pura yang **belum punya pengurus**. Tidak bisa mengubah rekening atau mengatur akun. | Admin Utama |
+| **Pengurus Pura** | Hanya pura yang ditugaskan: verifikasi punia, input punia manual (tunai/WhatsApp), catat pengeluaran + foto nota, laporan PDF/Excel, pengaturan tampilan untuk umat, Riwayat Audit Pura. Satu orang boleh memegang beberapa pura, dan boleh juga menjadi Pengurus Banjar. | Admin Utama |
+| **Pemeriksa** | Hanya melihat (transaksi, nota, laporan, Riwayat Audit Pura). | Admin Utama |
+| **Umat** | Akun sendiri: kirim punia, lihat riwayat punia sendiri, hapus akun. | Daftar sendiri (otomatis) |
 
-Anda **tidak perlu** memasang program apa pun di komputer untuk Langkah 1–6.
+Peran lama dipetakan otomatis: Ketua/Bendahara/Sekretaris → **Pengurus Pura**, Auditor → **Pemeriksa**.
+
+Saat masuk, aplikasi mencocokkan email (huruf besar/kecil tidak berpengaruh). Email yang terdaftar sebagai pengurus langsung masuk ke **Dashboard**; selain itu menjadi **Umat**. Staf bisa berpindah antara **Dashboard** dan **Tampilan Umat** lewat tombol di atas layar.
 
 ---
 
-## Langkah 1 — Membuat database gratis di Neon
+## 3. Yang perlu disiapkan
+
+- [ ] Akun **GitHub** (sudah ada; kode ada di repo `Aplikasi-Pura`).
+- [ ] Email Admin Utama: `wiraaditya452@gmail.com` (akun Google).
+- [ ] Laptop/komputer (lebih mudah daripada HP untuk langkah awal).
+- [ ] Tempat aman untuk catatan rahasia (buku pribadi atau pengelola kata sandi).
+
+---
+
+## Langkah 1 — Database gratis di Neon
 
 **Kenapa:** aplikasi butuh tempat menyimpan data yang aman dan selalu menyala.
 
-1. Buka **https://neon.tech** lalu klik **Sign up**. Pilih **Continue with GitHub** supaya tidak perlu membuat kata sandi baru.
-2. Saat diminta membuat project:
-   - **Project name:** `pura`
-   - **Region:** pilih **AWS Asia Pacific (Singapore)** — paling dekat dengan Indonesia, jadi aplikasi lebih cepat.
-   - Pilihan lain biarkan seperti bawaan, lalu klik **Create project**.
-3. Di halaman project, klik tombol **Connect**. Akan muncul tulisan panjang yang diawali `postgresql://…`. Inilah **alamat database**.
-   - Pastikan pilihan **Connection pooling** dalam keadaan **menyala (ON)**. Alamatnya akan mengandung kata `-pooler`.
-   - Klik **Copy**, lalu simpan di catatan rahasia Anda dengan judul **DATABASE_URL**.
-4. Matikan pilihan **Connection pooling** (OFF). Alamatnya berubah (kata `-pooler` hilang). Salin juga dan simpan dengan judul **DATABASE_URL_UNPOOLED**.
+1. Buka **https://neon.tech** → **Sign up** → **Continue with GitHub**.
+2. Buat project: **Project name** `pura`, **Region** **AWS Asia Pacific (Singapore)** → **Create project**.
+3. Klik **Connect**. Pastikan **Connection pooling** **ON** (alamat mengandung `-pooler`) → **Copy** → simpan sebagai **DATABASE_URL**.
+4. Matikan **Connection pooling** (OFF) → salin → simpan sebagai **DATABASE_URL_UNPOOLED**.
 
-> ⚠️ Alamat database berisi kata sandi database. **Jangan dibagikan** ke grup WhatsApp atau ke siapa pun.
+> ⚠️ Alamat database berisi kata sandi database. **Jangan dibagikan.**
 
 ---
 
-## Langkah 2 — Membuat kode setup rahasia
+## Langkah 2 — Kode rahasia
 
-**Kenapa:** akun Admin Utama dibuat lewat halaman khusus `/setup`. Supaya orang asing tidak bisa memakainya duluan, halaman itu meminta **kode rahasia** yang hanya Anda yang tahu.
+Buat **dua** kode acak (masing-masing 24–32 huruf dan angka), misalnya dengan pengelola kata sandi. **Jangan pakai contoh ini:** `k7Rq2mXv9TzL4pWn8sBd3HcY6jFa`.
 
-Buat kode berisi **minimal 24 huruf dan angka acak**. Contoh bentuknya (**jangan pakai contoh ini**):
-
-```
-k7Rq2mXv9TzL4pWn8sBd3HcY6jFa
-```
-
-Cara mudah: buka pengelola kata sandi di HP/peramban dan buat kata sandi acak sepanjang 24–32 karakter.
-
-Simpan kode ini di catatan rahasia dengan judul **SETUP_TOKEN**.
+| Simpan dengan judul | Gunanya |
+|---|---|
+| **SETUP_TOKEN** | Membuka halaman `/setup` untuk membuat Admin Utama (sekali saja). |
+| **CRON_SECRET** | Kunci untuk email ringkasan harian ke pengurus. |
 
 ---
 
-## Langkah 3 — Memasang aplikasi di Vercel
+## Langkah 3 — Email tautan masuk dengan Brevo
 
-**Kenapa:** Vercel menjalankan aplikasi agar bisa dibuka dari mana saja lewat internet.
+**Kenapa:** umat dan pengurus yang tidak memakai Google masuk lewat tautan yang dikirim ke email. Aplikasi juga mengirim **satu email ringkasan per hari** ke pengurus jika ada punia menunggu verifikasi (bisa dimatikan masing-masing di **Pengaturan → Notifikasi**).
 
-1. Buka **https://vercel.com** → **Sign Up** → pilih paket **Hobby** (gratis) → **Continue with GitHub**.
-2. Klik **Add New… → Project**.
-3. Cari repo **Aplikasi-Pura**, lalu klik **Import**.
-   - Jika repo tidak muncul, klik **Adjust GitHub App Permissions** dan izinkan Vercel mengakses repo tersebut.
-4. Buka bagian **Environment Variables**. Ini adalah "pengaturan rahasia" aplikasi. Tambahkan satu per satu (kolom **Key** = nama, kolom **Value** = isi):
+**Batas gratis Brevo:** 300 email per hari. Untuk satu banjar ini lebih dari cukup: tiap orang biasanya hanya butuh tautan masuk sesekali (sesi masuk bertahan lama), dan ringkasan harian maksimal satu per pengurus. Email yang dikirim layanan gratis memuat sedikit logo Brevo dan kadang masuk folder **Spam/Promosi** — beri tahu umat untuk memeriksa folder itu.
+
+1. Buka **https://www.brevo.com** → **Sign up free**. Isi data, verifikasi email Anda.
+2. Daftarkan pengirim: menu **Senders, Domains & Dedicated IPs → Senders → Add a sender**. Isi nama `PURA` dan email Anda (mis. `wiraaditya452@gmail.com`), lalu klik tautan verifikasi yang dikirim ke email tersebut.
+   - Catatan: pengirim berupa alamat Gmail bisa lebih sering masuk Spam. Jika kelak punya domain sendiri, daftarkan domain di menu **Domains** agar lebih terpercaya.
+3. Ambil data SMTP: menu **SMTP & API → tab SMTP**. Catat:
+   - **SMTP server** → `smtp-relay.brevo.com`, **Port** → `587`
+   - **Login** → simpan sebagai **SMTP_USER**
+   - Klik **Generate a new SMTP key** → salin → simpan sebagai **SMTP_PASS** (hanya ditampilkan sekali).
+
+---
+
+## Langkah 4 — Pasang aplikasi di Vercel
+
+1. Buka **https://vercel.com** → **Sign Up** → paket **Hobby** (gratis) → **Continue with GitHub**.
+2. **Add New… → Project** → pilih repo **Aplikasi-Pura** → **Import**.
+3. Buka **Environment Variables** dan tambahkan:
 
    | Key (nama) | Value (isi) |
    |---|---|
-   | `DATABASE_URL` | alamat dari Langkah 1 nomor 3 (yang ada `-pooler`) |
-   | `DATABASE_URL_UNPOOLED` | alamat dari Langkah 1 nomor 4 |
+   | `DATABASE_URL` | dari Langkah 1 nomor 3 (yang ada `-pooler`) |
+   | `DATABASE_URL_UNPOOLED` | dari Langkah 1 nomor 4 |
    | `ADMIN_EMAIL` | `wiraaditya452@gmail.com` |
-   | `SETUP_TOKEN` | kode dari Langkah 2 |
-   | `ALLOW_REGISTRATION` | `false` |
-   | `APP_TIMEZONE` | `Asia/Makassar` (WITA). Gunakan `Asia/Jakarta` untuk WIB. |
+   | `SETUP_TOKEN` | dari Langkah 2 |
+   | `CRON_SECRET` | dari Langkah 2 |
+   | `APP_TIMEZONE` | `Asia/Makassar` (WITA). `Asia/Jakarta` untuk WIB. |
+   | `SMTP_HOST` | `smtp-relay.brevo.com` |
+   | `SMTP_PORT` | `587` |
+   | `SMTP_USER` | dari Langkah 3 |
+   | `SMTP_PASS` | dari Langkah 3 |
+   | `EMAIL_FROM` | `PURA <email-pengirim-yang-sudah-diverifikasi>` |
+   | `UMAT_REGISTRATION` | `true` |
 
-5. Klik **Deploy**. Tunggu 2–4 menit. Pada proses ini Vercel juga **membuat tabel-tabel di database secara otomatis**.
-6. Jika berhasil, muncul tulisan **Congratulations!** beserta alamat aplikasi Anda, misalnya `https://aplikasi-pura.vercel.app`. Catat alamat ini.
+4. Klik **Deploy** dan tunggu 2–4 menit. Tabel database dibuat otomatis.
+5. Catat alamat aplikasi, mis. `https://aplikasi-pura.vercel.app`. Tambahkan variabel **`APP_URL`** berisi alamat itu (tanpa `/` di akhir), lalu **Deployments → ⋯ → Redeploy**.
 
-**Cek cepat:** buka `https://ALAMAT-ANDA/api/health`. Jika muncul `"database":"terhubung"`, berarti aplikasi sudah tersambung ke database. 🎉
+**Cek cepat:** buka `https://ALAMAT-ANDA/api/health` → harus ada `"database":"terhubung"`.
+
+Email ringkasan harian berjalan otomatis setiap pagi (pukul 09.00 WITA) lewat **Vercel Cron** yang sudah diatur di `vercel.json`. Paket gratis Vercel mengizinkan jadwal sekali sehari.
 
 ---
 
-## Langkah 4 — Membuat akun Admin Utama (sekali saja)
+## Langkah 5 — Login Google
+
+**Kenapa:** kebanyakan umat sudah punya akun Google di HP-nya, jadi masuk cukup satu ketukan.
+
+1. Buka **https://console.cloud.google.com** dengan akun Google Anda → buat project baru bernama `PURA`.
+2. Menu **APIs & Services → OAuth consent screen** (di tampilan baru: **Google Auth Platform → Branding**):
+   - **User type / Audience:** **External**.
+   - Isi nama aplikasi `PURA`, email dukungan, dan email kontak Anda.
+   - Bagian **Scopes / Data access:** cukup `openid`, `email`, `profile` (bawaan). Tidak perlu yang lain.
+   - Bagian **Audience:** klik **Publish app** agar semua orang bisa masuk (bukan hanya "test users"). Karena hanya memakai nama & email, aplikasi tidak perlu proses verifikasi panjang dari Google.
+3. Menu **Credentials → Create credentials → OAuth client ID** (atau **Clients → Create client**):
+   - **Application type:** **Web application**.
+   - **Authorized redirect URIs:** tambahkan `https://ALAMAT-ANDA/api/auth/google/callback` (ganti dengan alamat dari Langkah 4). Untuk mencoba di laptop, tambahkan juga `http://localhost:3000/api/auth/google/callback`.
+   - Klik **Create**, lalu salin **Client ID** dan **Client secret**.
+4. Di Vercel tambahkan `GOOGLE_CLIENT_ID` dan `GOOGLE_CLIENT_SECRET`, lalu **Redeploy**.
+
+Jika alamat aplikasi berubah (mis. memakai domain sendiri), ubah juga **Authorized redirect URIs** di Google.
+
+---
+
+## Langkah 6 — Akun Admin Utama (sekali saja)
 
 1. Buka `https://ALAMAT-ANDA/setup`.
-2. Isi formulirnya:
-   - **Kode setup:** kode dari Langkah 2.
-   - **Nama lengkap:** nama Anda.
-   - **Email:** `wiraaditya452@gmail.com`. Harus sama persis dengan `ADMIN_EMAIL`.
-   - **Kata sandi:** minimal 10 karakter, berisi huruf dan angka. Buat yang **belum pernah Anda pakai** di tempat lain.
-3. Klik **Buat Admin Utama**.
+2. Isi **Kode setup** (SETUP_TOKEN), **Nama lengkap**, dan **Email** `wiraaditya452@gmail.com` (harus sama dengan `ADMIN_EMAIL`).
+3. Klik **Buat Admin Utama**. Anda langsung masuk ke **Back Office**.
 
-Setelah berhasil, **halaman `/setup` terkunci selamanya**. Tidak ada orang lain yang bisa membuat Admin Utama kedua, meskipun mengetahui kode setup.
-
-> 💡 Simpan kata sandi Admin Utama di tempat aman. Jika lupa, lihat [Masalah yang sering terjadi](#masalah-yang-sering-terjadi).
+Setelah itu **halaman `/setup` terkunci selamanya**. Berikutnya Anda masuk dengan **Masuk dengan Google** (akun `wiraaditya452@gmail.com`) atau tautan email. *(Disarankan)* hapus `SETUP_TOKEN` dari Vercel lalu Redeploy.
 
 ---
 
-## Langkah 5 — Menyelesaikan pengaturan
+## Langkah 7 — Banjar, pura, rekening, dan pengurus
 
-1. Di Vercel, buka project Anda → **Settings → Environment Variables**.
-2. Tambahkan `APP_URL` dengan isi alamat aplikasi Anda, misalnya `https://aplikasi-pura.vercel.app` (tanpa garis miring `/` di akhir). Alamat ini dipakai untuk membuat tautan aktivasi pengurus.
-3. *(Disarankan)* Hapus `SETUP_TOKEN`. Kode ini sudah tidak dibutuhkan.
-4. Buka tab **Deployments**, klik tanda **⋯** pada deployment teratas → **Redeploy**. Langkah ini membuat perubahan pengaturan mulai berlaku.
+Semua dilakukan di **Back Office** (menu kiri, atau **Lainnya** di HP). Semua perubahan tercatat di **Log Aktivitas**.
+
+1. **Tambah banjar** — tab **Banjar → Tambah banjar**.
+2. **Tambah pura** — tab **Pura → Tambah pura**. Centang satu atau lebih **banjar pengempon** (satu pura boleh diempon beberapa banjar).
+3. **Isi rekening pura** — pada kartu pura tekan **Rekening**: nama bank, nomor rekening, dan **nama pemilik rekening** (ditampilkan ke umat agar mereka bisa mencocokkan di m-banking). Hanya Admin Utama yang bisa mengubahnya. **Umat baru bisa berpunia ke pura yang rekeningnya sudah diisi.**
+4. **Daftarkan pengurus pura** — pada kartu pura tekan **Pengurus** → ketik email orang tersebut → pilih **Pengurus Pura** atau **Pemeriksa**. Orang itu cukup membuka aplikasi dan masuk dengan Google/tautan email memakai alamat itu — tidak ada undangan atau kata sandi.
+5. **Daftarkan Pengurus Banjar** — tab **Banjar → Pengurus Banjar** → ketik email.
+6. **Mencabut/menonaktifkan** — tekan ikon hapus di daftar pengurus untuk mencabut peran, atau tab **Akun → Nonaktifkan** untuk menutup akunnya sama sekali. Aksesnya **langsung** hilang di semua perangkat.
+
+Tanda yang perlu diperhatikan di Back Office:
+- **"Pengurus pura belum terdaftar"** — punia pura ini diverifikasi oleh Pengurus Banjar; umat juga melihat label ini.
+- **"Hanya 1 pengurus"** — sebaiknya tambah pengurus kedua, agar punia yang dikirim pengurus itu sendiri bisa diverifikasi orang lain.
+- **"Rekening belum diisi"** — umat belum bisa berpunia lewat aplikasi.
+
+Pengurus pura lalu mengisi sendiri di **Pengaturan**: deskripsi & kontak pura, **saldo awal** kas (agar posisi kas di halaman umat benar), dan **Tampilan untuk umat** (tampilkan saldo, transaksi terakhir, daftar punia, berapa transaksi terakhir 3–5). Semua bawaannya **terbuka**.
 
 ---
 
-## Langkah 6 — Menambahkan pura dan pengurus
+## Alur punia sehari-hari
 
-### Membuat pura
+**Umat:**
+1. Buka halaman pura → **Berpunia** → salin nomor rekening → transfer lewat m-banking.
+2. Isi nominal, tanggal transfer, unggah foto/tangkapan layar bukti, pilih **TAMPIL** atau **ANONIM**, tujuan (umum / odalan / pembangunan / lainnya), dan kegiatan jika ada → **Kirim punia**.
+3. Pantau di **Punia Saya → Riwayat punia**. Jika ditolak, alasannya terlihat dan bisa **Perbaiki & kirim ulang**.
 
-Setelah setup, Anda langsung diarahkan untuk mengisi data pura pertama: nama, lokasi, dan kontak. Pura yang dibuat Admin Utama langsung aktif dan tampil di halaman publik.
-
-Pura berikutnya ditambahkan lewat: ketuk nama pura di menu kiri (atau menu **Lainnya** di HP) → **Daftarkan pura lain**.
-
-### Menambahkan pengurus (Ketua, Bendahara, Sekretaris, Auditor)
-
-1. Buka **Panel Admin Utama → Pengguna → Tambah pengguna**.
-2. Isi nama, email, pura, dan perannya.
-3. Aplikasi membuat **tautan aktivasi**. Klik **Kirim via WhatsApp** dan kirim ke orang tersebut secara pribadi, **bukan ke grup**.
-4. Orang itu membuka tautan, membuat kata sandinya sendiri, lalu langsung masuk.
-   - Tautan berlaku **72 jam** dan hanya bisa dipakai **sekali**.
-
-Ketua pura juga bisa menambah pengurus untuk puranya sendiri lewat menu **Pengurus & Peran**.
-
-### Hak tiap peran
-
-| Peran | Bisa melakukan |
-|---|---|
-| **Admin Utama** | Semuanya, di semua pura. Termasuk Log Aktivitas, kelola pengguna, dan cadangan data. |
-| **Ketua Pengempon** | Mencatat & menyetujui transaksi, mengelola donasi & campaign, mempublikasikan laporan, mengelola pengurus pura. |
-| **Bendahara** | Mencatat transaksi, memverifikasi donasi, membuat campaign dan laporan. |
-| **Sekretaris** | Melihat data dan membuat **draf** transaksi (perlu dikonfirmasi Ketua/Bendahara). |
-| **Pemeriksa / Auditor** | Hanya melihat: transaksi, nota, dan Riwayat Audit pura. |
-
-### Jika pengurus berhenti atau ada masalah
-
-**Panel Admin Utama → Pengguna →** pilih orangnya:
-
-- **Nonaktifkan:** orang itu langsung dikeluarkan dari semua perangkat dan tidak bisa masuk lagi. Catatan yang pernah dibuatnya tetap tersimpan.
-- **Atur peran:** ubah atau cabut perannya di tiap pura.
-- **Atur ulang sandi:** buat tautan baru jika ia lupa kata sandi. Jika pengurus menekan **Lupa kata sandi**, permintaannya muncul di bagian atas Panel Admin Utama.
+**Pengurus:**
+1. Lencana **"N punia menunggu"** muncul di menu **Punia**. Buka **Verifikasi Punia**.
+2. Cocokkan bukti dengan mutasi rekening → **Setuju**, atau **Tolak** dengan alasan. Bisa pilih beberapa sekaligus lalu **Setujui terpilih**.
+3. Tanda **"Kemungkinan dobel"** muncul jika ada punia lain dengan nominal dan tanggal sama. Bukti yang **persis sama** atau nominal + tanggal + nomor referensi yang sama otomatis ditolak sistem.
+4. *(Opsional, hemat waktu)* **Cocokkan mutasi (CSV):** unduh mutasi rekening dari internet banking dalam format CSV, lalu unggah di halaman Verifikasi Punia. Aplikasi menandai punia yang nominalnya sama dan tanggalnya selisih paling lama 2 hari, lalu Anda bisa menyetujui semuanya sekaligus. File mutasi hanya dibaca di perangkat Anda dan tidak disimpan. Tetap periksa nama pengirimnya.
+5. Punia tunai atau lewat WhatsApp: **Input punia manual** — langsung tercatat terverifikasi (kecuali email donaturnya adalah email Anda sendiri; itu harus disetujui pengurus lain).
+6. Pengeluaran: **+ → Catat Pengeluaran** dengan kategori, catatan, dan foto nota.
+7. Untuk paruman: **Laporan** → pilih jenis (mis. **Laporan punia** atau **Ringkasan keuangan**) dan periode → unduh **PDF** atau **Excel**.
 
 ---
 
 ## Memasang aplikasi di HP
 
-**Android (Chrome):**
-1. Buka alamat aplikasi di Chrome.
-2. Ketuk menu **⋮** (kanan atas) → **Instal aplikasi** atau **Tambahkan ke layar utama**.
+Di aplikasi buka menu **Pasang di HP** (`/pasang`) — ada panduan bergambar untuk **Android (Chrome)** dan **iPhone (Safari)**. Ringkasnya:
+- **Android:** Chrome → **⋮** → **Instal aplikasi** / **Tambahkan ke layar utama**.
+- **iPhone:** Safari → **Bagikan** (kotak panah ke atas) → **Tambah ke Layar Utama** → **Tambah**.
 
-**iPhone (Safari):**
-1. Buka alamat aplikasi di **Safari** (bukan Chrome).
-2. Ketuk tombol **Bagikan** (kotak dengan panah ke atas) → **Tambah ke Layar Utama** → **Tambah**.
-
-Ikon PURA akan muncul di layar HP. Jika internet putus, aplikasi menampilkan pesan "Tidak ada koneksi". Data keuangan sengaja **tidak disimpan di HP** demi keamanan, jadi aplikasi butuh internet untuk menampilkan data.
-
-Tombol **Pasang aplikasi** juga tersedia di **Pengaturan → Tampilan**.
+Data keuangan sengaja **tidak disimpan di HP**; aplikasi butuh internet untuk menampilkan data. Tampilan aplikasi disimpan di HP agar ringan untuk HP sederhana dan sinyal lemah, dan foto bukti otomatis diperkecil sebelum dikirim.
 
 ---
 
-## Mencadangkan (backup) data
+## Cadangan data mingguan
 
-Lakukan cadangan **rutin** — misalnya setiap awal bulan, dan sebelum upacara besar seperti Piodalan.
+Buat cadangan **setiap minggu** (mis. setiap Minggu sore) dan **sebelum upacara besar**.
 
-### Cara 1 — Dari aplikasi (paling mudah, disarankan)
+### Cara 1 — Dari aplikasi (disarankan)
+1. Masuk sebagai Admin Utama → **Back Office → Cadangan data → Unduh cadangan (.json)**.
+2. Simpan di **Google Drive pribadi** atau flashdisk dengan nama jelas, mis. `cadangan-pura-2026-11-01.json`. Simpan setidaknya 4 cadangan terakhir.
 
-1. Masuk sebagai Admin Utama → **Panel Admin Utama → Cadangan data**.
-2. Klik **Unduh cadangan (.json)**.
-3. Simpan file tersebut di **Google Drive pribadi** atau flashdisk. Beri nama yang jelas, misalnya `cadangan-pura-2026-11.json`.
-
-Catatan:
-- File ini **tidak berisi foto nota**, supaya ukurannya kecil. Untuk cadangan beserta foto, gunakan Cara 3.
-- File berisi data keuangan dan kata sandi dalam bentuk hash. **Jangan dibagikan.**
+File ini berisi data keuangan **dan data pribadi umat** (nama, email), tanpa foto. **Jangan dibagikan.**
 
 ### Cara 2 — Riwayat otomatis Neon
+Neon menyimpan riwayat perubahan **6 jam terakhir** (paket gratis). Gunanya membatalkan kesalahan yang baru saja terjadi. Karena hanya 6 jam, **Cara 1 tetap wajib**.
 
-Neon otomatis menyimpan riwayat perubahan database. Pada paket **gratis**, riwayat ini hanya mencakup **6 jam terakhir**. Gunanya untuk membatalkan kesalahan yang **baru saja** terjadi (misalnya baru 1 jam yang lalu). Cara pakainya ada di [Memulihkan data](#memulihkan-data).
-
-Karena hanya 6 jam, **Cara 1 tetap wajib dilakukan rutin.**
-
-### Cara 3 — Cadangan lengkap dengan foto (butuh komputer)
-
-Ikuti dulu [Menjalankan di komputer sendiri](#menjalankan-di-komputer-sendiri-opsional) sampai langkah 4. Isi `.env` dengan alamat database **utama**, lalu jalankan:
-
-```
-npm run backup
-```
-
-File cadangan muncul di folder `cadangan/`.
+### Cara 3 — Cadangan lengkap dengan foto (butuh laptop)
+Ikuti [Menjalankan di laptop](#menjalankan-di-laptop) sampai langkah 4 dengan alamat database **utama**, lalu `npm run backup`. File muncul di folder `cadangan/`.
 
 ---
 
 ## Memulihkan data
 
-### Kesalahan dalam 6 jam terakhir (paling mudah)
+**Kesalahan dalam 6 jam terakhir:** console.neon.tech → project **pura** → **Restore** → pilih waktu sebelum kesalahan.
 
-1. Buka **console.neon.tech** → project **pura** → menu **Restore** (kadang bernama *Instant restore* atau *Backup & restore*).
-2. Pilih waktu **sebelum** kesalahan terjadi, lalu ikuti petunjuk di layar.
-
-### Dari file cadangan (butuh komputer)
-
-1. Di Neon, buat **database baru** (atau project baru), lalu salin alamatnya.
-2. Di komputer, isi `DATABASE_URL` pada file `.env` dengan alamat database **baru** tersebut.
-3. Jalankan:
+**Dari file cadangan (butuh laptop):**
+1. Di Neon buat database/project **baru**, salin alamatnya, isi ke `DATABASE_URL` di file `.env`.
+2. Jalankan:
    ```
    npm run db:migrate
    npm run restore -- cadangan/nama-file-cadangan.json
    ```
-4. Di Vercel, ganti `DATABASE_URL` dan `DATABASE_URL_UNPOOLED` ke database baru, lalu **Redeploy**.
+3. Di Vercel ganti `DATABASE_URL` dan `DATABASE_URL_UNPOOLED` ke database baru → **Redeploy**.
 
-Pemulihan hanya mau berjalan ke database yang **masih kosong**. Ini sengaja, supaya data lama tidak tertimpa tanpa sengaja.
-
-> Jika ragu, mintalah bantuan orang yang paham komputer dan tunjukkan bagian panduan ini. Jangan pernah memberikan file `.env` atau file cadangan kepada orang yang tidak Anda percayai.
+Pemulihan hanya mau berjalan ke database **kosong**, supaya data lama tidak tertimpa tanpa sengaja.
 
 ---
 
-## Menjalankan di komputer sendiri (opsional)
+## Menjalankan di laptop
 
-Hanya perlu jika Anda ingin mencoba perubahan, membuat cadangan lengkap, atau memulihkan data.
+Untuk mencoba perubahan, data contoh, cadangan lengkap, atau pemulihan.
 
-1. Pasang **Node.js versi 20 LTS** dari https://nodejs.org (pilih tombol **LTS**).
-2. Unduh kode: di GitHub, buka repo **Aplikasi-Pura** → tombol hijau **Code** → **Download ZIP**, lalu ekstrak. Atau, jika memakai git:
-   ```
-   git clone https://github.com/gwadityatanaya/Aplikasi-Pura.git
-   ```
-3. Buka **Terminal** (Mac) atau **Command Prompt** (Windows) di folder tersebut, lalu jalankan:
-   ```
-   npm install
-   ```
-4. Salin file `.env.example` menjadi `.env`, lalu isi nilainya (lihat penjelasan di dalam file).
-   - **Saran penting:** untuk percobaan, gunakan database **terpisah**, bukan database utama. Di Neon: **Branches → Create branch**, beri nama `percobaan`, lalu salin alamatnya. Dengan begitu data sungguhan tidak tersentuh.
-5. Siapkan tabel, lalu jalankan aplikasi:
+1. Pasang **Node.js 20 LTS** dari https://nodejs.org.
+2. Unduh kode: GitHub → repo **Aplikasi-Pura** → **Code → Download ZIP** (lalu ekstrak), atau `git clone https://github.com/gwadityatanaya/Aplikasi-Pura.git`.
+3. Buka Terminal/Command Prompt di folder itu → `npm install`.
+4. Salin `.env.example` menjadi `.env`, lalu isi:
+   - `DATABASE_URL` — **gunakan database terpisah untuk percobaan**: di Neon **Branches → Create branch** `percobaan`, salin alamatnya. Data sungguhan tidak tersentuh.
+   - `ADMIN_EMAIL`, `SETUP_TOKEN`, `APP_TIMEZONE` seperti di Vercel.
+   - `SMTP_HOST` boleh **dikosongkan**: di laptop, tautan masuk akan **langsung tampil di layar** sehingga tidak perlu email.
+   - `GOOGLE_CLIENT_ID/SECRET` opsional (perlu redirect URI `http://localhost:3000/...` di Google).
+5. Jalankan:
    ```
    npm run db:migrate
    npm run dev
    ```
-6. Buka **http://localhost:3000** di peramban.
+6. Buka **http://localhost:3000** → `/setup` untuk akun Admin Utama pertama.
+
+**Data contoh (fiktif)** — hanya untuk database percobaan yang **kosong**:
+```
+npm run db:seed-demo -- --ya
+```
+Isinya: 2 banjar, 6 pura (satu diempon dua banjar, satu tanpa pengurus), Pengurus Banjar `ketut.banjar@contoh.id` dan `gede.banjar@contoh.id`, pengurus pura (`made@`, `komang@`, `wayan@`, `putu@`, `nengah@`, `kadek.taman@contoh.id`), dan umat (`ayu@`, `nyoman@`, `kadek@contoh.id`). Masuk dengan tautan email; di laptop tautannya tampil di layar.
+
+**Tes otomatis** — butuh database tes terpisah yang namanya mengandung `test` atau `e2e` (isinya dihapus setiap kali tes jalan):
+```
+E2E_DATABASE_URL="postgres://.../pura_e2e" npm run test:e2e
+```
 
 ---
 
 ## Memperbarui aplikasi
 
-Setiap kali ada perubahan kode yang di-*push* ke GitHub (cabang `main`), Vercel **otomatis** membangun ulang aplikasinya. Database juga ikut diperbarui jika ada tabel baru. Anda tidak perlu melakukan apa-apa.
-
-Untuk berjaga-jaga, buat **cadangan data** (Cara 1) sebelum pembaruan besar.
+Setiap perubahan yang di-*push* ke GitHub (cabang `main`) otomatis dibangun ulang oleh Vercel, termasuk pembaruan tabel database. Buat **cadangan** dulu sebelum pembaruan besar.
 
 ---
 
 ## Keamanan: kebiasaan baik
 
-- 🔒 **Jangan pernah** membagikan isi Environment Variables, file `.env`, atau file cadangan.
-- 🔒 Gunakan kata sandi yang berbeda untuk PURA, email, dan akun lain.
+- 🔒 Jangan membagikan Environment Variables, file `.env`, atau file cadangan.
+- 🔐 Aktifkan **verifikasi 2 langkah** di akun Google `wiraaditya452@gmail.com` — akun ini sekarang adalah kunci Admin Utama.
 - 👤 Satu orang, satu akun. Jangan memakai akun bersama.
-- 🚪 Segera **nonaktifkan** akun pengurus yang sudah tidak menjabat.
-- 👀 Sesekali periksa **Log Aktivitas**, terutama baris merah seperti "Login gagal" atau "Akses ditolak" yang muncul berulang.
-- 💾 Buat cadangan rutin setiap bulan.
-- 📱 Jika HP hilang: ganti kata sandi dari perangkat lain (**Pengaturan → Keamanan**). Semua sesi di perangkat lain otomatis berakhir.
+- 🚪 Segera cabut peran pengurus yang sudah tidak menjabat.
+- 👥 Usahakan tiap pura punya **minimal 2 pengurus**.
+- 👀 Sesekali periksa **Log Aktivitas**, terutama "Akses ditolak" atau "Masuk gagal" yang berulang.
+- 💾 Cadangan setiap minggu.
+- 📱 HP hilang: **Pengaturan → Keamanan → Keluar dari semua perangkat** dari perangkat lain.
 
 ---
 
 ## Masalah yang sering terjadi
 
-**"Setup belum dikonfigurasi" di halaman /setup**
-→ `SETUP_TOKEN` (minimal 16 karakter) atau `ADMIN_EMAIL` belum diisi di Vercel. Isi keduanya, lalu **Redeploy**.
+**Email tautan masuk tidak datang**
+→ Periksa folder **Spam/Promosi**. Pastikan pengirim di `EMAIL_FROM` sudah diverifikasi di Brevo dan `SMTP_USER/SMTP_PASS` benar. Cek kuota harian Brevo (300/hari). Sementara itu, masuk dengan Google.
 
-**"Email ini tidak terdaftar sebagai email Admin Utama"**
-→ Email yang diketik berbeda dengan `ADMIN_EMAIL`. Periksa huruf dan spasinya.
+**"Masuk dengan Google belum diatur"**
+→ `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` belum diisi di Vercel, atau belum Redeploy.
 
-**Deploy gagal dengan tulisan "DATABASE_URL belum diisi"**
-→ Tambahkan `DATABASE_URL` di Environment Variables Vercel, lalu Redeploy.
+**Google menampilkan "redirect_uri_mismatch"**
+→ Alamat di **Authorized redirect URIs** harus persis `https://ALAMAT-ANDA/api/auth/google/callback` (https, tanpa `/` di akhir).
+
+**Google menampilkan "access blocked / app not verified" untuk umat**
+→ Aplikasi masih mode **Testing**. Buka Google Cloud → **Audience → Publish app**.
+
+**Pengurus masuk tetapi hanya melihat Tampilan Umat**
+→ Emailnya belum didaftarkan di Back Office, atau berbeda dengan email Google yang dipakai. Daftarkan email yang benar.
+
+**"Terlalu banyak percobaan"**
+→ Tunggu 15 menit lalu coba lagi.
+
+**Admin Utama tidak bisa masuk (akun Google hilang / email tidak datang)** — skrip darurat
+→ Dari laptop yang file `.env`-nya berisi alamat database **utama** dan `APP_URL`, jalankan:
+```
+npm run admin:reset
+```
+Perintah ini menampilkan **tautan masuk sekali pakai (berlaku 1 jam)** untuk Admin Utama. Pembuatannya tercatat di Log Aktivitas. Hanya orang yang memegang alamat database yang bisa menjalankannya.
+
+**"Setup belum dikonfigurasi" / "Email ini tidak terdaftar sebagai email Admin Utama"**
+→ Isi `SETUP_TOKEN` (min. 16 karakter) dan `ADMIN_EMAIL` di Vercel, lalu Redeploy. Email yang diketik harus sama dengan `ADMIN_EMAIL`.
 
 **`/api/health` tidak menampilkan "terhubung"**
 → Alamat database salah salin. Salin ulang dari tombol **Connect** di Neon.
 
-**Pengurus lupa kata sandi**
-→ Panel Admin Utama → Pengguna → **Atur ulang sandi** → kirim tautannya lewat WhatsApp.
+**Umat tidak bisa berpunia ke suatu pura**
+→ Rekening pura belum diisi Admin Utama (**Back Office → Pura → Rekening**).
 
-**Admin Utama lupa kata sandi**
-→ Demi keamanan, tidak ada orang lain yang bisa mereset Admin Utama dari dalam aplikasi. Jalankan perintah ini dari komputer yang file `.env`-nya berisi alamat database **utama** dan `APP_URL`:
-```
-npm run admin:reset
-```
-Perintah ini menampilkan tautan atur ulang yang berlaku 1 jam. Pembuatan tautan ini juga tercatat di Log Aktivitas.
-
-**"Terlalu banyak percobaan gagal"**
-→ Tunggu 15 menit lalu coba lagi dengan kata sandi yang benar.
-
-**Pura baru tidak muncul di halaman publik**
-→ Pura yang didaftarkan oleh selain Admin Utama perlu disetujui dulu: **Panel Admin Utama → Pura → Setujui**.
-
-**Ingin membuka pendaftaran mandiri** (orang bisa membuat akun sendiri)
-→ Ubah `ALLOW_REGISTRATION` menjadi `true` di Vercel, lalu Redeploy. Pura baru yang mereka daftarkan tetap menunggu persetujuan Anda.
+**Ingin menutup pendaftaran umat baru sementara**
+→ Ubah `UMAT_REGISTRATION` menjadi `false` di Vercel lalu Redeploy. Pengurus yang sudah terdaftar tetap bisa masuk.

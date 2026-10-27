@@ -8,6 +8,16 @@ import { log, type Handler } from "./commands";
 import { destroySession } from "./auth";
 
 export const accountCommands: Record<string, Handler> = {
+  /** Signs this account out on every device (e.g. a lost phone), including this one. */
+  async logoutEverywhere(ctx) {
+    await db.transaction(async (tx) => {
+      await tx.delete(T.sessions).where(eq(T.sessions.userId, ctx.user.id));
+      await log(ctx, tx, { action: "Keluar dari semua perangkat", entity: "session", entityId: ctx.user.id, detail: ctx.user.email, templeId: null });
+    });
+    await destroySession();
+    return null;
+  },
+
   /**
    * Umat deletes their own account. Verified punia stay as the temple's financial record,
    * but the name is anonymised. Staff accounts must be released by Admin Utama first.
@@ -22,7 +32,7 @@ export const accountCommands: Record<string, Handler> = {
       const ids = mine.map((d) => d.id);
       if (ids.length) {
         await tx.update(T.donations).set({ donorName: "Anonim (akun dihapus)", privacy: "anonymous", submitterEmail: null, message: null }).where(inArray(T.donations.id, ids));
-        await tx.update(T.transactions).set({ source: "Anonim" }).where(and(inArray(T.transactions.donationId, ids)));
+        await tx.update(T.transactions).set({ source: "Anonim", description: "Punia: Anonim (akun dihapus)" }).where(and(inArray(T.transactions.donationId, ids)));
       }
       await log(ctx, tx, { action: "Menghapus akun sendiri", entity: "user", entityId: ctx.user.id, detail: `Akun umat dihapus; ${ids.length} catatan punia dianonimkan.`, templeId: null });
       await tx

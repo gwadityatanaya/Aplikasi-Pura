@@ -6,7 +6,7 @@ import { loadState } from "@/server/state";
 export const dynamic = "force-dynamic";
 
 export const GET = route(async (req: Request) => {
-  if (!(await getCurrent())) return json({ ok: true, state: null, registrationOpen: process.env.ALLOW_REGISTRATION === "true" });
+  if (!(await getCurrent())) return json({ ok: true, state: null });
   const ctx = await getCtx(req);
   return json({ ok: true, state: await loadState(ctx) });
 });

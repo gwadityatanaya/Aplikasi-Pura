@@ -58,6 +58,20 @@ export async function loadPublic(): Promise<PublicData> {
   const catName = new Map(catRows.map((c) => [c.id, c.name]));
   const txs = txRows.map(m.toTx);
   const accounts = accRows.map(m.toAccount);
+  // Punia entries are described from the donation's CURRENT privacy, never from the stored text,
+  // so a donor who later chose anonymity or deleted their account is not named publicly.
+  const donationById = new Map(donRows.map((d) => [d.id, d]));
+  const txById = new Map(txs.map((x) => [x.id, x]));
+  const publicDescription = (x: (typeof txs)[number]): string => {
+    const original = x.reversalOf ? txById.get(x.reversalOf) : undefined;
+    const donationId = x.donationId ?? original?.donationId;
+    if (donationId) {
+      const d = donationById.get(donationId);
+      const text = `Punia: ${d && d.privacy === "public" ? d.donorName : "Anonim"}`;
+      return x.reversalOf ? `Koreksi: ${text}` : text;
+    }
+    return x.reversalOf ? `Koreksi: ${x.description.replace(/^Koreksi:\s*/, "")}` : x.description;
+  };
 
   const temples: PublicTemple[] = base.map((t) => {
     const banjarIds = tb.filter((r) => r.templeId === t.id).map((r) => r.banjarId);
@@ -86,7 +100,7 @@ export async function loadPublic(): Promise<PublicData> {
           id: x.id,
           date: x.date,
           type: x.type as "income" | "expense",
-          description: x.reversalOf ? `Koreksi: ${x.description.replace(/^Koreksi:\s*/, "")}` : x.description,
+          description: publicDescription(x),
           category: catName.get(x.categoryId ?? "") ?? "",
           amount: (x.type === "income" ? 1 : -1) * (x.reversalOf ? -x.amount : x.amount),
         }));

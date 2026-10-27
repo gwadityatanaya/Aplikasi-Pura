@@ -2,10 +2,11 @@
 import { Fragment, Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { AlertTriangle, Check, CheckCheck, Image as ImageIcon, Inbox, Plus, X } from "lucide-react";
+import { AlertTriangle, Check, CheckCheck, FileSpreadsheet, Image as ImageIcon, Inbox, Plus, X } from "lucide-react";
 import { NoAccess, PageHeader } from "@/components/app/page-header";
 import { useCan, useWorkspace } from "@/components/app/hooks";
 import { ManualPuniaDialog } from "@/components/app/manual-punia";
+import { MutasiImport } from "@/components/app/mutasi-import";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -43,6 +44,7 @@ function PuniaQueue() {
   const [rejecting, setRejecting] = useState<Donation>();
   const [busy, setBusy] = useState(false);
   const [manual, setManual] = useState(params.get("input") === "1");
+  const [mutasi, setMutasi] = useState(false);
 
   const isOwn = (d: Donation) => !!me && (d.submittedBy === me.id || (!!d.submitterEmail && d.submitterEmail.toLowerCase() === me.email.toLowerCase()));
   const list = useMemo(
@@ -86,7 +88,14 @@ function PuniaQueue() {
       <PageHeader
         title="Verifikasi Punia"
         description={ws.temple ? `${ws.temple.name} — cocokkan bukti dengan mutasi rekening, lalu setujui.` : undefined}
-        actions={canAct && <Button onClick={() => setManual(true)}><Plus className="h-4 w-4" /> Input punia manual</Button>}
+        actions={
+          canAct && (
+            <>
+              <Button onClick={() => setManual(true)}><Plus className="h-4 w-4" /> Input punia manual</Button>
+              {pending.length > 0 && <Button variant="outline" onClick={() => setMutasi(true)}><FileSpreadsheet className="h-4 w-4" /> Cocokkan mutasi (CSV)</Button>}
+            </>
+          )
+        }
       />
 
       {pending.length > 0 && (
@@ -185,6 +194,7 @@ function PuniaQueue() {
         </Dialog>
       )}
       {rejecting && <RejectDialog d={rejecting} onClose={() => setRejecting(undefined)} />}
+      {mutasi && <MutasiImport open onClose={() => setMutasi(false)} pending={pending} isOwn={isOwn} />}
       <ManualPuniaDialog open={manual} onClose={() => { setManual(false); if (params.get("input")) router.replace("/app/punia"); }} />
     </div>
   );

@@ -24,6 +24,7 @@ import { cn, rupiah } from "@/lib/format";
 import type { Account, Category, CoverVariant, Temple } from "@/lib/types";
 import { InstallAppButton } from "@/components/pwa";
 import type { Result } from "@/lib/store";
+import { LogoutEverywhere } from "@/components/shared/logout-everywhere";
 
 /** Shows the right toast for a save result; returns true on success. */
 function done(r: Result<unknown>, msg: string) {
@@ -323,6 +324,7 @@ function Security() {
           <div><p className="font-semibold">Sesi di perangkat ini</p><p className="text-sm text-muted">Dimulai {session ? new Date(session.startedAt).toLocaleString("id-ID") : "—"}</p></div>
           <Button variant="outline" onClick={() => setConfirm(true)}><LogOut className="h-4 w-4" /> Keluar</Button>
         </div>
+        <LogoutEverywhere />
       </CardBody>
       <ConfirmDialog open={confirm} onClose={() => setConfirm(false)} title="Keluar dari aplikasi?" onConfirm={() => router.push("/keluar")} confirmLabel="Keluar" />
     </Card>

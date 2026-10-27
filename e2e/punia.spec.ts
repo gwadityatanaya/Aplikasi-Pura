@@ -130,3 +130,42 @@ test("rekening pura hanya bisa diubah Admin Utama", async ({ page }) => {
   const r = await command(made, "setTempleBank", { templeId: dalem.id, bankName: "Bank Palsu", bankAccountNumber: "999", bankAccountHolder: "Penipu" });
   expect(r.ok).toBe(false);
 });
+
+test("umat menghapus akun: punia tetap ada sebagai arsip, nama dianonimkan di mana-mana", async ({ page }) => {
+  const before = await (await page.request.get("/api/public")).text();
+  expect(before).toContain("Ni Luh Ayu Lestari"); // punia TAMPIL dari data contoh
+  const ayu = await as("ayu@contoh.id");
+  const del = await command(ayu, "deleteMyAccount", { confirm: "HAPUS" });
+  expect(del.ok, del.error).toBe(true);
+  const after = await (await page.request.get("/api/public")).text();
+  expect(after).not.toContain("Ayu");
+  const pub = await publicData(page.request);
+  const dalem = pub.temples.find((t) => t.name === "Pura Dalem Kahyangan")!;
+  expect(pub.donations.some((d) => d.templeId === dalem.id && d.amount === 250_000)).toBe(true);
+
+  const made = await as("made@contoh.id");
+  const staffDelete = await command(made, "deleteMyAccount", { confirm: "HAPUS" });
+  expect(staffDelete.ok).toBe(false);
+});
+
+test("keluar dari semua perangkat mengakhiri sesi lain", async () => {
+  const a = await as("nyoman@contoh.id");
+  const b = await as("nyoman@contoh.id");
+  expect((await command(b, "logoutEverywhere")).ok).toBe(true);
+  const s = await (await a.get("/api/state")).json();
+  expect(s.state).toBeNull();
+});
+
+test("impor mutasi CSV menandai punia yang cocok lalu menyetujuinya", async ({ page }) => {
+  // Data contoh: Kadek Surya mengirim Rp100.000 ke Pura Dalem Kahyangan 2 hari lalu (masih menunggu).
+  const d = new Date(Date.now() + 8 * 3600_000 - 2 * 86400_000);
+  const tgl = `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
+  const csv = `Tanggal;Keterangan;Debet;Kredit\n${tgl};TRF DARI KADEK SURYA;;100.000,00\n${tgl};BIAYA ADM;5.000,00;\n`;
+  await signInUi(page, "komang@contoh.id");
+  await page.goto("/app/punia");
+  await page.getByRole("button", { name: /Cocokkan mutasi/ }).click();
+  await page.locator('input[type="file"][accept*="csv"]').setInputFiles({ name: "mutasi.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
+  await expect(page.getByText("Cocok", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /Setujui 1 punia yang cocok/ }).click();
+  await expect(page.getByText(/1 punia disetujui/)).toBeVisible();
+});

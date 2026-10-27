@@ -10,6 +10,7 @@ import { ConfirmDialog } from "@/components/ui/confirm";
 import { Field, Input } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRequireLogin } from "@/components/umat/use-umat";
+import { LogoutEverywhere } from "@/components/shared/logout-everywhere";
 import { useStore } from "@/lib/store";
 
 export default function MyAccountPage() {
@@ -73,6 +74,8 @@ export default function MyAccountPage() {
         <p className="mt-1 text-[15px] text-muted">Baca bagaimana data Anda disimpan dan siapa yang dapat melihatnya.</p>
         <Link href="/kebijakan-privasi" className="mt-2 inline-block font-semibold text-emerald-800 underline">Kebijakan privasi</Link>
       </Card>
+
+      <div className="mt-4"><LogoutEverywhere /></div>
 
       <Button variant="outline" size="lg" className="mt-4 w-full" onClick={async () => { await logout(); router.replace("/"); }}>
         <LogOut className="h-5 w-5" /> Keluar
