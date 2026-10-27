@@ -29,14 +29,20 @@ export function Dialog({
 }) {
   const [mounted, setMounted] = React.useState(false);
   const panelRef = React.useRef<HTMLDivElement>(null);
+  const bodyRef = React.useRef<HTMLDivElement>(null);
   const titleId = React.useId();
+  // Callers usually pass a new `onClose` function on every render (onClose={() => …}). Keep the
+  // latest one in a ref so the effect below runs ONLY when the dialog opens or closes — never on a
+  // re-render (e.g. every keystroke in a form field), which used to move focus away from the field.
+  const onCloseRef = React.useRef(onClose);
+  onCloseRef.current = onClose;
   React.useEffect(() => setMounted(true), []);
 
   React.useEffect(() => {
     if (!open) return;
     const prev = document.activeElement as HTMLElement | null;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
       if (e.key === "Tab" && panelRef.current) {
         const f = panelRef.current.querySelectorAll<HTMLElement>(
           'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -56,9 +62,18 @@ export function Dialog({
     document.addEventListener("keydown", onKey);
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    // Initial focus, once: a marked element, else the first form field in the dialog BODY (never the
+    // close button in the header), else the first button. Leave focus alone if it is already inside.
     const t = setTimeout(() => {
-      const el = panelRef.current?.querySelector<HTMLElement>("[data-autofocus], input, select, textarea, button");
-      el?.focus();
+      const panel = panelRef.current;
+      if (!panel || panel.contains(document.activeElement)) return;
+      const body = bodyRef.current;
+      const el =
+        panel.querySelector<HTMLElement>("[data-autofocus]") ??
+        body?.querySelector<HTMLElement>('input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled])') ??
+        body?.querySelector<HTMLElement>("button:not([disabled])") ??
+        panel;
+      el.focus();
     }, 50);
     return () => {
       document.removeEventListener("keydown", onKey);
@@ -66,7 +81,7 @@ export function Dialog({
       clearTimeout(t);
       prev?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!mounted) return null;
   const widths = { sm: "sm:max-w-sm", md: "sm:max-w-lg", lg: "sm:max-w-2xl", xl: "sm:max-w-4xl" };
@@ -84,11 +99,12 @@ export function Dialog({
           />
           <motion.div
             ref={panelRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? titleId : undefined}
             className={cn(
-              "relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-lift sm:rounded-3xl",
+              "relative flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-3xl bg-white shadow-lift focus:outline-none sm:rounded-3xl",
               widths[size]
             )}
             initial={{ y: "100%", opacity: 0.6 }}
@@ -119,7 +135,7 @@ export function Dialog({
                 )}
               </div>
             )}
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-2 sm:px-6">{children}</div>
+            <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-2 sm:px-6">{children}</div>
             {footer && (
               <div className="shrink-0 border-t border-line bg-ivory/60 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
                 {footer}

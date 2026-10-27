@@ -38,7 +38,15 @@ export function ConfirmDialog({
           <Button variant="outline" size="lg" onClick={onClose}>
             {cancelLabel}
           </Button>
-          <Button variant={tone === "danger" ? "danger" : "primary"} size="lg" onClick={onConfirm} loading={loading} data-autofocus>
+          <Button
+            variant={tone === "danger" ? "danger" : "primary"}
+            size="lg"
+            onClick={onConfirm}
+            loading={loading}
+            // Start on the confirm button only for harmless dialogs without fields. Danger dialogs
+            // (and ones with a field such as "ketik HAPUS") must not be confirmable by one Enter.
+            data-autofocus={tone !== "danger" && !children ? true : undefined}
+          >
             {confirmLabel}
           </Button>
         </div>
