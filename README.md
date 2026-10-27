@@ -62,6 +62,10 @@ Deploy: import the repo in Vercel, set the variables from `.env.example`. `verce
 - **Duplicates:** same file hash, or same amount + date + reference, is refused; same amount + date is flagged for pengurus.
 - **Regions (alamat bertingkat):** Kemendagri codes for provinsi › kab/kota › kecamatan › desa/kelurahan are bundled in `src/data/wilayah/wilayah.json` (source cahyadsn/wilayah, MIT — see `SUMBER.md`), served by `GET /api/wilayah?induk=`. Banjars and temples store both codes (`*_code`, null when typed by hand) and names; `resolveAddress()` validates the code chain and takes names from the data file. UI: `components/app/wilayah-picker.tsx` (searchable, cascading, "tidak ada di daftar").
 - **Digest:** `/api/cron/digest` (Vercel Cron, daily, `CRON_SECRET`) emails each pengurus at most once a day when punia are waiting.
+- **Reports:** `lib/reports.ts` builds tables (cash book with running balance, per category, positions; umum/lengkap version); `lib/export.ts` → PDF (jsPDF, A4/F4, kop, signature block kept on one page, page numbers); `lib/export-xlsx.ts` → Excel (ExcelJS: several sheets, real dates/numbers, SUM and running-balance formulas, print setup). Signers come from the jabatan per kepengurusan (Back Office).
+- **Archive / delete (Back Office):** a temple with data can only be archived (hidden from the public, read-only, reversible); only an empty temple or a banjar without temples can be deleted. Migration 0011 enforces this in the database too (also against cascading deletes) and refuses new transactions/punia for archived temples.
+- **Profile photo:** cropped and resized on the device (256×256), checked again on the server, served by `/api/avatar/[userId]` only to the owner, related Pengurus Pura / Banjar and Admin Utama (`canSeeAvatar`). Never in public data.
+- **Pusat bantuan:** floating button (`components/shared/help-button.tsx`) for signed-in people; tickets + replies in `help_tickets` / `help_replies`; context (page path, role, temple, device, browser) is filled in by the server; Admin Utama inbox in Back Office → Bantuan; 5 messages/hour; attachments deleted 30 days after "Selesai" (`cleanupHelpAttachments`).
 - **PWA:** `app/manifest.ts`, `public/sw.js` (never caches `/api/*`), offline page, `/pasang` install guide.
 
 ## Main routes
@@ -70,6 +74,7 @@ Deploy: import the repo in Vercel, set the variables from `.env.example`. `verce
 |---|---|
 | Public | `/`, `/pura`, `/pura/[slug]`, `/pura/[slug]/laporan/[id]`, `/donasi/[slug]`, `/pasang`, `/kebijakan-privasi` |
 | Umat | `/umat`, `/umat/punia`, `/umat/akun`, `/pura/[slug]/punia` |
+| Everyone signed in | `/bantuan` (help messages and replies) |
 | Auth | `/masuk`, `/masuk/tautan`, `/setup`, `/keluar` |
 | Staff | `/app` (dashboard), `/app/punia` (verification + manual input), `/app/banjar`, `/app/transaksi`, `/app/kegiatan`, `/app/campaign`, `/app/laporan`, `/app/presentasi`, `/app/pengguna`, `/app/audit`, `/app/pengaturan`, `/app/notifikasi` |
 | Admin Utama | `/app/admin` (Back Office), `/app/log-aktivitas` |

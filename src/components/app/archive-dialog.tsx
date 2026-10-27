@@ -11,6 +11,8 @@ export interface ArchiveTarget {
   action: ArchiveAction;
   id: string;
   name: string;
+  /** Punia still waiting for verification (archiving a temple leaves them unverifiable) */
+  pending?: number;
 }
 
 /** Command name for each kind + action (all Admin Utama only, checked on the server). */
@@ -105,6 +107,9 @@ export function ArchiveDialog({ target, busy, onClose, onConfirm }: { target: Ar
           <div className={danger ? "rounded-xl bg-red-50 p-3 text-[15px] text-red-900" : "rounded-xl bg-amber-50 p-3 text-[15px] text-amber-900"}>
             <p className="flex items-center gap-2 font-bold"><AlertTriangle className="h-5 w-5 shrink-0" /> Yang akan terjadi</p>
             <ul className="mt-1.5 list-disc space-y-1 pl-5">{t.points.map((p) => <li key={p}>{p}</li>)}</ul>
+            {target.action === "archive" && !!target.pending && (
+              <p className="mt-2 font-bold">Masih ada {target.pending} punia menunggu verifikasi. Sebaiknya selesaikan dulu: setelah diarsipkan, punia itu tidak bisa disahkan atau ditolak.</p>
+            )}
           </div>
           <Field label="Alasan (wajib)" hint="Dicatat di Log Aktivitas." htmlFor="arsip-alasan">
             <Textarea id="arsip-alasan" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} />

@@ -50,12 +50,15 @@ test("dashboard pengurus pas dengan lebar layar", async ({ page }) => {
   await checkPage(page, "/app", "dashboard");
   await checkPage(page, "/app/punia", "verifikasi-punia");
   await checkPage(page, "/app/laporan", "laporan");
+  await checkPage(page, "/app/pengaturan?tab=profil-admin", "profil-saya");
+  await checkPage(page, "/bantuan", "bantuan");
 });
 
 test("Back Office pas dengan lebar layar", async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   await signInUi(page, "admin@contoh.id");
   await checkPage(page, "/app/admin", "back-office");
+  await checkPage(page, "/app/admin?tab=bantuan", "back-office-bantuan");
 });
 
 test("menu HP: panel penuh setinggi layar, latar solid, halaman terkunci, bisa ditutup", async ({ page }) => {

@@ -162,7 +162,7 @@ export default function BackOfficePage() {
                     <Button size="sm" variant="outline" onClick={() => { setNewStaff({ email: "", name: "", role: "pengurus" }); setStaffFor({ kind: "temple", t }); }}><Users className="h-4 w-4" /> Pengurus</Button>
                     {t.status === "archived"
                       ? <Button size="sm" variant="outline" onClick={() => setArchiveFor({ kind: "temple", action: "unarchive", id: t.id, name: t.name })}><ArchiveRestore className="h-4 w-4" /> Aktifkan kembali</Button>
-                      : <Button size="sm" variant="outline" onClick={() => setArchiveFor({ kind: "temple", action: "archive", id: t.id, name: t.name })}><Archive className="h-4 w-4" /> Arsipkan</Button>}
+                      : <Button size="sm" variant="outline" onClick={() => setArchiveFor({ kind: "temple", action: "archive", id: t.id, name: t.name, pending: t.pendingCount })}><Archive className="h-4 w-4" /> Arsipkan</Button>}
                     <Button size="sm" variant="ghost" className="text-expense" onClick={() => setArchiveFor({ kind: "temple", action: "delete", id: t.id, name: t.name })}><Trash2 className="h-4 w-4" /> Hapus permanen</Button>
                   </div>
                 </li>
