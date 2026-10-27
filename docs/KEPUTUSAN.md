@@ -11,11 +11,13 @@ Daftar ini berisi pilihan yang **tidak bisa saya putuskan sendiri** karena menya
 - ✅ Situs demo hanya untuk orang tertentu, tidak diindeks mesin pencari, isi ulang manual dengan `npm run db:reset-demo`.
 - ✅ Email uji coba: Brevo Free + Gmail khusus proyek; domain sendiri ditunda sampai pilot.
 
-## Masih terbuka
+- ✅ Nama akun di Log Aktivitas (khusus Admin Utama) dibiarkan sebagai jejak keamanan. **Sampaikan ke pengurus saat pilot:** "ANONIM" berarti anonim di **tampilan publik** dan laporan versi umum. Nama asli pengirim tetap diketahui oleh pengurus pura tujuan, Pengurus Banjar pengemponnya, dan Admin Utama.
+- ✅ Gabung akun: tidak dibuat. Pengurus yang punya dua email memakai email yang didaftarkan Admin Utama.
+- ⏳ Skrip ganti email Admin Utama: dikerjakan di **Phase 3.2**, bersama aturan pengesahan pengeluaran.
 
-1. **Nama akun umat di Log Aktivitas (khusus Admin Utama).** Log mencatat *siapa* melakukan tindakan, termasuk umat yang mengirim punia ANONIM. Log ini tidak bisa diedit, jadi nama akun tetap tersimpan di sana walaupun umat kemudian menghapus akunnya. Catatan ini hanya bisa dilihat Admin Utama, dan sejak Phase 3.1 tidak lagi muncul di Riwayat Audit Pura. *Saran: biarkan* — ini jejak keamanan yang wajar — tetapi sebutkan di kebijakan privasi.
-2. **Ganti email Admin Utama.** Tombol "Ganti email" sengaja tidak berlaku untuk Admin Utama. Perlu dibuatkan skrip khusus (seperti `admin:reset`)?
-3. **Ganti email ke alamat yang sudah dipakai akun umat** masih ditolak. Perlu fitur "gabungkan akun"? *Saran: belum perlu untuk pilot.*
+## Bahan pilot (dijawab sebelum pilot, tidak perlu untuk demo)
+
+Bagian A–D di bawah: pengurus tiap pura, rekening, tanggal mulai dan saldo awal, serta pemegang cadangan.
 
 ## A. Sebelum uji coba (pilot) dimulai
 

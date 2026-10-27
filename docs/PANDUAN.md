@@ -275,6 +275,12 @@ Pengurus pura lalu mengisi sendiri di **Pengaturan**: deskripsi & kontak pura (o
 
 ---
 
+### Pesan untuk pengurus saat pilot
+
+Jelaskan di paruman atau saat pelatihan: **"ANONIM" berarti anonim di tampilan publik** (halaman pura, transaksi terakhir, laporan versi umum). Nama asli pengirim tetap diketahui oleh **pengurus pura tujuan**, **Pengurus Banjar** pengemponnya, dan **Admin Utama**, karena mereka perlu mencocokkan bukti transfer. Log Aktivitas Admin Utama juga mencatat akun yang mengirim punia, dan catatan ini tidak bisa dihapus.
+
+---
+
 ## Admin Utama: mode lihat dan mode darurat
 
 - Dari **Back Office → Pura → Buka dashboard** (atau pemilih pura di atas layar, atau menu **Pura Banjar Saya**), Admin Utama bisa membuka dashboard **semua pura** untuk melihat kas, punia, laporan, dan riwayatnya. Di atas layar muncul pita gelap **"Mode lihat — Admin Utama"**.
