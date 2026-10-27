@@ -1,4 +1,5 @@
 import { expect, request as pw, type Download, type Page, test } from "@playwright/test";
+import { createRequire } from "module";
 import { command, publicData, signInApi, signInUi } from "./helpers";
 
 // Phase 3.2 — detailed reports (one row per transaction, running balance), jabatan per
@@ -129,4 +130,51 @@ test("jabatan per kepengurusan: hanya Admin Utama, satu Ketua per pura, tercatat
   await signInApi(pengurus, "made@contoh.id");
   const denied = await command(pengurus, "adminSetPosition", { kind: "temple", id: mem(komang.id).id, position: "sekretaris" });
   expect(denied.ok).toBe(false);
+});
+
+test("Excel rapi: beberapa sheet, tanggal & Rupiah sebagai angka, rumus SUM & saldo, tanda tangan, kertas F4", async ({ page }) => {
+  // The prebuilt bundle: the Node entry of exceljs pulls in a dependency that the test runner's
+  // module loader cannot transform.
+  const ExcelJS = createRequire(__filename)("exceljs/dist/exceljs.min.js") as typeof import("exceljs");
+  await openReports(page, "made@contoh.id");
+  await page.locator("#r-sign").selectOption("ketua_bendahara");
+  await page.locator("#r-paper").selectOption("f4");
+  const [d] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Excel" }).click()]);
+  expect(d.suggestedFilename()).toMatch(/\.xlsx$/);
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(Buffer.concat(await (await d.createReadStream()).toArray()) as unknown as ArrayBuffer);
+  const names = wb.worksheets.map((w) => w.name);
+  expect(names.slice(0, 3)).toEqual(["Ringkasan", "Rincian Transaksi", "Per Kategori"]);
+  for (const n of names) expect(n.length).toBeLessThanOrEqual(31);
+
+  const ws = wb.getWorksheet("Rincian Transaksi")!;
+  let head = 0;
+  ws.eachRow((row, i) => { if (!head && row.getCell(1).value === "Tanggal" && row.getCell(7).value === "Saldo") head = i; });
+  expect(head, "baris judul kolom buku kas").toBeGreaterThan(0);
+  // Header frozen and repeated on every printed page; F4 landscape, fit to width.
+  expect(ws.views[0]).toMatchObject({ state: "frozen", ySplit: head });
+  expect(ws.pageSetup).toMatchObject({ paperSize: 14, orientation: "landscape", fitToPage: true, fitToWidth: 1, printTitlesRow: `${head}:${head}` });
+  expect(String(ws.headerFooter.oddFooter)).toContain("Hal. &P dari &N");
+
+  const first = ws.getRow(head + 2); // first transaction (row after "Saldo awal periode")
+  expect(first.getCell(1).value).toBeInstanceOf(Date);
+  expect(first.getCell(1).numFmt).toContain("d mmm yyyy");
+  const income = first.getCell(5).value ?? first.getCell(6).value;
+  expect(typeof income).toBe("number");
+  expect(first.getCell(5).numFmt ?? first.getCell(6).numFmt).toContain('"Rp"');
+  expect(first.getCell(5).alignment?.horizontal).toBe("right");
+  const bal = first.getCell(7).value as { formula: string; result: number };
+  expect(bal.formula).toBe(`G${head + 1}+N(E${head + 2})-N(F${head + 2})`);
+
+  let foot = 0;
+  ws.eachRow((row, i) => { if (row.getCell(3).value === "Jumlah / saldo akhir") foot = i; });
+  expect((ws.getCell(foot, 5).value as { formula: string }).formula).toBe(`SUM(E${head + 1}:E${foot - 1})`);
+  expect((ws.getCell(foot, 7).value as { formula: string }).formula).toBe(`G${foot - 1}`);
+
+  const texts: string[] = [];
+  ws.eachRow((row) => row.eachCell((c) => typeof c.value === "string" && texts.push(c.value)));
+  for (const s of ["Ketua", "I Made Suarjana (contoh)", "Bendahara", "I Komang Adi (contoh)"]) expect(texts, s).toContain(s);
+  expect(texts).not.toContain("Sekretaris");
+  // Shareable version: anonymous donor stays anonymous in the workbook too.
+  wb.eachSheet((s) => s.eachRow((row) => row.eachCell((c) => expect(String(c.value ?? "")).not.toContain("Nyoman Darma"))));
 });

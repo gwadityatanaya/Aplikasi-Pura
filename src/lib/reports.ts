@@ -1,7 +1,7 @@
 import type { ReportDoc, ReportTable } from "./export";
 import type { DataState, Temple, Transaction } from "./types";
 import { activitySummary, byCategory, campaignStats, expenseOf, incomeOf, monthlyCashflow, summarize } from "./ledger";
-import { formatDate, formatDateShort, slugify } from "./format";
+import { formatDate, slugify } from "./format";
 import { PURPOSE_LABEL } from "./permissions";
 import { templeLocation } from "./temple";
 
@@ -99,9 +99,9 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
     head: kind ? ["Tanggal", "No. bukti", "Uraian", "Kategori", "Kegiatan", ...(full ? ["Dicatat oleh"] : []), "Nominal"] : ["Tanggal", "No.", "Keterangan", "Jenis", "Kategori", "Kas/Rekening", "Status", "Nominal"],
     body: list.map((t) =>
       kind
-        ? [formatDateShort(t.date), t.number, describe(t), catName(t.categoryId), t.activityId ? actName(t.activityId) : "—", ...(full ? [personName(t.createdBy)] : []), signed(t)]
+        ? [t.date, t.number, describe(t), catName(t.categoryId), t.activityId ? actName(t.activityId) : "—", ...(full ? [personName(t.createdBy)] : []), signed(t)]
         : [
-            formatDateShort(t.date),
+            t.date,
             t.number,
             t.description,
             t.type === "income" ? "Pemasukan" : t.type === "expense" ? "Pengeluaran" : "Pindah dana",
@@ -113,6 +113,7 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
     ),
     foot: kind ? ["", "", "Total", "", "", ...(full ? [""] : []), kind === "income" ? income : expense] : undefined,
     money: kind ? [full ? 6 : 5] : [7],
+    dateCols: [0],
   });
 
   /**
@@ -141,7 +142,7 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
       totOut += out;
       const uraian = t.type === "transfer" ? `Pindah dana: ${accName(t.accountId)} → ${accName(t.toAccountId)}${t.description ? ` (${t.description})` : ""}` : describe(t);
       body.push([
-        formatDateShort(t.date), t.number, t.reversalOf ? `${uraian} [koreksi]` : uraian,
+        t.date, t.number, t.reversalOf ? `${uraian} [koreksi]` : uraian,
         t.type === "transfer" ? "Pindah dana" : catName(t.categoryId), inc || "", out || "", saldo, ...(full ? [personName(t.createdBy)] : []),
       ]);
     }
@@ -151,6 +152,7 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
       body,
       foot: ["", "", "Jumlah / saldo akhir", "", totIn, totOut, saldo, ...(full ? [""] : [])],
       money: [4, 5, 6],
+      dateCols: [0],
       ledger: { opening, incomeCol: 4, expenseCol: 5, balanceCol: 6 },
     };
   };
@@ -230,7 +232,7 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
       const tables: ReportTable[] = [{ title: "Ringkasan campaign", head: ["Campaign", "Target", "Terkumpul", "Donatur", "Digunakan", "Sisa"], body, money: [1, 2, 4, 5] }];
       for (const c of cps) {
         const exp = data.transactions.filter((t) => t.campaignId === c.id && t.type === "expense" && t.status === "confirmed");
-        if (exp.length) tables.push({ title: `Penggunaan dana: ${c.title}`, head: ["Tanggal", "No.", "Keterangan", "Nominal"], body: exp.map((t) => [formatDateShort(t.date), t.number, t.description, signed(t)]), money: [3] });
+        if (exp.length) tables.push({ title: `Penggunaan dana: ${c.title}`, head: ["Tanggal", "No.", "Keterangan", "Nominal"], body: exp.map((t) => [t.date, t.number, t.description, signed(t)]), money: [3], dateCols: [0] });
       }
       const tot = body.reduce((x, r) => x + (r[2] as number), 0);
       const used = body.reduce((x, r) => x + (r[4] as number), 0);
@@ -265,16 +267,18 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
           ? {
               title: `Rincian punia (${list.length}) — INTERNAL`,
               head: ["Tgl transfer", "Nama donatur", "Tampil di publik", "Tujuan", "Lewat", "Dicatat oleh", "Nominal"],
-              body: list.map((d) => [formatDateShort(d.transferDate ?? d.date), d.donorName, d.privacy === "public" ? "Tampil" : "Anonim", PURPOSE_LABEL[d.purpose ?? "umum"], channel[d.channel], d.inputByName ?? "Umat (aplikasi)", d.amount]),
+              body: list.map((d) => [(d.transferDate ?? d.date), d.donorName, d.privacy === "public" ? "Tampil" : "Anonim", PURPOSE_LABEL[d.purpose ?? "umum"], channel[d.channel], d.inputByName ?? "Umat (aplikasi)", d.amount]),
               foot: ["", "", "", "", "", "Total", total],
               money: [6],
+              dateCols: [0],
             }
           : {
               title: `Rincian punia (${list.length})`,
               head: ["Tgl transfer", "Nama", "Tujuan", "Kegiatan", "Lewat", "Nominal"],
-              body: list.map((d) => [formatDateShort(d.transferDate ?? d.date), d.privacy === "public" ? d.donorName : "Anonim", PURPOSE_LABEL[d.purpose ?? "umum"], campName(d.campaignId), channel[d.channel], d.amount]),
+              body: list.map((d) => [(d.transferDate ?? d.date), d.privacy === "public" ? d.donorName : "Anonim", PURPOSE_LABEL[d.purpose ?? "umum"], campName(d.campaignId), channel[d.channel], d.amount]),
               foot: ["", "", "", "", "Total", total],
               money: [5],
+              dateCols: [0],
             }
       );
       return {

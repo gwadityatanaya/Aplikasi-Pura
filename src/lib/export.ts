@@ -1,6 +1,6 @@
 "use client";
 // Client-side exports: PDF (jsPDF), Excel (SheetJS) and CSV. Everything runs in the browser.
-import { formatDate, formatDateTime, rupiah } from "./format";
+import { formatDate, formatDateShort, formatDateTime, rupiah } from "./format";
 
 export interface ReportTable {
   title: string;
@@ -8,6 +8,8 @@ export interface ReportTable {
   body: (string | number)[][];
   /** Column indexes holding Rupiah numbers (formatted in PDF, kept numeric in Excel) */
   money?: number[];
+  /** Column indexes holding ISO dates "2026-10-27" (shown as 27 Okt 2026, real dates in Excel) */
+  dateCols?: number[];
   foot?: (string | number)[];
   /**
    * Cash-book table: first body row is the opening balance, the balance column is a running
@@ -47,8 +49,14 @@ export interface ReportDoc {
   note?: string;
 }
 
-function cell(v: string | number, money: boolean) {
+function cell(v: string | number, money: boolean, date = false) {
+  if (date && typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v)) return formatDateShort(v);
   return money && typeof v === "number" ? rupiah(v) : String(v);
+}
+
+/** How a table cell is shown on screen / in PDF (Rupiah, dates). */
+export function displayCell(t: ReportTable, v: string | number, col: number) {
+  return cell(v, !!t.money?.includes(col), !!t.dateCols?.includes(col));
 }
 
 /** Paper sizes in points (1 pt = 1/72 inch). F4 / Folio = 215 × 330 mm. */
@@ -137,7 +145,7 @@ export async function buildPdf(doc: ReportDoc, opts: { paper?: Paper } = {}): Pr
     autoTable(pdf, {
       startY: y + 8,
       head: [t.head],
-      body: t.body.map((r) => r.map((v, i) => cell(v, money.has(i)))),
+      body: t.body.map((r) => r.map((v, i) => cell(v, money.has(i), !!t.dateCols?.includes(i)))),
       foot: t.foot ? [t.foot.map((v, i) => cell(v, money.has(i)))] : undefined,
       showHead: "everyPage",
       showFoot: "lastPage",
@@ -227,38 +235,9 @@ export async function exportPdf(doc: ReportDoc, opts: { paper?: Paper } = {}) {
   return blob;
 }
 
-export async function exportXlsx(doc: ReportDoc, _opts: { paper?: Paper } = {}) {
-  const XLSX = await import("xlsx");
-  const wb = XLSX.utils.book_new();
-  const summary = [
-    [doc.title],
-    [doc.templeName],
-    [`Periode: ${doc.period}`],
-    [],
-    ["Ringkasan", "Nominal (Rp)"],
-    ...doc.summary.map((s) => [s.label, s.value]),
-    ...(doc.signatures
-      ? [
-          [],
-          [`${doc.signatures.place ? `${doc.signatures.place}, ` : ""}${doc.signatures.date}`],
-          ...[...(doc.signatures.acknowledger ? [{ ...doc.signatures.acknowledger, role: `Mengetahui, ${doc.signatures.acknowledger.role}` }] : []), ...doc.signatures.signers].map((x) => [x.role, x.name ?? "(..............................)"]),
-        ]
-      : []),
-  ];
-  const ws0 = XLSX.utils.aoa_to_sheet(summary);
-  ws0["!cols"] = [{ wch: 36 }, { wch: 20 }];
-  XLSX.utils.book_append_sheet(wb, ws0, "Ringkasan");
-  const used = new Set<string>(["Ringkasan"]);
-  for (const t of doc.tables) {
-    let name = t.title.replace(/[\\/?*[\]:]/g, "").slice(0, 28) || "Data";
-    while (used.has(name)) name = name.slice(0, 26) + Math.floor(Math.random() * 90 + 10);
-    used.add(name);
-    const rows = [t.head, ...t.body, ...(t.foot ? [t.foot] : [])];
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws["!cols"] = t.head.map((h, i) => ({ wch: Math.max(h.length + 2, ...t.body.slice(0, 50).map((r) => String(r[i] ?? "").length + 2), 10) }));
-    XLSX.utils.book_append_sheet(wb, ws, name);
-  }
-  XLSX.writeFile(wb, `${doc.fileName}.xlsx`);
+export async function exportXlsx(doc: ReportDoc, opts: { paper?: Paper } = {}) {
+  const { buildXlsx } = await import("./export-xlsx");
+  downloadBlob(await buildXlsx(doc, opts), `${doc.fileName}.xlsx`);
 }
 
 function csvEscape(v: string | number) {

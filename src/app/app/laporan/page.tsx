@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChartLegend, CategoryBars, FlowChart } from "@/components/shared/charts";
 import { WhatsAppIcon, whatsappLink } from "@/components/shared/share";
 import { OrnamentDivider } from "@/components/brand/ornament";
+import { displayCell } from "@/lib/export";
 import { buildReport, filterTx, REPORT_TYPES, whatsappSummary, type ReportFilters } from "@/lib/reports";
 import { ReportSignOptions, defaultSignOptions, signatureBlock, type SignOptions } from "@/components/app/report-signatures";
 import { exportCsv, exportPdf, exportXlsx, sharePdfFile } from "@/lib/export";
@@ -202,7 +203,7 @@ function Reports() {
                   <thead className="bg-emerald-700 text-white"><tr>{t.head.map((h, i) => <th key={h + i} className={cn("px-3 py-2.5 font-semibold", t.money?.includes(i) && "text-right")}>{h}</th>)}</tr></thead>
                   <tbody className="divide-y divide-line">
                     {t.body.slice(0, 60).map((r, ri) => (
-                      <tr key={ri} className="even:bg-ivory/60">{r.map((v, i) => <td key={i} className={cn("px-3 py-2", t.money?.includes(i) && "tabular text-right font-semibold")}>{t.money?.includes(i) && typeof v === "number" ? rupiah(v) : v}</td>)}</tr>
+                      <tr key={ri} className="even:bg-ivory/60">{r.map((v, i) => <td key={i} className={cn("px-3 py-2", t.money?.includes(i) && "tabular text-right font-semibold")}>{displayCell(t, v, i)}</td>)}</tr>
                     ))}
                     {t.body.length === 0 && <tr><td colSpan={t.head.length} className="px-3 py-6 text-center text-muted">Tidak ada data pada periode/filter ini.</td></tr>}
                   </tbody>

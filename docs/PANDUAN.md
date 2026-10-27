@@ -300,6 +300,8 @@ Pengurus pura lalu mengisi sendiri di **Pengaturan**: deskripsi & kontak pura (o
    - Pilih **Versi**: **umum / paruman** (aman dibagikan: donatur anonim tertulis "Anonim", tanpa nama pencatat) atau **lengkap (internal)** (nama asli + kolom "Dicatat oleh" — **hanya untuk pengurus**, jangan dibagikan). Pemeriksa hanya bisa versi umum.
    - **Tanda tangan & kertas:** pilih penanda tangan (Ketua saja; Ketua dan Sekretaris; Ketua dan Bendahara; atau ketiganya), opsional **Mengetahui** (Kelian Banjar / Pengurus Banjar), dan ukuran kertas **A4** atau **F4/Folio**. Nama diambil dari jabatan di Back Office. Jika ada jabatan yang belum diisi, muncul peringatan; centang **"Cetak dengan garis kosong"** untuk mencetak titik-titik yang diisi tangan.
    - Blok tanda tangan (tempat & tanggal, jabatan, ruang tanda tangan, nama) selalu utuh di satu halaman. Tabel lebar dicetak mendatar (landscape) otomatis; setiap halaman bernomor.
+   - **Berkas Excel** berisi beberapa lembar (sheet): **Ringkasan** (saldo awal/akhir + tanda tangan), **Rincian Transaksi** (buku kas + tanda tangan), **Per Kategori**, dan posisi kas. Tanggal dan nominal tersimpan sebagai **angka asli** (bisa dijumlah/diurutkan), total memakai rumus **SUM**, dan kolom saldo memakai rumus "saldo sebelumnya + masuk − keluar" — jika angka diubah di Excel, total dan saldo ikut berubah. Pengaturan cetak sudah siap: ukuran kertas, arah kertas, muat selebar halaman, judul kolom diulang di tiap halaman, nomor halaman. Tinggal tekan **Cetak**.
+   - Catatan: pemisah ribuan (titik atau koma) mengikuti pengaturan bahasa komputer. Di komputer berbahasa Indonesia tampil **Rp1.050.000**; di komputer berbahasa Inggris tampil Rp1,050,000. Nilainya sama.
 
 ---
 

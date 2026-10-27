@@ -83,4 +83,4 @@ Deploy: import the repo in Vercel, set the variables from `.env.example`. `verce
 
 ## Tech stack
 
-Next.js 14 (App Router) · TypeScript · Tailwind CSS · hand-written shadcn-style UI · Lucide · Framer Motion · Recharts · React Hook Form + Zod · PostgreSQL + Drizzle ORM · nodemailer · Zustand (only display preferences persist on the device) · jsPDF + autotable · SheetJS · Playwright.
+Next.js 14 (App Router) · TypeScript · Tailwind CSS · hand-written shadcn-style UI · Lucide · Framer Motion · Recharts · React Hook Form + Zod · PostgreSQL + Drizzle ORM · nodemailer · Zustand (only display preferences persist on the device) · jsPDF + autotable · ExcelJS · Playwright.
