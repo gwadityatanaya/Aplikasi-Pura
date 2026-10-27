@@ -1,6 +1,7 @@
 import type { PublishedReport, Temple } from "./types";
 import { formatDate, slugify } from "./format";
 import type { ReportDoc } from "./export";
+import { templeLocation } from "./temple";
 
 export function snapshotDoc(r: PublishedReport, t: Temple): ReportDoc {
   const s = r.snapshot;
@@ -8,7 +9,7 @@ export function snapshotDoc(r: PublishedReport, t: Temple): ReportDoc {
     fileName: slugify(`${t.name} ${r.title}`),
     title: r.title,
     templeName: t.name,
-    templeAddress: `${t.regency}, ${t.province}`,
+    templeAddress: [templeLocation(t), t.province].filter(Boolean).join(", "),
     period: `${formatDate(r.periodStart)} – ${formatDate(r.periodEnd)}`,
     summary: [
       { label: "Saldo awal", value: s.openingBalance },
@@ -33,7 +34,6 @@ export function snapshotDoc(r: PublishedReport, t: Temple): ReportDoc {
         money: [1],
       },
     ],
-    signatory: { name: t.branding.signatoryName, role: t.branding.signatoryRole },
     footerNote: t.branding.footerNote,
   };
 }

@@ -8,7 +8,7 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonClass } from "@/components/ui/button";
 import { useAccess, useStore } from "@/lib/store";
-import { ALL_PERMISSIONS, ALL_ROLES, PERMISSION_LABEL, ROLE_DESC, ROLE_LABEL, ROLE_TONE, can as roleCan } from "@/lib/permissions";
+import { ALL_PERMISSIONS, ALL_ROLES, PERMISSION_LABEL, ROLE_DESC, ROLE_LABEL, ROLE_TONE, can as roleCan, positionName } from "@/lib/permissions";
 import { cn } from "@/lib/format";
 import type { Role } from "@/lib/types";
 
@@ -19,9 +19,9 @@ export default function PengurusPage() {
   const me = useStore((s) => s.session?.userId);
   const banjars = useStore((s) => s.data.banjars);
   const templeBanjars = ws.temple?.banjarIds ?? [];
-  const rows: { key: string; userId: string; role: Role; note?: string }[] = [
-    ...ws.memberships.map((m) => ({ key: m.id, userId: m.userId, role: m.role as Role })),
-    ...ws.data.banjarMembers.filter((b) => templeBanjars.includes(b.banjarId) && b.status === "active").map((b) => ({ key: b.id, userId: b.userId, role: "banjar" as Role, note: banjars.find((x) => x.id === b.banjarId)?.name })),
+  const rows: { key: string; userId: string; role: Role; note?: string; jabatan?: string }[] = [
+    ...ws.memberships.map((m) => ({ key: m.id, userId: m.userId, role: m.role as Role, jabatan: positionName(m.position, m.positionTitle) })),
+    ...ws.data.banjarMembers.filter((b) => templeBanjars.includes(b.banjarId) && b.status === "active").map((b) => ({ key: b.id, userId: b.userId, role: "banjar" as Role, note: banjars.find((x) => x.id === b.banjarId)?.name, jabatan: positionName(b.position, b.positionTitle) })),
   ];
   const pengurusCount = ws.memberships.filter((m) => m.role === "pengurus" && m.status === "active").length;
 
@@ -49,6 +49,7 @@ export default function PengurusPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-bold">{u.name} {u.id === me && <span className="text-sm font-medium text-muted">(Anda)</span>}</p>
                   <p className="flex items-center gap-1.5 text-sm text-muted"><Mail className="h-3.5 w-3.5" /> {u.email}</p>
+                  {r.jabatan && <p className="text-sm font-semibold text-emerald-800">Jabatan: {r.jabatan}</p>}
                 </div>
                 {u.status === "disabled" && <Badge tone="red">Nonaktif</Badge>}
                 <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", ROLE_TONE[r.role])}>{ROLE_LABEL[r.role]}{r.note ? ` · ${r.note}` : ""}</span>
@@ -58,7 +59,7 @@ export default function PengurusPage() {
         </ul>
         {!rows.length && <p className="p-6 text-muted">Belum ada pengurus terdaftar.</p>}
       </Card>
-      <p className="mt-3 text-sm text-muted">Untuk menambah atau mencabut pengurus, hubungi Admin Utama. Pengurus baru cukup masuk dengan Google atau tautan email memakai alamat yang didaftarkan.</p>
+      <p className="mt-3 text-sm text-muted">Untuk menambah atau mencabut pengurus, atau mengubah jabatan (Ketua, Sekretaris, Bendahara), hubungi Admin Utama. Pengurus baru cukup masuk dengan Google atau tautan email memakai alamat yang didaftarkan.</p>
 
       <Card className="mt-6 overflow-hidden">
         <CardHeader title="Hak akses tiap peran" />

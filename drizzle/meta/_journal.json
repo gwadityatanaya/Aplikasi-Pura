@@ -71,6 +71,13 @@
       "when": 1793130659762,
       "tag": "0009_wilayah_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793137441542,
+      "tag": "0010_jabatan",
+      "breakpoints": true
     }
   ]
 }

@@ -129,7 +129,15 @@ export const banjarMembers = pgTable("banjar_members", {
   userId: text("user_id").notNull().references(() => users.id),
   banjarId: text("banjar_id").notNull().references(() => banjars.id),
   status: text("status").notNull().default("active"),
-}, (t) => [uniqueIndex("banjar_member_unique").on(t.userId, t.banjarId)]);
+  /** Jabatan in THIS banjar (kelian_banjar | sekretaris | bendahara | lainnya) — set by Admin Utama only */
+  position: text("position"),
+  /** Free title when position = lainnya (e.g. "Wakil Kelian") */
+  positionTitle: text("position_title"),
+}, (t) => [
+  uniqueIndex("banjar_member_unique").on(t.userId, t.banjarId),
+  // One Kelian / Sekretaris / Bendahara per banjar at a time.
+  uniqueIndex("banjar_member_position_unique").on(t.banjarId, t.position).where(sql`position in ('ketua','kelian_banjar','sekretaris','bendahara') and status = 'active'`),
+]);
 
 export const memberships = pgTable("memberships", {
   id: text("id").primaryKey(),
@@ -137,7 +145,14 @@ export const memberships = pgTable("memberships", {
   templeId: text("temple_id").notNull().references(() => temples.id),
   role: text("role").notNull(), // pengurus | pemeriksa
   status: text("status").notNull().default("active"),
-}, (t) => [uniqueIndex("membership_unique").on(t.userId, t.templeId)]);
+  /** Jabatan in THIS temple's kepengurusan (ketua | sekretaris | bendahara | lainnya) — Admin Utama only */
+  position: text("position"),
+  positionTitle: text("position_title"),
+}, (t) => [
+  uniqueIndex("membership_unique").on(t.userId, t.templeId),
+  // One Ketua / Sekretaris / Bendahara per temple at a time.
+  uniqueIndex("membership_position_unique").on(t.templeId, t.position).where(sql`position in ('ketua','kelian_banjar','sekretaris','bendahara') and status = 'active'`),
+]);
 
 export const accounts = pgTable("accounts", {
   id: text("id").primaryKey(),

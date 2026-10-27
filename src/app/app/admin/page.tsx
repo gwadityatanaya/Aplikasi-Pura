@@ -18,9 +18,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { api, useAccess, useStore, type Result } from "@/lib/store";
-import { ROLE_LABEL, ROLE_TONE } from "@/lib/permissions";
+import { BANJAR_POSITIONS, POSITION_LABEL, ROLE_LABEL, ROLE_TONE, TEMPLE_POSITIONS } from "@/lib/permissions";
 import { cn, relativeTime } from "@/lib/format";
-import type { Banjar, BanjarMember, Membership, Temple, User } from "@/lib/types";
+import type { Banjar, BanjarMember, Membership, Position, Temple, User } from "@/lib/types";
 
 type AdminTemple = Temple & { banjarIds: string[]; pengurusCount: number; pendingCount: number };
 interface AdminData {
@@ -349,13 +349,20 @@ export default function BackOfficePage() {
           <div className="space-y-4 pb-2">
             <ul className="divide-y divide-line rounded-2xl border border-line">
               {(staffFor.kind === "temple"
-                ? data.memberships.filter((m) => m.templeId === staffFor.t.id).map((m) => ({ id: m.id, kind: "temple" as const, user: userById(m.userId), role: m.role }))
-                : data.banjarMembers.filter((m) => m.banjarId === staffFor.b.id).map((m) => ({ id: m.id, kind: "banjar" as const, user: userById(m.userId), role: "banjar" as const }))
+                ? data.memberships.filter((m) => m.templeId === staffFor.t.id).map((m) => ({ id: m.id, kind: "temple" as const, user: userById(m.userId), role: m.role, position: m.position, positionTitle: m.positionTitle }))
+                : data.banjarMembers.filter((m) => m.banjarId === staffFor.b.id).map((m) => ({ id: m.id, kind: "banjar" as const, user: userById(m.userId), role: "banjar" as const, position: m.position, positionTitle: m.positionTitle }))
               ).map((r) => (
-                <li key={r.id} className="flex items-center gap-3 p-3">
+                <li key={r.id} className="flex flex-wrap items-center gap-3 p-3">
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold">{r.user?.name ?? "—"} {r.user?.status === "disabled" && <Badge tone="red">Nonaktif</Badge>}</p>
                     <p className="truncate text-sm text-muted">{r.user?.email}</p>
+                    <PositionPicker
+                      id={`jabatan-${r.id}`}
+                      kind={r.kind}
+                      position={r.position}
+                      title={r.positionTitle}
+                      onSave={(position, title) => done(run("adminSetPosition", { kind: r.kind, id: r.id, position, title }), "Jabatan disimpan")}
+                    />
                   </div>
                   <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", ROLE_TONE[r.role])}>{ROLE_LABEL[r.role]}</span>
                   <button className="grid h-9 w-9 place-items-center rounded-lg text-expense hover:bg-red-50" aria-label="Cabut peran" onClick={() => setRemoveStaff({ kind: r.kind, id: r.id, label: `${r.user?.name} (${ROLE_LABEL[r.role]})` })}><X className="h-4 w-4" /></button>
@@ -432,6 +439,47 @@ export default function BackOfficePage() {
           await done(run("adminSetUserStatus", { userId: u.id, status: u.status === "disabled" ? "active" : "disabled" }), u.status === "disabled" ? "Akun diaktifkan" : "Akun dinonaktifkan");
         }}
       />
+    </div>
+  );
+}
+
+/**
+ * Jabatan of one person in this kepengurusan (temple or banjar). Saved immediately on change;
+ * "Lainnya" asks for the title first. Only Admin Utama sees this (Back Office).
+ */
+function PositionPicker({ id, kind, position, title, onSave }: {
+  id: string;
+  kind: "temple" | "banjar";
+  position?: Position;
+  title?: string;
+  onSave: (position: Position | null, title?: string) => Promise<boolean>;
+}) {
+  const [value, setValue] = useState<string>(position ?? "");
+  const [custom, setCustom] = useState(title ?? "");
+  useEffect(() => { setValue(position ?? ""); setCustom(title ?? ""); }, [position, title]);
+  const options = kind === "temple" ? TEMPLE_POSITIONS : BANJAR_POSITIONS;
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-2">
+      <label htmlFor={id} className="text-sm font-semibold text-muted">Jabatan</label>
+      <Select
+        id={id}
+        className="h-10 w-auto min-w-[9rem] py-0 text-sm"
+        value={value}
+        onChange={async (e) => {
+          const v = e.target.value;
+          setValue(v);
+          if (v !== "lainnya" && !(await onSave((v || null) as Position | null))) setValue(position ?? "");
+        }}
+      >
+        <option value="">— Belum diisi —</option>
+        {options.map((o) => <option key={o} value={o}>{POSITION_LABEL[o]}</option>)}
+      </Select>
+      {value === "lainnya" && (
+        <>
+          <Input aria-label="Nama jabatan" className="h-10 w-40 text-sm" value={custom} maxLength={60} onChange={(e) => setCustom(e.target.value)} placeholder="mis. Wakil Ketua" />
+          <Button size="sm" variant="outline" disabled={!custom.trim() || (position === "lainnya" && custom === (title ?? ""))} onClick={() => onSave("lainnya", custom.trim())}>Simpan</Button>
+        </>
+      )}
     </div>
   );
 }

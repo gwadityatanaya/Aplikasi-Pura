@@ -5,18 +5,17 @@ import { formatDate, formatDateShort, slugify } from "./format";
 import { PURPOSE_LABEL } from "./permissions";
 import { templeLocation } from "./temple";
 
-export type ReportType = "summary" | "income" | "expense" | "cashflow" | "activity" | "campaign" | "punia" | "punia_lengkap" | "detail";
+export type ReportType = "summary" | "income" | "expense" | "cashflow" | "activity" | "campaign" | "punia" | "detail";
 
 export const REPORT_TYPES: { value: ReportType; label: string; desc: string }[] = [
-  { value: "summary", label: "Ringkasan keuangan", desc: "Saldo awal, pemasukan, pengeluaran, saldo akhir" },
+  { value: "summary", label: "Laporan keuangan (rinci)", desc: "Setiap transaksi dengan saldo berjalan, lalu ringkasan per kategori, saldo awal & akhir" },
   { value: "income", label: "Laporan pemasukan", desc: "Rincian semua pemasukan" },
   { value: "expense", label: "Laporan pengeluaran", desc: "Rincian semua pengeluaran" },
   { value: "cashflow", label: "Arus kas bulanan", desc: "Saldo awal & akhir setiap bulan" },
   { value: "activity", label: "Laporan per kegiatan", desc: "Pemasukan & pengeluaran tiap kegiatan" },
   { value: "campaign", label: "Pertanggungjawaban campaign", desc: "Dana terkumpul dan penggunaannya" },
-  { value: "punia", label: "Laporan punia — versi umum / paruman", desc: "Punia disahkan per tujuan & kegiatan; donatur anonim tertulis \"Anonim\"" },
-  { value: "punia_lengkap", label: "Laporan punia — versi lengkap (internal)", desc: "Dengan nama asli & pencatat. Hanya untuk pengurus, jangan dibagikan" },
-  { value: "detail", label: "Rincian transaksi", desc: "Daftar lengkap seluruh transaksi" },
+  { value: "punia", label: "Laporan punia", desc: "Punia disahkan per tujuan & kegiatan, rinci per punia" },
+  { value: "detail", label: "Buku kas (rincian transaksi)", desc: "Semua transaksi berurutan dengan saldo berjalan" },
 ];
 
 export interface ReportFilters {
@@ -29,6 +28,11 @@ export interface ReportFilters {
   campaignId: string;
   accountId: string;
   status: "confirmed" | "all" | "draft";
+  /**
+   * "umum" = for paruman / sharing: ANONIM donors are "Anonim", no names of who recorded entries.
+   * "lengkap" = internal (pengurus, Pengurus Banjar, Admin Utama): real names and "dicatat oleh".
+   */
+  version: "umum" | "lengkap";
 }
 
 type WS = {
@@ -69,22 +73,33 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
   const expense = expenseOf(rows);
   const typeLabel = REPORT_TYPES.find((r) => r.value === f.type)!.label;
   const period = `${formatDate(f.from)} – ${formatDate(f.to)}`;
+  const full = f.version === "lengkap";
+  const personName = (id?: string) => data.users.find((u) => u.id === id)?.name ?? "—";
+  const banjarNames = data.banjars.filter((b) => temple.banjarIds?.includes(b.id)).map((b) => b.name).join(", ");
+  // Internal version: show the real name behind "Punia: Anonim" (staff state only has it for
+  // pengurus / Pengurus Banjar / Admin Utama — a Pemeriksa gets "Anonim" from the server anyway).
+  const describe = (t: Transaction) => {
+    if (!full || !t.donationId) return t.description;
+    const d = data.donations.find((x) => x.id === t.donationId);
+    return d && d.privacy !== "public" ? `Punia: ${d.donorName} (anonim)` : t.description;
+  };
   const base = {
-    fileName: `${slugify(`${typeLabel} ${temple.name}`)}_${f.from}_${f.to}`,
-    title: typeLabel === "Ringkasan keuangan" ? temple.branding.headerTitle : `${typeLabel}`,
+    fileName: `${slugify(`${typeLabel}${full ? " internal" : ""} ${temple.name}`)}_${f.from}_${f.to}`,
+    title: f.type === "summary" ? temple.branding.headerTitle || typeLabel : typeLabel,
+    subtitle: full ? "VERSI LENGKAP — INTERNAL, JANGAN DIBAGIKAN" : undefined,
     templeName: temple.name,
     templeAddress: [templeLocation(temple), temple.province].filter(Boolean).join(", "),
+    banjarNames,
     period,
-    signatory: { name: temple.branding.signatoryName, role: temple.branding.signatoryRole },
     footerNote: temple.branding.footerNote,
     note: f.status !== "confirmed" ? "Catatan: laporan ini menyertakan transaksi berstatus draf yang belum dikonfirmasi." : undefined,
   };
   const txTable = (title: string, list: Transaction[], kind?: "income" | "expense"): ReportTable => ({
     title,
-    head: kind ? ["Tanggal", "No.", "Keterangan", "Kategori", "Kegiatan", "Nominal"] : ["Tanggal", "No.", "Keterangan", "Jenis", "Kategori", "Kas/Rekening", "Status", "Nominal"],
+    head: kind ? ["Tanggal", "No. bukti", "Uraian", "Kategori", "Kegiatan", ...(full ? ["Dicatat oleh"] : []), "Nominal"] : ["Tanggal", "No.", "Keterangan", "Jenis", "Kategori", "Kas/Rekening", "Status", "Nominal"],
     body: list.map((t) =>
       kind
-        ? [formatDateShort(t.date), t.number, t.description, catName(t.categoryId), t.activityId ? actName(t.activityId) : "—", signed(t)]
+        ? [formatDateShort(t.date), t.number, describe(t), catName(t.categoryId), t.activityId ? actName(t.activityId) : "—", ...(full ? [personName(t.createdBy)] : []), signed(t)]
         : [
             formatDateShort(t.date),
             t.number,
@@ -96,8 +111,55 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
             t.type === "expense" ? -signed(t) : signed(t),
           ]
     ),
-    foot: kind ? ["", "", "Total", "", "", kind === "income" ? income : expense] : undefined,
-    money: kind ? [5] : [7],
+    foot: kind ? ["", "", "Total", "", "", ...(full ? [""] : []), kind === "income" ? income : expense] : undefined,
+    money: kind ? [full ? 6 : 5] : [7],
+  });
+
+  /**
+   * The detailed cash book: one row per confirmed entry, in date order, with a running balance
+   * that starts from the balance on the day before the period. Internal transfers between the
+   * temple's own accounts do not change the total, so they show without amounts (unless one
+   * account is selected, then they are money in / out of that account).
+   */
+  const ledgerTable = (title: string): ReportTable => {
+    const opening = s.openingBalance;
+    let saldo = opening;
+    const body: (string | number)[][] = [["", "", "Saldo awal periode", "", "", "", opening, ...(full ? [""] : [])]];
+    let totIn = 0;
+    let totOut = 0;
+    for (const t of rows.filter((x) => x.status === "confirmed")) {
+      let inc = 0;
+      let out = 0;
+      if (t.type === "income") inc = signed(t);
+      else if (t.type === "expense") out = signed(t);
+      else if (f.accountId) {
+        if (t.accountId === f.accountId) out = signed(t);
+        if (t.toAccountId === f.accountId) inc = signed(t);
+      }
+      saldo += inc - out;
+      totIn += inc;
+      totOut += out;
+      const uraian = t.type === "transfer" ? `Pindah dana: ${accName(t.accountId)} → ${accName(t.toAccountId)}${t.description ? ` (${t.description})` : ""}` : describe(t);
+      body.push([
+        formatDateShort(t.date), t.number, t.reversalOf ? `${uraian} [koreksi]` : uraian,
+        t.type === "transfer" ? "Pindah dana" : catName(t.categoryId), inc || "", out || "", saldo, ...(full ? [personName(t.createdBy)] : []),
+      ]);
+    }
+    return {
+      title,
+      head: ["Tanggal", "No. bukti", "Uraian", "Kategori", "Pemasukan", "Pengeluaran", "Saldo", ...(full ? ["Dicatat oleh"] : [])],
+      body,
+      foot: ["", "", "Jumlah / saldo akhir", "", totIn, totOut, saldo, ...(full ? [""] : [])],
+      money: [4, 5, 6],
+      ledger: { opening, incomeCol: 4, expenseCol: 5, balanceCol: 6 },
+    };
+  };
+  const positionTable = (): ReportTable => ({
+    title: "Posisi kas & rekening akhir periode",
+    head: ["Kas / Rekening", "Saldo"],
+    body: data.accounts.filter((a) => a.templeId === ws.templeId).map((a) => [a.name + (a.bankName ? ` (${a.bankName})` : ""), summarize(data, ws.templeId, { to: f.to, accountId: a.id }).closingBalance]),
+    foot: ["Total", s.closingBalance],
+    money: [1],
   });
   const catTable = (title: string, kind: "income" | "expense"): ReportTable => {
     const r = byCategory(rows, cats, kind);
@@ -115,15 +177,10 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
           { label: "Saldo akhir", value: s.closingBalance },
         ],
         tables: [
-          catTable("Pemasukan per kategori", "income"),
-          catTable("Pengeluaran per kategori", "expense"),
-          {
-            title: "Posisi kas & rekening akhir periode",
-            head: ["Kas / Rekening", "Saldo"],
-            body: data.accounts.filter((a) => a.templeId === ws.templeId).map((a) => [a.name + (a.bankName ? ` (${a.bankName})` : ""), summarize(data, ws.templeId, { to: f.to, accountId: a.id }).closingBalance]),
-            foot: ["Total", s.closingBalance],
-            money: [1],
-          },
+          ledgerTable("Rincian transaksi"),
+          catTable("Ringkasan pemasukan per kategori", "income"),
+          catTable("Ringkasan pengeluaran per kategori", "expense"),
+          positionTable(),
         ],
       };
     case "income": {
@@ -179,11 +236,9 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
       const used = body.reduce((x, r) => x + (r[4] as number), 0);
       return { ...base, period: `Sampai ${formatDate(f.to)}`, summary: [{ label: "Total terkumpul", value: tot }, { label: "Telah digunakan", value: used }, { label: "Sisa dana campaign", value: tot - used }], tables, note: "Hanya donasi disahkan yang dihitung. Data pribadi donatur tidak dicantumkan." };
     }
-    case "punia":
-    case "punia_lengkap": {
+    case "punia": {
       // Versi umum is safe to share at paruman: ANONIM donors are "Anonim" and the pengurus who typed
       // an entry is not named. Versi lengkap is for pengurus / Pengurus Banjar / Admin Utama only.
-      const full = f.type === "punia_lengkap";
       const list = data.donations
         .filter((d) => d.templeId === ws.templeId && d.status === "verified" && !d.correctedAt)
         .filter((d) => { const day = d.transferDate ?? d.date; return day >= f.from && day <= f.to; })
@@ -235,8 +290,13 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
     default:
       return {
         ...base,
-        summary: [{ label: "Total pemasukan", value: income }, { label: "Total pengeluaran", value: expense }, { label: "Selisih", value: income - expense }],
-        tables: [txTable(`Rincian transaksi (${rows.length})`, rows)],
+        summary: [
+          { label: "Saldo awal", value: s.openingBalance },
+          { label: "Total pemasukan", value: income },
+          { label: "Total pengeluaran", value: expense },
+          { label: "Saldo akhir", value: s.closingBalance },
+        ],
+        tables: [ledgerTable("Buku kas — rincian transaksi"), positionTable()],
       };
   }
 }

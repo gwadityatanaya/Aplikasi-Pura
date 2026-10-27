@@ -348,15 +348,12 @@ function Branding() {
       <CardHeader title="Kop laporan" description="Dipakai pada PDF dan mode presentasi." />
       <CardBody className="space-y-4">
         <Field label="Judul laporan" htmlFor="b-title"><Input id="b-title" disabled={ro} value={b.headerTitle} onChange={(e) => setB({ ...b, headerTitle: e.target.value })} /></Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Nama penandatangan" htmlFor="b-name"><Input id="b-name" disabled={ro} value={b.signatoryName} onChange={(e) => setB({ ...b, signatoryName: e.target.value })} /></Field>
-          <Field label="Jabatan" htmlFor="b-role"><Input id="b-role" disabled={ro} value={b.signatoryRole} onChange={(e) => setB({ ...b, signatoryRole: e.target.value })} /></Field>
-        </div>
+        <p className="rounded-xl bg-ivory p-3 text-sm text-muted">Penanda tangan (Ketua, Sekretaris, Bendahara, Mengetahui) dipilih saat mencetak di halaman <b>Laporan</b>. Namanya diambil dari jabatan pengurus yang diisi Admin Utama di Back Office.</p>
         <Field label="Catatan kaki" htmlFor="b-foot"><Input id="b-foot" disabled={ro} value={b.footerNote} onChange={(e) => setB({ ...b, footerNote: e.target.value })} /></Field>
         <div className="overflow-hidden rounded-2xl border border-line">
           <div className="bg-forest p-4 text-white"><p className="font-bold">{b.headerTitle}</p><p className="text-sm text-white/70">{temple!.name}</p></div>
           <div className="h-1 bg-gold" />
-          <div className="flex justify-end p-4 text-right text-sm"><div><p className="text-muted">{b.signatoryRole}</p><p className="mt-6 font-bold">{b.signatoryName}</p></div></div>
+
         </div>
         {!ro && <div className="flex justify-end"><Button size="lg" onClick={async () => done(await update({ branding: b }), "Kop laporan disimpan")}>Simpan</Button></div>}
       </CardBody>

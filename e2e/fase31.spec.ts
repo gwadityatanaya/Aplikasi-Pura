@@ -90,7 +90,7 @@ test("laporan punia versi umum: nama anonim dan pencatat tidak ada di isi maupun
     expect(name).not.toContain(s.toLowerCase());
   }
   // Versi lengkap is for pengurus: real name and who typed it in.
-  await page.locator("#r-type").selectOption("punia_lengkap");
+  await page.locator("#r-version").selectOption("lengkap");
   const [dl2] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "CSV" }).click()]);
   const full = await (await dl2.createReadStream()).toArray().then((c) => Buffer.concat(c).toString("utf8"));
   expect(full).toContain("Bu Rahasia Manual");

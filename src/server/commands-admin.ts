@@ -273,4 +273,51 @@ export const adminCommands: Record<string, Handler> = {
     return null;
   },
 
+
+  /**
+   * Sets the jabatan (Ketua, Sekretaris, Bendahara, Kelian Banjar, …) of one person in ONE
+   * kepengurusan — a temple membership or a banjar membership — so the same person can hold
+   * different jabatan in different temples. Admin Utama only; logged.
+   */
+  async adminSetPosition(ctx, p) {
+    await requireSuperAdmin(ctx, "mengubah jabatan");
+    const i = z
+      .object({
+        kind: z.enum(["temple", "banjar"]), id,
+        position: z.enum(["ketua", "sekretaris", "bendahara", "kelian_banjar", "lainnya"]).nullable(),
+        title: optText(60),
+      })
+      .parse(p);
+    if (i.kind === "temple" && i.position === "kelian_banjar") throw new ApiError(400, "Kelian Banjar adalah jabatan di banjar, bukan di pura.");
+    if (i.kind === "banjar" && i.position === "ketua") throw new ApiError(400, "Di banjar, pilih Kelian Banjar.");
+    if (i.position === "lainnya" && !i.title) throw new ApiError(400, "Tuliskan nama jabatannya.");
+    const title = i.position === "lainnya" ? i.title : null;
+    return db.transaction(async (tx) => {
+      const table = i.kind === "temple" ? T.memberships : T.banjarMembers;
+      const row = (await tx.select().from(table).where(eq(table.id, i.id)))[0] as (typeof T.memberships.$inferSelect | typeof T.banjarMembers.$inferSelect) | undefined;
+      if (!row) throw new ApiError(404, "Kepengurusan tidak ditemukan.");
+      const u = await one(tx.select().from(T.users).where(eq(T.users.id, row.userId)));
+      const scopeId = "templeId" in row ? row.templeId : row.banjarId;
+      const scopeCol = i.kind === "temple" ? T.memberships.templeId : T.banjarMembers.banjarId;
+      if (i.position && i.position !== "lainnya") {
+        const holder = (await tx.select({ id: table.id, userId: table.userId }).from(table).where(and(eq(scopeCol, scopeId), eq(table.position, i.position), eq(table.status, "active"))))[0];
+        if (holder && holder.id !== row.id) {
+          const [h] = await tx.select({ name: T.users.name }).from(T.users).where(eq(T.users.id, holder.userId));
+          throw new ApiError(409, `Jabatan ini sudah dipegang ${h?.name ?? "orang lain"}. Ubah jabatan orang itu terlebih dahulu.`);
+        }
+      }
+      await tx.update(table).set({ position: i.position, positionTitle: title }).where(eq(table.id, i.id));
+      const label = (pos: string | null, t: string | null) => (!pos ? "(tanpa jabatan)" : pos === "lainnya" ? t ?? "Lainnya" : pos);
+      const where = i.kind === "temple"
+        ? (await one(tx.select({ name: T.temples.name }).from(T.temples).where(eq(T.temples.id, scopeId)))).name
+        : (await one(tx.select({ name: T.banjars.name }).from(T.banjars).where(eq(T.banjars.id, scopeId)))).name;
+      await log(ctx, tx, {
+        action: "Mengubah jabatan", entity: "user", entityId: u.id, detail: `${u.name} — ${where}`,
+        changes: { jabatan: { dari: label(row.position, row.positionTitle), menjadi: label(i.position, title) } },
+        templeId: i.kind === "temple" ? scopeId : null,
+      });
+      return null;
+    });
+  },
+
 };

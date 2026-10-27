@@ -247,6 +247,16 @@ Semua dilakukan di **Back Office** (menu kiri, atau **Lainnya** di HP). Semua pe
 6. **Mencabut/menonaktifkan** — tekan ikon hapus di daftar pengurus untuk mencabut peran, atau tab **Akun → Nonaktifkan** untuk menutup akunnya sama sekali. Aksesnya **langsung** hilang di semua perangkat.
 7. **Ganti email pengurus** (mis. pengurus ganti HP/akun Google) — tab **Akun** → cari orangnya → **Ganti email** → ketik email baru. Akunnya **tetap sama**: peran, pura yang dipegang, dan riwayatnya tidak berubah. Orang itu langsung dikeluarkan dari semua perangkat, lalu masuk lagi dengan email baru. Perubahan tercatat di Log Aktivitas (email lama, email baru, oleh siapa, kapan). Email Admin Utama sendiri tidak diganti dari sini.
 
+### Jabatan pengurus (Ketua, Sekretaris, Bendahara, Kelian Banjar)
+
+Jabatan dipakai untuk tanda tangan laporan. Jabatan disimpan **per kepengurusan**: satu orang bisa menjadi Ketua di satu pura dan Bendahara di pura lain.
+
+1. **Back Office → Pura** → pada kartu pura tekan **Pengurus** (untuk banjar: tab **Banjar → Pengurus Banjar**).
+2. Di bawah nama tiap orang ada pilihan **Jabatan**: Ketua, Sekretaris, Bendahara (pura) atau Kelian Banjar, Sekretaris, Bendahara (banjar), atau **Lainnya** (ketik nama jabatannya, mis. *Wakil Ketua*, lalu **Simpan**).
+3. Perubahan langsung tersimpan dan tercatat di Log Aktivitas. Satu jabatan utama hanya untuk satu orang per pura/banjar; jika sudah dipegang orang lain, ubah dulu jabatan orang itu.
+
+Hanya Admin Utama yang bisa mengisi atau mengubah jabatan. Pengurus melihatnya di menu **Pengurus Pura**.
+
 ### Mengisi alamat (Provinsi → Kabupaten → Kecamatan → Desa)
 
 Untuk banjar dan pura, wilayah dipilih dari **daftar resmi** (kode Kemendagri), satu tingkat demi satu tingkat:
@@ -285,9 +295,11 @@ Pengurus pura lalu mengisi sendiri di **Pengaturan**: deskripsi & kontak pura (o
    - Di setiap punia manual tertulis kecil **"dicatat oleh [nama Anda]"**. Tulisan ini hanya terlihat oleh pengurus pura, Pengurus Banjar, dan Admin Utama — **tidak** oleh umat.
 6. **Salah catat?** Buka punia yang sudah disahkan → **Koreksi punia ini** → tulis alasannya (wajib). Yang boleh mengoreksi: Pengurus Pura, dan **Pengurus Banjar** untuk semua pura yang diempon banjarnya (termasuk pura tanpa pengurus). Tidak ada yang boleh mengoreksi punia yang dikirim dari email/akunnya sendiri — dijaga aplikasi **dan** database. Koreksi tercatat di Log Aktivitas dan Riwayat Audit Pura, tanpa nama donatur anonim. Catatan asli **tidak diubah**: aplikasi membuat **entri koreksi** yang membatalkan pemasukannya, dan punia itu ditandai "Dikoreksi — tidak dihitung". Jika nominalnya yang salah, catat ulang punia yang benar.
 7. Pengeluaran: **+ → Catat Pengeluaran** dengan kategori, catatan, dan foto nota.
-8. Untuk paruman: **Laporan** → pilih jenis dan periode → unduh **PDF** atau **Excel**. Laporan punia ada **dua versi**:
-   - **Versi umum / paruman** — aman dibagikan: donatur anonim tertulis "Anonim", nama pencatat tidak dicantumkan.
-   - **Versi lengkap (internal)** — berisi nama asli dan siapa yang mencatat. **Hanya untuk pengurus**, jangan dibagikan di grup atau ditampilkan di paruman. Pemeriksa tidak bisa memilih versi ini.
+8. Untuk paruman: **Laporan** → pilih jenis dan periode → unduh **PDF** atau **Excel**.
+   - **Laporan keuangan (rinci)** dan **Buku kas** memuat **setiap transaksi** (tanggal, nomor bukti, uraian, kategori, pemasukan, pengeluaran, **saldo berjalan**), lalu ringkasan per kategori, posisi kas, saldo awal dan saldo akhir.
+   - Pilih **Versi**: **umum / paruman** (aman dibagikan: donatur anonim tertulis "Anonim", tanpa nama pencatat) atau **lengkap (internal)** (nama asli + kolom "Dicatat oleh" — **hanya untuk pengurus**, jangan dibagikan). Pemeriksa hanya bisa versi umum.
+   - **Tanda tangan & kertas:** pilih penanda tangan (Ketua saja; Ketua dan Sekretaris; Ketua dan Bendahara; atau ketiganya), opsional **Mengetahui** (Kelian Banjar / Pengurus Banjar), dan ukuran kertas **A4** atau **F4/Folio**. Nama diambil dari jabatan di Back Office. Jika ada jabatan yang belum diisi, muncul peringatan; centang **"Cetak dengan garis kosong"** untuk mencetak titik-titik yang diisi tangan.
+   - Blok tanda tangan (tempat & tanggal, jabatan, ruang tanda tangan, nama) selalu utuh di satu halaman. Tabel lebar dicetak mendatar (landscape) otomatis; setiap halaman bernomor.
 
 ---
 

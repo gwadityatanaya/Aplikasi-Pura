@@ -122,6 +122,20 @@ async function main() {
   for (const [email, name, kind, target] of staff)
     await run(admin, null, "adminAddStaff", kind === "banjar" ? { email, name, kind, banjarId: target } : { email, name, kind, templeId: target });
 
+  // Jabatan (per kepengurusan): Dalem has a Ketua and a Bendahara but no Sekretaris yet, so the
+  // "jabatan belum diisi" warning on the Laporan page can be tried out.
+  const setPosition = async (email: string, scope: "temple" | "banjar", scopeId: string, position: string) => {
+    const u = await userByEmail(email);
+    const table = scope === "temple" ? T.memberships : T.banjarMembers;
+    const col = scope === "temple" ? T.memberships.templeId : T.banjarMembers.banjarId;
+    const [row] = await db.select({ id: table.id }).from(table).where(sql`${table.userId} = ${u.id} and ${col} = ${scopeId}`);
+    await run(admin, null, "adminSetPosition", { kind: scope, id: row.id, position });
+  };
+  await setPosition("made@contoh.id", "temple", temples.dalem, "ketua");
+  await setPosition("komang@contoh.id", "temple", temples.dalem, "bendahara");
+  await setPosition("wayan@contoh.id", "temple", temples.desa, "ketua");
+  await setPosition("ketut.banjar@contoh.id", "banjar", bjA.id, "kelian_banjar");
+
   const umatNames: [string, string][] = [["ayu@contoh.id", "Ni Luh Ayu Lestari (contoh)"], ["nyoman@contoh.id", "I Nyoman Darma (contoh)"], ["kadek@contoh.id", "Kadek Surya (contoh)"]];
   for (const [email, name] of umatNames) {
     await db.insert(T.users).values({ id: uid("u"), name, callName: callNameOf(name), email, avatarColor: "#0F766E" });

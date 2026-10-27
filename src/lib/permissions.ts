@@ -91,3 +91,16 @@ export const ALL_ROLES: Role[] = ["superadmin", "pengurus", "banjar", "pemeriksa
 export const MEMBER_ROLES = ["pengurus", "pemeriksa"] as const;
 
 export const PURPOSE_LABEL = { umum: "Umum", odalan: "Odalan / Piodalan", pembangunan: "Pembangunan", lainnya: "Lainnya" } as const;
+
+/** Jabatan names. Temples have Ketua/Sekretaris/Bendahara; a banjar has a Kelian Banjar. */
+export const POSITION_LABEL = {
+  ketua: "Ketua",
+  sekretaris: "Sekretaris",
+  bendahara: "Bendahara",
+  kelian_banjar: "Kelian Banjar",
+  lainnya: "Lainnya",
+} as const;
+export const TEMPLE_POSITIONS = ["ketua", "sekretaris", "bendahara", "lainnya"] as const;
+export const BANJAR_POSITIONS = ["kelian_banjar", "sekretaris", "bendahara", "lainnya"] as const;
+export const positionName = (p?: string | null, title?: string | null) =>
+  !p ? "" : p === "lainnya" ? (title?.trim() || "Lainnya") : POSITION_LABEL[p as keyof typeof POSITION_LABEL] ?? p;

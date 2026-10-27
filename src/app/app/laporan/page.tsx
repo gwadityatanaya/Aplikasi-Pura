@@ -16,6 +16,7 @@ import { ChartLegend, CategoryBars, FlowChart } from "@/components/shared/charts
 import { WhatsAppIcon, whatsappLink } from "@/components/shared/share";
 import { OrnamentDivider } from "@/components/brand/ornament";
 import { buildReport, filterTx, REPORT_TYPES, whatsappSummary, type ReportFilters } from "@/lib/reports";
+import { ReportSignOptions, defaultSignOptions, signatureBlock, type SignOptions } from "@/components/app/report-signatures";
 import { exportCsv, exportPdf, exportXlsx, sharePdfFile } from "@/lib/export";
 import { byCategory, monthlyCashflow } from "@/lib/ledger";
 import { useRole, useStore } from "@/lib/store";
@@ -52,7 +53,8 @@ function Reports() {
   const initialPreset = params.get("preset") ?? "tahun-ini";
   const [preset, setPreset] = useState<string>(initialPreset);
   const [from0, to0] = presetRange(initialPreset);
-  const [f, setF] = useState<ReportFilters>({ type: "summary", from: from0, to: to0, txType: "", categoryId: "", activityId: "", campaignId: "", accountId: "", status: "confirmed" });
+  const [f, setF] = useState<ReportFilters>({ type: "summary", from: from0, to: to0, txType: "", categoryId: "", activityId: "", campaignId: "", accountId: "", status: "confirmed", version: "umum" });
+  const [sign, setSign] = useState<SignOptions>(defaultSignOptions);
   const [more, setMore] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [wa, setWa] = useState(false);
@@ -60,7 +62,15 @@ function Reports() {
   const [pub, setPub] = useState({ open: false, title: "", note: "" });
   const [unpub, setUnpub] = useState<string | null>(null);
 
-  const doc = useMemo(() => (ws.temple ? buildReport(ws, f) : null), [ws, f]);
+  // Pengurus Pura, Pengurus Banjar and Admin Utama choose who signs; a Pemeriksa prints without.
+  const canSign = role === "pengurus" || role === "banjar" || role === "superadmin" || role === "admin_view";
+  const signed = useMemo(() => (canSign ? signatureBlock(ws, sign) : { missing: [] as string[] }), [ws, sign, canSign]);
+  const doc = useMemo(() => {
+    if (!ws.temple) return null;
+    const d = buildReport(ws, { ...f, version: role === "pemeriksa" ? "umum" : f.version });
+    return signed.block ? { ...d, signatures: signed.block } : d;
+  }, [ws, f, role, signed]);
+  const blockedBySign = signed.missing.length > 0 && !sign.allowBlank;
   const rows = useMemo(() => filterTx(ws, f), [ws, f]);
   const monthly = useMemo(() => monthlyCashflow(ws.data, ws.templeId, f.from, f.to).map((r) => ({ label: r.month.split(" ")[0].slice(0, 3), income: r.income, expense: r.expense })), [ws, f.from, f.to]);
 
@@ -73,8 +83,8 @@ function Reports() {
     if (!doc || invalid) return;
     setBusy(kind);
     try {
-      if (kind === "pdf") await exportPdf(doc);
-      if (kind === "xlsx") await exportXlsx(doc);
+      if (kind === "pdf") await exportPdf(doc, { paper: sign.paper });
+      if (kind === "xlsx") await exportXlsx(doc, { paper: sign.paper });
       if (kind === "csv") exportCsv(doc);
       toast.success(`Laporan ${kind.toUpperCase()} diunduh`);
     } catch (e) {
@@ -98,9 +108,17 @@ function Reports() {
         <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
           <Field label="Jenis laporan" htmlFor="r-type">
             <Select id="r-type" value={f.type} onChange={(e) => set("type", e.target.value as ReportFilters["type"])}>
-              {REPORT_TYPES.filter((r) => r.value !== "punia_lengkap" || role !== "pemeriksa").map((r) => <option key={r.value} value={r.value}>{r.label} — {r.desc}</option>)}
+              {REPORT_TYPES.map((r) => <option key={r.value} value={r.value}>{r.label} — {r.desc}</option>)}
             </Select>
           </Field>
+          {role !== "pemeriksa" && (
+            <Field label="Versi" htmlFor="r-version" hint={f.version === "lengkap" ? "Berisi nama asli donatur anonim dan nama pencatat. Jangan dibagikan." : "Aman untuk paruman: donatur anonim tertulis \"Anonim\", tanpa nama pencatat."}>
+              <Select id="r-version" value={f.version} onChange={(e) => set("version", e.target.value as ReportFilters["version"])}>
+                <option value="umum">Versi umum / paruman</option>
+                <option value="lengkap">Versi lengkap (internal)</option>
+              </Select>
+            </Field>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <Field label="Dari" htmlFor="r-from" error={invalid ? "Tanggal awal setelah tanggal akhir" : undefined}><Input id="r-from" type="date" value={f.from} onChange={(e) => { set("from", e.target.value); setPreset(""); }} /></Field>
             <Field label="Sampai" htmlFor="r-to"><Input id="r-to" type="date" value={f.to} onChange={(e) => { set("to", e.target.value); setPreset(""); }} /></Field>
@@ -132,10 +150,12 @@ function Reports() {
         )}
       </Card>
 
+      {canSign && <ReportSignOptions ws={ws} value={sign} onChange={setSign} missing={signed.missing} />}
+
       <div className="sticky top-16 z-20 -mx-4 mt-4 border-b border-line/60 bg-ivory/90 px-4 py-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
         <div className="no-scrollbar flex gap-2 overflow-x-auto">
-          <Button onClick={() => run("pdf")} loading={busy === "pdf"} disabled={invalid}><FileText className="h-4 w-4" /> PDF</Button>
-          <Button variant="outline" onClick={() => run("xlsx")} loading={busy === "xlsx"} disabled={invalid}><FileSpreadsheet className="h-4 w-4" /> Excel</Button>
+          <Button onClick={() => run("pdf")} loading={busy === "pdf"} disabled={invalid || blockedBySign}><FileText className="h-4 w-4" /> PDF</Button>
+          <Button variant="outline" onClick={() => run("xlsx")} loading={busy === "xlsx"} disabled={invalid || blockedBySign}><FileSpreadsheet className="h-4 w-4" /> Excel</Button>
           <Button variant="outline" onClick={() => run("csv")} loading={busy === "csv"} disabled={invalid}><Table2 className="h-4 w-4" /> CSV</Button>
           <button onClick={() => { setWaText(whatsappSummary(ws, f)); setWa(true); }} disabled={invalid} className="press inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-[#1FAF55] px-4 text-[15px] font-semibold text-white hover:bg-[#199a4a] disabled:opacity-50">
             <WhatsAppIcon className="h-5 w-5" /> WhatsApp
@@ -161,7 +181,7 @@ function Reports() {
               </div>
             ))}
           </div>
-          {doc.note && <p className={cn("mt-4 rounded-xl p-3 text-sm", f.type === "punia_lengkap" ? "bg-red-50 font-semibold text-red-800" : "bg-ivory text-muted")}>{doc.note}</p>}
+          {doc.note && <p className={cn("mt-4 rounded-xl p-3 text-sm", f.version === "lengkap" ? "bg-red-50 font-semibold text-red-800" : "bg-ivory text-muted")}>{doc.note}</p>}
           {(f.type === "summary" || f.type === "cashflow") && monthly.length > 1 && (
             <div className="mt-6">
               <div className="flex items-center justify-between"><h3 className="font-bold">Pemasukan & pengeluaran per bulan</h3><ChartLegend /></div>
@@ -193,9 +213,20 @@ function Reports() {
             </div>
           ))}
           <OrnamentDivider className="mt-8" />
-          <div className="mt-6 flex justify-end text-right text-sm">
-            <div><p className="text-muted">{doc.signatory?.role}</p><p className="mt-10 font-bold">{doc.signatory?.name}</p></div>
-          </div>
+          {doc.signatures && (
+            <div className="mt-6 text-sm">
+              <p className="text-right">{doc.signatures.place ? `${doc.signatures.place}, ` : ""}{doc.signatures.date}</p>
+              <div className="mt-3 grid gap-4" style={{ gridTemplateColumns: `repeat(${(doc.signatures.acknowledger ? 1 : 0) + doc.signatures.signers.length}, minmax(0, 1fr))` }}>
+                {[...(doc.signatures.acknowledger ? [{ ...doc.signatures.acknowledger, lead: "Mengetahui," }] : []), ...doc.signatures.signers.map((x) => ({ ...x, lead: "" }))].map((x, i) => (
+                  <div key={i} className="text-center">
+                    <p className="min-h-[1.25rem] text-muted">{x.lead}</p>
+                    <p>{x.role}</p>
+                    <p className="mt-12 border-t border-stone-400 pt-1 font-bold">{x.name ?? "(............................)"}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -40,7 +40,13 @@ export interface Membership {
   templeId: ID;
   role: MemberRole;
   status: "active" | "invited";
+  /** Jabatan in this temple's kepengurusan */
+  position?: Position;
+  positionTitle?: string;
 }
+
+/** Jabatan within one kepengurusan (per person per temple, or per person per banjar). */
+export type Position = "ketua" | "sekretaris" | "bendahara" | "kelian_banjar" | "lainnya";
 
 export type CoverVariant = "emerald" | "dusk" | "gold" | "ocean" | "forest";
 
@@ -121,6 +127,8 @@ export interface BanjarMember {
   userId: ID;
   banjarId: ID;
   status: "active" | "disabled";
+  position?: Position;
+  positionTitle?: string;
 }
 
 export interface ReportBranding {

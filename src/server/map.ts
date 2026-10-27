@@ -46,10 +46,12 @@ export const toBanjar = (r: Row<typeof schema.banjars>): Banjar => ({
 
 export const toBanjarMember = (r: Row<typeof schema.banjarMembers>): BanjarMember => ({
   id: r.id, userId: r.userId, banjarId: r.banjarId, status: r.status as BanjarMember["status"],
+  position: u(r.position) as BanjarMember["position"], positionTitle: u(r.positionTitle),
 });
 
 export const toMembership = (r: Row<typeof schema.memberships>): Membership => ({
   id: r.id, userId: r.userId, templeId: r.templeId, role: r.role as Membership["role"], status: r.status as Membership["status"],
+  position: u(r.position) as Membership["position"], positionTitle: u(r.positionTitle),
 });
 
 export const toAccount = (r: Row<typeof schema.accounts>): Account => ({
