@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Eye, EyeOff, FlaskConical } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/field";
 import * as React from "react";
 
@@ -21,14 +21,28 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, React.InputHTMLA
   );
 });
 
-export function MockAuthNote() {
+/** Same rule as the server: at least 8 characters with letters and numbers. */
+export function passwordHint(pw: string) {
+  const score = (pw.length >= 8 ? 1 : 0) + (/\d/.test(pw) && /[A-Za-z]/.test(pw) ? 1 : 0) + (pw.length >= 12 ? 1 : 0) + (/[^\w]/.test(pw) || /[A-Z]/.test(pw) ? 1 : 0);
+  return score;
+}
+
+export function StrengthBar({ password }: { password: string }) {
+  const s = passwordHint(password);
   return (
-    <p className="flex items-start gap-2 rounded-2xl bg-gold-light/70 p-3.5 text-sm text-gold-dark ring-1 ring-gold/25">
-      <FlaskConical className="mt-0.5 h-4 w-4 shrink-0" />
-      <span>
-        <strong>Autentikasi simulasi.</strong> Ini prototipe: kata sandi tidak diperiksa maupun disimpan, dan sesi hanya ada di
-        peramban ini. Versi produksi akan memakai autentikasi server yang aman.
-      </span>
+    <div className="flex gap-1.5" aria-hidden>
+      {[0, 1, 2, 3].map((i) => (
+        <span key={i} className={`h-1.5 flex-1 rounded-full ${i < s ? (s < 2 ? "bg-expense" : s < 3 ? "bg-gold" : "bg-emerald-600") : "bg-stone-200"}`} />
+      ))}
+    </div>
+  );
+}
+
+export function SecureNote() {
+  return (
+    <p className="flex items-start gap-2 rounded-2xl bg-mint/60 p-3.5 text-sm text-emerald-900">
+      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+      <span>Kata sandi disimpan dalam bentuk terenkripsi (hash) dan tidak dapat dilihat siapa pun, termasuk Admin Utama.</span>
     </p>
   );
 }

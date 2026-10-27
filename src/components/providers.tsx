@@ -4,6 +4,7 @@ import { MotionConfig } from "framer-motion";
 import { Toaster } from "sonner";
 import { useStore } from "@/lib/store";
 import { DemoTourProvider } from "@/components/demo/demo-tour";
+import { PwaRegister } from "@/components/pwa";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const prefs = useStore((s) => s.prefs);
@@ -20,6 +21,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <MotionConfig reducedMotion={prefs.reduceMotion ? "always" : "user"}>
       <DemoTourProvider>{children}</DemoTourProvider>
+      <PwaRegister />
       <Toaster
         position="top-center"
         richColors

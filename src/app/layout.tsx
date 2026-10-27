@@ -5,8 +5,14 @@ import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
   title: { default: "PURA — Kas & Dana Punia Pura yang Transparan", template: "%s · PURA" },
-  description:
-    "Prototipe PURA: platform pencatatan kas, dana punia, dan laporan keuangan pura yang sederhana dan transparan.",
+  description: "PURA: pencatatan kas, dana punia, dan laporan keuangan pura yang sederhana dan transparan.",
+  applicationName: "PURA",
+  appleWebApp: { capable: true, title: "PURA", statusBarStyle: "default" },
+  icons: {
+    icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+  },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {

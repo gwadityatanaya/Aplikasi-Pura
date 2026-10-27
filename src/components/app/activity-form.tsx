@@ -36,8 +36,9 @@ export function ActivityForm({ open, onClose, activity }: { open: boolean; onClo
           : { name: "", description: "", startDate: "", endDate: "", budget: 0, fundType: "general", status: "planned" }
       );
   }, [open, activity, reset]);
-  const onSubmit = handleSubmit((v) => {
-    save({ ...v, id: activity?.id, color: activity?.color ?? COLORS[Math.floor(Math.random() * COLORS.length)] });
+  const onSubmit = handleSubmit(async (v) => {
+    const r = await save({ ...v, id: activity?.id, color: activity?.color ?? COLORS[Math.floor(Math.random() * COLORS.length)] });
+    if (!r.ok) return toast.error(r.error);
     toast.success(activity ? "Kegiatan diperbarui" : "Kegiatan dibuat");
     onClose();
   });

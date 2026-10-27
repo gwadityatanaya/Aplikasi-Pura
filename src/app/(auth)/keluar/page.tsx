@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { LogOut } from "lucide-react";
 import { buttonClass } from "@/components/ui/button";
 import { useStore } from "@/lib/store";
@@ -8,8 +8,12 @@ import { useStore } from "@/lib/store";
 export default function LogoutPage() {
   const hydrated = useStore((s) => s.hydrated);
   const logout = useStore((s) => s.logout);
+  const done = useRef(false);
   useEffect(() => {
-    if (hydrated && useStore.getState().session) logout();
+    if (hydrated && !done.current) {
+      done.current = true;
+      logout();
+    }
   }, [hydrated, logout]);
   return (
     <div className="text-center">

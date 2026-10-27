@@ -27,7 +27,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm";
 import { PrototypeNotice } from "@/components/shared/prototype-banner";
 import { DemoButton, useDemo } from "@/components/demo/demo-tour";
-import { useActiveTemple, useCurrentUser, useMembership, useRole, useStore } from "@/lib/store";
+import { useActiveTemple, useCurrentUser, useIsDemo, useMembership, useRole, useStore } from "@/lib/store";
 import { ALL_ROLES, ROLE_LABEL, ROLE_TONE, can } from "@/lib/permissions";
 import { cn, initials } from "@/lib/format";
 import { NAV, isActive } from "./nav";
@@ -43,7 +43,13 @@ export function Avatar({ name, color, size = 40 }: { name: string; color?: strin
 
 function useUnread() {
   const templeId = useStore((s) => s.session?.activeTempleId);
-  return useStore((s) => s.data.notifications.reduce((n, x) => n + (x.templeId === templeId && !x.read ? 1 : 0), 0));
+  return useStore((s) => s.data.notifications.reduce((n, x) => n + (x.templeId === templeId && !x.read && notificationVisible(x.kind, s.prefs.notifications) ? 1 : 0), 0));
+}
+
+/** Notification preferences decide what is shown (the server keeps every notification). */
+export function notificationVisible(kind: string, p: { donationPending: boolean; campaignTarget: boolean; campaignEnding: boolean; approvals: boolean; reportReady: boolean }) {
+  const map: Record<string, boolean> = { donation_pending: p.donationPending, target_reached: p.campaignTarget, campaign_ending: p.campaignEnding, tx_approval: p.approvals, report_ready: p.reportReady };
+  return map[kind] ?? true;
 }
 
 function TempleSwitcher({ onDone }: { onDone?: () => void }) {
@@ -53,7 +59,11 @@ function TempleSwitcher({ onDone }: { onDone?: () => void }) {
   const memberships = useStore((s) => s.data.memberships);
   const temples = useStore((s) => s.data.temples);
   const setActive = useStore((s) => s.setActiveTemple);
-  const mine = memberships.filter((m) => m.userId === userId && m.status === "active");
+  const me = useCurrentUser();
+  // Admin Utama can open every temple; others see their own memberships.
+  const mine = me?.isSuperAdmin
+    ? temples.map((t) => ({ id: `all_${t.id}`, templeId: t.id, role: "superadmin" as const }))
+    : memberships.filter((m) => m.userId === userId && m.status === "active");
   const router = useRouter();
   return (
     <>
@@ -76,17 +86,18 @@ function TempleSwitcher({ onDone }: { onDone?: () => void }) {
             return (
               <li key={m.id}>
                 <button
-                  onClick={() => {
-                    setActive(t.id);
+                  onClick={async () => {
                     setOpen(false);
                     onDone?.();
+                    const r = await setActive(t.id);
+                    if (!r.ok) return toast.error(r.error);
                     toast.success(`Beralih ke ${t.name}`);
                     router.push("/app");
                   }}
                   className={cn("press flex w-full items-center gap-3 rounded-2xl border p-3.5 text-left", t.id === temple?.id ? "border-emerald-500 bg-mint/40" : "border-line hover:bg-ivory")}
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block font-semibold">{t.name}</span>
+                    <span className="block font-semibold">{t.name} {t.status === "pending" && <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Menunggu persetujuan</span>}</span>
                     <span className={cn("mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold", ROLE_TONE[m.role])}>{ROLE_LABEL[m.role]}</span>
                   </span>
                   {t.id === temple?.id && <Check className="h-5 w-5 text-emerald-700" />}
@@ -110,6 +121,7 @@ export function ProfileMenu({ open, onClose }: { open: boolean; onClose: () => v
   const override = useStore((s) => s.session?.roleOverride);
   const setRoleOverride = useStore((s) => s.setRoleOverride);
   const resetData = useStore((s) => s.resetData);
+  const isDemo = useIsDemo();
   const [confirmReset, setConfirmReset] = useState(false);
   const router = useRouter();
   if (!user) return null;
@@ -123,7 +135,12 @@ export function ProfileMenu({ open, onClose }: { open: boolean; onClose: () => v
             <p className="truncate text-sm text-muted">{user.email}</p>
           </div>
         </div>
-        <div className="mt-5">
+        {!isDemo && role && (
+          <p className="mt-4 text-sm text-muted">
+            Peran Anda di pura ini: <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", ROLE_TONE[role])}>{ROLE_LABEL[role]}</span>
+          </p>
+        )}
+        {isDemo && <div className="mt-5">
           <p className="text-sm font-bold">Lihat aplikasi sebagai peran</p>
           <p className="text-sm text-muted">Simulasi hak akses untuk demo. Di versi produksi, peran ditentukan server.</p>
           <div className="mt-3 grid grid-cols-1 gap-2">
@@ -146,16 +163,16 @@ export function ProfileMenu({ open, onClose }: { open: boolean; onClose: () => v
             })}
           </div>
           {override && <p className="mt-2 text-xs font-semibold text-gold-dark">Sedang mempratinjau peran lain.</p>}
-        </div>
+        </div>}
         <div className="mt-5 space-y-2 border-t border-line pt-4">
           <Link href="/app/pengaturan?tab=profil-admin" onClick={onClose} className="flex items-center gap-3 rounded-xl px-3 py-3 font-semibold hover:bg-ivory">
             <UserCog className="h-5 w-5 text-muted" /> Profil saya
           </Link>
-          <button onClick={() => setConfirmReset(true)} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-semibold hover:bg-ivory">
+          {isDemo && <button onClick={() => setConfirmReset(true)} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-semibold hover:bg-ivory">
             <RotateCcw className="h-5 w-5 text-muted" /> Atur ulang data demo
-          </button>
+          </button>}
           <Link href="/keluar" onClick={onClose} className="flex items-center gap-3 rounded-xl px-3 py-3 font-semibold text-expense hover:bg-red-50">
-            <LogOut className="h-5 w-5" /> Keluar
+            <LogOut className="h-5 w-5" /> {isDemo ? "Keluar dari mode demo" : "Keluar"}
           </Link>
         </div>
       </Dialog>
@@ -168,7 +185,6 @@ export function ProfileMenu({ open, onClose }: { open: boolean; onClose: () => v
         confirmLabel="Ya, atur ulang"
         onConfirm={() => {
           resetData();
-          useStore.getState().replaceAll({ data: useStore.getState().data, session: { userId: "u_made", activeTempleId: "t_durgandhini", startedAt: new Date().toISOString() } });
           setConfirmReset(false);
           onClose();
           toast.success("Data demo telah diatur ulang");
@@ -181,6 +197,7 @@ export function ProfileMenu({ open, onClose }: { open: boolean; onClose: () => v
 
 function Sidebar() {
   const pathname = usePathname();
+  const isDemo = useIsDemo();
   const role = useRole();
   const unread = useUnread();
   const user = useCurrentUser();
@@ -201,7 +218,7 @@ function Sidebar() {
         <div className="mt-4"><TempleSwitcher /></div>
         <nav className="no-scrollbar mt-5 flex-1 space-y-5 overflow-y-auto" aria-label="Navigasi admin">
           {groups.map((g) => {
-            const items = NAV.filter((n) => n.group === g.key && (!n.perm || can(role, n.perm)));
+            const items = NAV.filter((n) => n.group === g.key && (!n.perm || can(role, n.perm)) && !(isDemo && n.hideInDemo));
             if (!items.length) return null;
             return (
               <div key={g.key}>
@@ -326,7 +343,8 @@ export function QuickActions({ open, onClose }: { open: boolean; onClose: () => 
 function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const role = useRole();
   const unread = useUnread();
-  const items = NAV.filter((n) => !["/app", "/app/transaksi", "/app/campaign"].includes(n.href) && (!n.perm || can(role, n.perm)));
+  const isDemo = useIsDemo();
+  const items = NAV.filter((n) => !["/app", "/app/transaksi", "/app/campaign"].includes(n.href) && (!n.perm || can(role, n.perm)) && !(isDemo && n.hideInDemo));
   return (
     <Dialog open={open} onClose={onClose} title="Menu lainnya" size="sm">
       <div className="mb-3"><TempleSwitcherLight onDone={onClose} /></div>
@@ -410,6 +428,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const hydrated = useStore((s) => s.hydrated);
   const session = useStore((s) => s.session);
   const temple = useActiveTemple();
+  const mode = useStore((s) => s.mode);
+  const exitDemo = useStore((s) => s.exitDemo);
+  const demoTour = useDemo();
 
   useEffect(() => {
     if (!hydrated) return;
@@ -418,11 +439,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [hydrated, session, router]);
 
   if (pathname.startsWith("/app/presentasi")) return <>{children}</>;
+  const isDemo = mode === "demo";
 
   return (
     <div className="min-h-dvh">
       <Sidebar />
       <div className="lg:pl-[272px]">
+        {isDemo && !demoTour.running && (
+          <div className="no-print flex items-center justify-center gap-3 bg-gold px-4 py-2 text-center text-sm font-semibold text-charcoal">
+            <span>Mode demo — data contoh, tidak tersimpan ke server.</span>
+            <button onClick={async () => { await exitDemo(); router.push("/masuk"); }} className="rounded-lg bg-charcoal px-3 py-1 text-xs font-bold text-white hover:bg-black">Keluar demo</button>
+          </div>
+        )}
         <TopBar />
           <motion.main
             key={pathname}

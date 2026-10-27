@@ -237,14 +237,14 @@ function Reports() {
         onClose={() => setPub({ ...pub, open: false })}
         title="Publikasikan ringkasan"
         description="Salinan ringkasan (saldo, total per kategori) akan tampil di halaman publik pura. Rincian transaksi tidak ikut dipublikasikan."
-        footer={<Button size="lg" className="w-full" disabled={pub.title.trim().length < 5} onClick={() => { publish({ title: pub.title.trim(), from: f.from, to: f.to, note: pub.note.trim() || undefined }); setPub({ open: false, title: "", note: "" }); toast.success("Laporan dipublikasikan"); }}><Globe className="h-4 w-4" /> Publikasikan</Button>}
+        footer={<Button size="lg" className="w-full" disabled={pub.title.trim().length < 5} onClick={async () => { const r = await publish({ title: pub.title.trim(), from: f.from, to: f.to, note: pub.note.trim() || undefined }); if (!r.ok) return toast.error(r.error); setPub({ open: false, title: "", note: "" }); toast.success("Laporan dipublikasikan"); }}><Globe className="h-4 w-4" /> Publikasikan</Button>}
       >
         <div className="space-y-4">
           <Field label="Judul laporan" htmlFor="p-title"><Input id="p-title" value={pub.title} onChange={(e) => setPub({ ...pub, title: e.target.value })} /></Field>
           <Field label="Catatan untuk krama (opsional)" htmlFor="p-note"><Textarea id="p-note" rows={2} value={pub.note} onChange={(e) => setPub({ ...pub, note: e.target.value })} /></Field>
         </div>
       </Dialog>
-      <ConfirmDialog open={!!unpub} onClose={() => setUnpub(null)} tone="danger" title="Tarik laporan dari publik?" description="Laporan tidak lagi tampil di halaman publik pura. Catatan transaksi tidak terpengaruh." confirmLabel="Tarik laporan" onConfirm={() => { if (unpub) unpublish(unpub); setUnpub(null); toast.success("Laporan ditarik"); }} />
+      <ConfirmDialog open={!!unpub} onClose={() => setUnpub(null)} tone="danger" title="Tarik laporan dari publik?" description="Laporan tidak lagi tampil di halaman publik pura. Catatan transaksi tidak terpengaruh." confirmLabel="Tarik laporan" onConfirm={async () => { if (!unpub) return; const r = await unpublish(unpub); setUnpub(null); r.ok ? toast.success("Laporan ditarik") : toast.error(r.error); }} />
     </div>
   );
 }

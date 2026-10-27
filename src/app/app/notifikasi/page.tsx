@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Segmented } from "@/components/ui/segmented";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useStore } from "@/lib/store";
+import { notificationVisible } from "@/components/app/app-shell";
 import { cn, relativeTime } from "@/lib/format";
 import type { NotificationKind } from "@/lib/types";
 import { toast } from "sonner";
@@ -29,9 +30,12 @@ export default function NotificationsPage() {
   const markRead = useStore((s) => s.markNotificationRead);
   const markAll = useStore((s) => s.markAllNotificationsRead);
   const push = useStore((s) => s.pushNotification);
+  const isDemo = useStore((s) => s.mode === "demo");
   const [tab, setTab] = useState<"all" | "unread">("all");
-  const list = [...ws.notifications].sort((a, b) => b.date.localeCompare(a.date)).filter((n) => tab === "all" || !n.read);
-  const unread = ws.notifications.filter((n) => !n.read).length;
+  const prefs = useStore((s) => s.prefs.notifications);
+  const visible = ws.notifications.filter((n) => notificationVisible(n.kind, prefs));
+  const list = [...visible].sort((a, b) => b.date.localeCompare(a.date)).filter((n) => tab === "all" || !n.read);
+  const unread = visible.filter((n) => !n.read).length;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -40,7 +44,7 @@ export default function NotificationsPage() {
         description={unread ? `${unread} belum dibaca` : "Semua sudah dibaca"}
         actions={
           <>
-            <Button variant="outline" onClick={() => { push({ kind: "campaign_ending", title: "Campaign segera berakhir (simulasi)", body: "Pengingat contoh: periksa campaign yang akan berakhir dalam 7 hari.", href: "/app/campaign" }); toast("Notifikasi simulasi ditambahkan"); }}>Simulasikan</Button>
+            {isDemo && <Button variant="outline" onClick={() => { push({ kind: "campaign_ending", title: "Campaign segera berakhir (simulasi)", body: "Pengingat contoh: periksa campaign yang akan berakhir dalam 7 hari.", href: "/app/campaign" }); toast("Notifikasi simulasi ditambahkan"); }}>Simulasikan</Button>}
             {unread > 0 && <Button variant="secondary" onClick={markAll}><CheckCheck className="h-4 w-4" /> Tandai semua dibaca</Button>}
           </>
         }

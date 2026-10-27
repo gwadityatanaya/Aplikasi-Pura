@@ -13,7 +13,10 @@ import { ImageUpload } from "@/components/ui/file-upload";
 import { useStore, useCurrentUser } from "@/lib/store";
 import { ROLE_DESC, ROLE_LABEL } from "@/lib/permissions";
 import { cn } from "@/lib/format";
-import type { Role } from "@/lib/types";
+import type { MemberRole } from "@/lib/types";
+import { Clock } from "lucide-react";
+import Link from "next/link";
+import { buttonClass } from "@/components/ui/button";
 
 const PROVINCES = ["Bali", "Nusa Tenggara Barat", "Jawa Timur", "Jawa Tengah", "DI Yogyakarta", "Jawa Barat", "DKI Jakarta", "Banten", "Lampung", "Sulawesi Tengah", "Sulawesi Selatan", "Kalimantan Timur", "Lainnya"];
 const REGENCY_HINTS: Record<string, string[]> = {
@@ -46,6 +49,8 @@ export default function OnboardingPage() {
   const hydrated = useStore((s) => s.hydrated);
   const user = useCurrentUser();
   const createTemple = useStore((s) => s.createTemple);
+  const registrationOpen = useStore((s) => s.registrationOpen);
+  const isDemo = useStore((s) => s.mode === "demo");
   const [step, setStep] = useState(0);
   const [done, setDone] = useState(false);
   const { register, handleSubmit, formState, trigger, watch, setValue } = useForm<V>({
@@ -66,14 +71,24 @@ export default function OnboardingPage() {
   }
 
   const onSubmit = handleSubmit(async (v) => {
-    await new Promise((r) => setTimeout(r, 700));
-    createTemple(
+    const r = await createTemple(
       { name: v.name, description: v.description, province: v.province, regency: v.regency, district: v.district, village: v.village, address: v.address, phone: v.phone, photo: v.photo },
-      v.role as Role
+      v.role as MemberRole
     );
+    if (!r.ok) return toast.error(r.error);
     setDone(true);
     toast.success("Ruang kerja pura berhasil dibuat");
   });
+
+  if (hydrated && user && !user.isSuperAdmin && !registrationOpen && !isDemo)
+    return (
+      <div className="text-center">
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-gold-light text-gold-dark"><Clock className="h-8 w-8" /></div>
+        <h1 className="mt-5 text-2xl font-extrabold text-forest">Akun Anda belum terhubung ke pura</h1>
+        <p className="mt-2 text-[17px] text-muted">Minta Admin Utama atau Ketua pura untuk menambahkan Anda sebagai pengurus. Setelah itu, muat ulang halaman ini.</p>
+        <Link href="/keluar" className={buttonClass("outline", "xl", "mt-7 w-full")}>Keluar</Link>
+      </div>
+    );
 
   if (done)
     return (
@@ -82,7 +97,7 @@ export default function OnboardingPage() {
           <PartyPopper className="h-10 w-10" />
         </motion.div>
         <h1 className="mt-5 text-3xl font-extrabold text-forest">Pura Anda siap!</h1>
-        <p className="mt-2 text-[17px] text-muted">Ruang kerja keuangan terpisah sudah dibuat, lengkap dengan kategori dan kas tunai.</p>
+        <p className="mt-2 text-[17px] text-muted">Ruang kerja keuangan terpisah sudah dibuat, lengkap dengan kategori dan kas tunai.{!user?.isSuperAdmin && !isDemo && " Halaman publik pura akan tampil setelah disetujui Admin Utama."}</p>
         <Button size="xl" className="mt-7 w-full" onClick={() => router.push("/app")}>Buka Dashboard</Button>
       </div>
     );
@@ -147,9 +162,9 @@ export default function OnboardingPage() {
                 <Field label="Telepon / WhatsApp pura" htmlFor="phone" required error={formState.errors.phone?.message}>
                   <Input id="phone" inputMode="tel" placeholder="0812-…" {...register("phone")} />
                 </Field>
-                <Field label="Peran Anda di pura" required>
+                {!user?.isSuperAdmin && <Field label="Peran Anda di pura" required>
                   <div role="radiogroup" className="grid gap-2">
-                    {(["ketua", "bendahara", "sekretaris", "auditor"] as Role[]).map((r) => (
+                    {(["ketua", "bendahara", "sekretaris", "auditor"] as MemberRole[]).map((r) => (
                       <button
                         key={r}
                         type="button"
@@ -163,7 +178,7 @@ export default function OnboardingPage() {
                       </button>
                     ))}
                   </div>
-                </Field>
+                </Field>}
               </>
             )}
           </motion.div>

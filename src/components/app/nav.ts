@@ -9,6 +9,7 @@ import {
   ReceiptText,
   Settings,
   ShieldCheck,
+  ScrollText,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -20,6 +21,7 @@ export interface NavItem {
   icon: LucideIcon;
   perm?: Permission;
   group: "main" | "manage" | "system";
+  hideInDemo?: boolean;
 }
 
 export const NAV: NavItem[] = [
@@ -31,9 +33,10 @@ export const NAV: NavItem[] = [
   { href: "/app/presentasi", label: "Mode Presentasi", icon: Presentation, perm: "report.view", group: "main" },
   { href: "/app/notifikasi", label: "Notifikasi", icon: Bell, group: "manage" },
   { href: "/app/pengguna", label: "Pengurus & Peran", icon: Users, group: "manage" },
-  { href: "/app/audit", label: "Riwayat Audit", icon: History, perm: "audit.view", group: "manage" },
+  { href: "/app/audit", label: "Riwayat Audit Pura", icon: History, perm: "audit.view", group: "manage" },
   { href: "/app/pengaturan", label: "Pengaturan", icon: Settings, group: "manage" },
-  { href: "/app/platform", label: "Admin Platform", icon: ShieldCheck, perm: "platform.manage", group: "system" },
+  { href: "/app/admin", label: "Panel Admin Utama", icon: ShieldCheck, perm: "admin.manage", group: "system" },
+  { href: "/app/log-aktivitas", label: "Log Aktivitas", icon: ScrollText, perm: "log.view", group: "system", hideInDemo: true },
 ];
 
 export function isActive(pathname: string, href: string) {

@@ -128,7 +128,6 @@ function TxForm() {
     for (let i = 0; i < steps.length - 1; i++) if (!validate(i)) return setStep(i);
     if (saving) return;
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 450));
     const payload = {
       type,
       amount: f.amount,
@@ -145,15 +144,21 @@ function TxForm() {
       status,
     };
     if (editing) {
-      const r = updateDraft(editing.id, payload);
+      const r = await updateDraft(editing.id, payload);
       if (!r.ok) {
         setSaving(false);
         return toast.error(r.error);
       }
-      if (status === "confirmed") useStore.getState().confirmDraft(editing.id);
+      if (status === "confirmed") {
+        const c = await useStore.getState().confirmDraft(editing.id);
+        if (!c.ok) {
+          setSaving(false);
+          return toast.error(c.error);
+        }
+      }
       setSavedId(editing.id);
     } else {
-      const r = addTransaction(payload, idemKey.current);
+      const r = await addTransaction(payload, idemKey.current);
       if (!r.ok) {
         setSaving(false);
         return toast.error(r.error);

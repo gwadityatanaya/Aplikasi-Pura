@@ -15,9 +15,10 @@ import { Dialog } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm";
 import { Field, Input, Select } from "@/components/ui/field";
 import { useStore } from "@/lib/store";
-import { ALL_PERMISSIONS, ALL_ROLES, PERMISSION_LABEL, ROLE_DESC, ROLE_LABEL, ROLE_TONE, can as roleCan } from "@/lib/permissions";
+import { ALL_PERMISSIONS, ALL_ROLES, MEMBER_ROLES, PERMISSION_LABEL, ROLE_DESC, ROLE_LABEL, ROLE_TONE, can as roleCan } from "@/lib/permissions";
 import { cn } from "@/lib/format";
-import type { Role } from "@/lib/types";
+import type { MemberRole } from "@/lib/types";
+import { LinkDialog } from "@/components/app/link-dialog";
 
 const schema = z.object({ name: z.string().trim().min(3, "Isi nama"), email: z.string().trim().email("Email belum benar"), role: z.enum(["ketua", "bendahara", "sekretaris", "auditor"]) });
 
@@ -30,7 +31,8 @@ export default function UsersPage() {
   const remove = useStore((s) => s.removeMember);
   const [open, setOpen] = useState(false);
   const [removing, setRemoving] = useState<string | null>(null);
-  const [roleChange, setRoleChange] = useState<{ id: string; role: Role } | null>(null);
+  const [roleChange, setRoleChange] = useState<{ id: string; role: MemberRole } | null>(null);
+  const [linkInfo, setLinkInfo] = useState<{ link: string; name: string; hours?: number } | null>(null);
   const manage = can("users.manage");
   const { register, handleSubmit, formState, reset } = useForm<z.infer<typeof schema>>({ resolver: zodResolver(schema), defaultValues: { role: "bendahara" } });
 
@@ -49,15 +51,16 @@ export default function UsersPage() {
                   <p className="font-bold">{u.name} {u.id === me && <span className="text-sm font-medium text-muted">(Anda)</span>}</p>
                   <p className="flex items-center gap-1.5 text-sm text-muted"><Mail className="h-3.5 w-3.5" /> {u.email}</p>
                 </div>
-                {m.status === "invited" && <Badge tone="amber">Undangan terkirim</Badge>}
-                {manage && m.role !== "platform" && u.id !== me ? (
-                  <Select aria-label={`Peran ${u.name}`} className="h-10 w-48 text-sm" value={m.role} onChange={(e) => setRoleChange({ id: m.id, role: e.target.value as Role })}>
-                    {ALL_ROLES.filter((r) => r !== "platform").map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+                {m.status === "invited" && <Badge tone="amber">Belum aktivasi</Badge>}
+                {u.status === "disabled" && <Badge tone="red">Nonaktif</Badge>}
+                {manage && u.id !== me ? (
+                  <Select aria-label={`Peran ${u.name}`} className="h-10 w-48 text-sm" value={m.role} onChange={(e) => setRoleChange({ id: m.id, role: e.target.value as MemberRole })}>
+                    {MEMBER_ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
                   </Select>
                 ) : (
                   <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", ROLE_TONE[m.role])}>{ROLE_LABEL[m.role]}</span>
                 )}
-                {manage && u.id !== me && m.role !== "platform" && (
+                {manage && u.id !== me && (
                   <Button variant="ghost" size="icon" className="text-expense" onClick={() => setRemoving(m.id)} aria-label={`Cabut akses ${u.name}`}><UserX className="h-5 w-5" /></Button>
                 )}
               </li>
@@ -100,15 +103,16 @@ export default function UsersPage() {
         </div>
       </Card>
 
-      <Dialog open={open} onClose={() => setOpen(false)} title="Undang pengurus" description="Prototipe: undangan tidak benar-benar dikirim lewat email." footer={<Button size="lg" className="w-full" onClick={handleSubmit((v) => { const r = invite(v); if (!r.ok) return toast.error(r.error); toast.success(`Undangan untuk ${v.name} dibuat`); setOpen(false); })}>Kirim undangan</Button>}>
+      <Dialog open={open} onClose={() => setOpen(false)} title="Undang pengurus" description="Sistem membuat tautan aktivasi sekali pakai. Kirimkan lewat WhatsApp kepada pengurus tersebut." footer={<Button size="lg" className="w-full" onClick={handleSubmit(async (v) => { const r = await invite(v); if (!r.ok) return toast.error(r.error); setOpen(false); if (r.value.link) setLinkInfo({ link: r.value.link, name: v.name, hours: r.value.hours }); else toast.success(`${v.name} ditambahkan sebagai pengurus`); })}>Kirim undangan</Button>}>
         <div className="space-y-4">
           <Field label="Nama" htmlFor="i-name" error={formState.errors.name?.message}><Input id="i-name" {...register("name")} /></Field>
           <Field label="Email" htmlFor="i-email" error={formState.errors.email?.message}><Input id="i-email" type="email" {...register("email")} /></Field>
-          <Field label="Peran" htmlFor="i-role"><Select id="i-role" {...register("role")}>{(["ketua", "bendahara", "sekretaris", "auditor"] as Role[]).map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</Select></Field>
+          <Field label="Peran" htmlFor="i-role"><Select id="i-role" {...register("role")}>{MEMBER_ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</Select></Field>
         </div>
       </Dialog>
-      <ConfirmDialog open={!!roleChange} onClose={() => setRoleChange(null)} title="Ubah peran?" description={roleChange && <>Peran akan diubah menjadi <strong>{ROLE_LABEL[roleChange.role]}</strong>. Hak aksesnya berubah seketika.</>} onConfirm={() => { if (roleChange) changeRole(roleChange.id, roleChange.role); setRoleChange(null); toast.success("Peran diperbarui"); }} />
-      <ConfirmDialog open={!!removing} onClose={() => setRemoving(null)} tone="danger" title="Cabut akses pengurus?" description="Pengguna tidak lagi dapat membuka ruang kerja pura ini. Catatan yang pernah dibuatnya tetap tersimpan." confirmLabel="Cabut akses" onConfirm={() => { if (removing) { const r = remove(removing); r.ok ? toast.success("Akses dicabut") : toast.error(r.error); } setRemoving(null); }} />
+      <LinkDialog link={linkInfo?.link ?? null} name={linkInfo?.name} hours={linkInfo?.hours} purpose="activation" onClose={() => setLinkInfo(null)} />
+      <ConfirmDialog open={!!roleChange} onClose={() => setRoleChange(null)} title="Ubah peran?" description={roleChange && <>Peran akan diubah menjadi <strong>{ROLE_LABEL[roleChange.role]}</strong>. Hak aksesnya berubah seketika.</>} onConfirm={async () => { if (!roleChange) return; const r = await changeRole(roleChange.id, roleChange.role); setRoleChange(null); r.ok ? toast.success("Peran diperbarui") : toast.error(r.error); }} />
+      <ConfirmDialog open={!!removing} onClose={() => setRemoving(null)} tone="danger" title="Cabut akses pengurus?" description="Pengguna tidak lagi dapat membuka ruang kerja pura ini. Catatan yang pernah dibuatnya tetap tersimpan." confirmLabel="Cabut akses" onConfirm={async () => { if (removing) { const r = await remove(removing); r.ok ? toast.success("Akses dicabut") : toast.error(r.error); } setRemoving(null); }} />
     </div>
   );
 }

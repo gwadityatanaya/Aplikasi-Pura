@@ -145,8 +145,8 @@ export default function TransactionDetailPage() {
         title="Konfirmasi transaksi ini?"
         description="Setelah dikonfirmasi, transaksi masuk ke saldo dan tidak bisa diubah lagi. Kesalahan diperbaiki dengan entri koreksi."
         confirmLabel="Ya, konfirmasi"
-        onConfirm={() => {
-          const r = confirmDraft(tx.id);
+        onConfirm={async () => {
+          const r = await confirmDraft(tx.id);
           setDlg(null);
           r.ok ? toast.success("Transaksi dikonfirmasi") : toast.error(r.error);
         }}
@@ -158,8 +158,8 @@ export default function TransactionDetailPage() {
         title="Hapus draf ini?"
         description="Draf belum mempengaruhi saldo, jadi aman untuk dihapus. Penghapusan tetap tercatat di riwayat audit."
         confirmLabel="Hapus draf"
-        onConfirm={() => {
-          const r = deleteDraft(tx.id);
+        onConfirm={async () => {
+          const r = await deleteDraft(tx.id);
           setDlg(null);
           if (r.ok) {
             toast.success("Draf dihapus");
@@ -178,9 +178,9 @@ export default function TransactionDetailPage() {
             <Button
               size="lg"
               className="flex-1"
-              onClick={() => {
+              onClick={async () => {
                 if (reason.trim().length < 5) return setReasonErr("Tuliskan alasan koreksi (min. 5 huruf)");
-                const r = reverse(tx.id, reason.trim());
+                const r = await reverse(tx.id, reason.trim());
                 setDlg(null);
                 if (r.ok) {
                   toast.success(`Koreksi ${r.value.number} dibuat`, { description: "Saldo telah disesuaikan." });

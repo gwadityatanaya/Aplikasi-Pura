@@ -21,7 +21,17 @@ import { ICONS } from "@/components/app/tx-row";
 import { useCurrentUser, useStore } from "@/lib/store";
 import { accountBalance } from "@/lib/ledger";
 import { cn, rupiah } from "@/lib/format";
-import type { Account, Category, CoverVariant } from "@/lib/types";
+import type { Account, Category, CoverVariant, Temple } from "@/lib/types";
+import { PasswordInput, StrengthBar } from "@/components/shared/auth-bits";
+import { InstallAppButton } from "@/components/pwa";
+import type { Result } from "@/lib/store";
+
+/** Shows the right toast for a save result; returns true on success. */
+function done(r: Result<unknown>, msg: string) {
+  if (r.ok) toast.success(msg);
+  else toast.error(r.error);
+  return r.ok;
+}
 
 const TABS = [
   { key: "profil-pura", label: "Profil pura", icon: Building2 },
@@ -121,7 +131,7 @@ function TempleProfile() {
         </Field>
         {!ro && <div className="flex justify-end"><Button size="lg" onClick={() => setConfirm(true)}>Simpan perubahan</Button></div>}
       </CardBody>
-      <ConfirmDialog open={confirm} onClose={() => setConfirm(false)} title="Simpan profil pura?" description="Perubahan langsung tampil di halaman publik pura." onConfirm={() => { const { id: _i, ...patch } = f; update(patch); setConfirm(false); toast.success("Profil pura disimpan"); }} />
+      <ConfirmDialog open={confirm} onClose={() => setConfirm(false)} title="Simpan profil pura?" description="Perubahan langsung tampil di halaman publik pura." onConfirm={async () => { const r = await update({ name: f.name, description: f.description, province: f.province, regency: f.regency, district: f.district, village: f.village, address: f.address, phone: f.phone, email: f.email, cover: f.cover, photo: f.photo ?? null } as Partial<Temple>); setConfirm(false); done(r, "Profil pura disimpan"); }} />
     </Card>
   );
 }
@@ -137,8 +147,8 @@ function AdminProfile() {
         <Field label="Nama lengkap" htmlFor="u-name"><Input id="u-name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
         <Field label="Nama sapaan" htmlFor="u-call" hint='Dipakai pada sapaan dashboard, mis. "Pak Made".'><Input id="u-call" value={f.callName} onChange={(e) => setF({ ...f, callName: e.target.value })} /></Field>
         <Field label="Nomor WhatsApp" htmlFor="u-phone"><Input id="u-phone" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>
-        <Field label="Email" htmlFor="u-email" hint="Email tidak dapat diubah pada prototipe."><Input id="u-email" disabled value={user?.email ?? ""} /></Field>
-        <div className="flex justify-end"><Button size="lg" disabled={f.name.trim().length < 3} onClick={() => { update(f); toast.success("Profil disimpan"); }}>Simpan</Button></div>
+        <Field label="Email" htmlFor="u-email" hint="Email dipakai untuk masuk. Hubungi Admin Utama bila perlu diganti."><Input id="u-email" disabled value={user?.email ?? ""} /></Field>
+        <div className="flex justify-end"><Button size="lg" disabled={f.name.trim().length < 3} onClick={async () => done(await update(f), "Profil disimpan")}>Simpan</Button></div>
       </CardBody>
     </Card>
   );
@@ -166,14 +176,14 @@ function Categories() {
                 <span className="grid h-10 w-10 place-items-center rounded-xl bg-ivory text-emerald-700"><Icon className="h-5 w-5" /></span>
                 <span className="flex-1"><span className="block font-semibold">{c.name}</span><span className="text-sm text-muted">{used} transaksi{c.archived ? " · diarsipkan" : ""}</span></span>
                 {!ro && <Button variant="ghost" size="icon" onClick={() => setEdit(c)} aria-label={`Ubah ${c.name}`}><Pencil className="h-4 w-4" /></Button>}
-                {!ro && <Button variant="ghost" size="icon" onClick={() => { save({ ...c, archived: !c.archived }); toast.success(c.archived ? "Kategori diaktifkan" : "Kategori diarsipkan"); }} aria-label={c.archived ? "Aktifkan" : "Arsipkan"}>{c.archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}</Button>}
+                {!ro && <Button variant="ghost" size="icon" onClick={async () => done(await save({ ...c, archived: !c.archived }), c.archived ? "Kategori diaktifkan" : "Kategori diarsipkan")} aria-label={c.archived ? "Aktifkan" : "Arsipkan"}>{c.archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}</Button>}
               </li>
             );
           })}
         </ul>
         <p className="mt-3 text-sm text-muted">Kategori yang sudah dipakai tidak dihapus, hanya diarsipkan agar laporan lama tetap utuh.</p>
       </CardBody>
-      <Dialog open={!!edit} onClose={() => setEdit(null)} title={edit?.id ? "Ubah kategori" : "Kategori baru"} footer={<Button size="lg" className="w-full" disabled={(edit?.name ?? "").trim().length < 3} onClick={() => { save({ name: edit!.name!.trim(), type: edit!.type!, icon: edit!.icon!, id: edit!.id, archived: edit!.archived }); setEdit(null); toast.success("Kategori disimpan"); }}>Simpan</Button>}>
+      <Dialog open={!!edit} onClose={() => setEdit(null)} title={edit?.id ? "Ubah kategori" : "Kategori baru"} footer={<Button size="lg" className="w-full" disabled={(edit?.name ?? "").trim().length < 3} onClick={async () => { const r = await save({ name: edit!.name!.trim(), type: edit!.type!, icon: edit!.icon!, id: edit!.id, archived: edit!.archived }); if (done(r, "Kategori disimpan")) setEdit(null); }}>Simpan</Button>}>
         {edit && (
           <div className="space-y-4">
             <Field label="Nama kategori" htmlFor="k-name"><Input id="k-name" value={edit.name ?? ""} onChange={(e) => setEdit({ ...edit, name: e.target.value })} /></Field>
@@ -213,9 +223,9 @@ function Accounts() {
             {!ro && <Button variant="ghost" size="icon" onClick={() => setEdit(a)} aria-label={`Ubah ${a.name}`}><Pencil className="h-4 w-4" /></Button>}
           </div>
         ))}
-        <p className="text-sm text-muted">Prototipe: nomor rekening bersifat fiktif. Jangan memasukkan PIN, kata sandi internet banking, atau data kartu.</p>
+        <p className="text-sm text-muted">Cukup isi nama bank dan nomor rekening. Jangan pernah memasukkan PIN, kata sandi internet banking, atau data kartu.</p>
       </CardBody>
-      <Dialog open={!!edit} onClose={() => setEdit(null)} title={edit?.id ? "Ubah kas/rekening" : "Kas/rekening baru"} footer={<Button size="lg" className="w-full" disabled={(edit?.name ?? "").trim().length < 3} onClick={() => { save({ ...(edit as Account), name: edit!.name!.trim() }); setEdit(null); toast.success("Tersimpan"); }}>Simpan</Button>}>
+      <Dialog open={!!edit} onClose={() => setEdit(null)} title={edit?.id ? "Ubah kas/rekening" : "Kas/rekening baru"} footer={<Button size="lg" className="w-full" disabled={(edit?.name ?? "").trim().length < 3} onClick={async () => { const r = await save({ ...(edit as Account), name: edit!.name!.trim() }); if (done(r, "Tersimpan")) setEdit(null); }}>Simpan</Button>}>
         {edit && (
           <div className="space-y-4">
             <Field label="Nama" htmlFor="ac-name"><Input id="ac-name" value={edit.name ?? ""} onChange={(e) => setEdit({ ...edit, name: e.target.value })} /></Field>
@@ -253,7 +263,7 @@ function NotifPrefs() {
         <Switch checked={n.campaignEnding} onChange={(v) => set("campaignEnding", v)} label="Campaign segera berakhir" />
         <Switch checked={n.approvals} onChange={(v) => set("approvals", v)} label="Transaksi menunggu persetujuan" />
         <Switch checked={n.reportReady} onChange={(v) => set("reportReady", v)} label="Laporan siap / dipublikasikan" />
-        <Switch checked={n.weeklySummary} onChange={(v) => set("weeklySummary", v)} label="Ringkasan mingguan via WhatsApp" description="Belum tersedia di prototipe — direncanakan untuk versi produksi." disabled />
+        <Switch checked={n.weeklySummary} onChange={(v) => set("weeklySummary", v)} label="Ringkasan mingguan via WhatsApp" description="Belum tersedia — direncanakan untuk versi berikutnya." disabled />
       </CardBody>
     </Card>
   );
@@ -282,33 +292,59 @@ function Transparency() {
         ))}
       </CardBody>
       <div className="border-t border-line p-5"><Link href={`/pura/${temple!.slug}`} target="_blank" className={buttonClass("outline")}><Eye className="h-4 w-4" /> Lihat halaman publik</Link></div>
-      <ConfirmDialog open={!!pending} onClose={() => setPending(null)} title={pending?.v ? "Tampilkan ke publik?" : "Sembunyikan dari publik?"} description={pending && LABELS[pending.k][0]} onConfirm={() => { if (pending) update({ transparency: { ...t, [pending.k]: pending.v } }); setPending(null); toast.success("Pengaturan transparansi disimpan"); }} />
+      <ConfirmDialog open={!!pending} onClose={() => setPending(null)} title={pending?.v ? "Tampilkan ke publik?" : "Sembunyikan dari publik?"} description={pending && LABELS[pending.k][0]} onConfirm={async () => { if (!pending) return; const r = await update({ transparency: { ...t, [pending.k]: pending.v } }); setPending(null); done(r, "Pengaturan transparansi disimpan"); }} />
     </Card>
   );
 }
 
 function Security() {
   const session = useStore((s) => s.session);
+  const isDemo = useStore((s) => s.mode === "demo");
+  const changePassword = useStore((s) => s.changePassword);
   const [confirm, setConfirm] = useState(false);
+  const [pw, setPw] = useState({ current: "", next: "", again: "" });
+  const [busy, setBusy] = useState(false);
   const router = useRouter();
+  const mismatch = pw.again.length > 0 && pw.next !== pw.again;
   return (
     <Card>
       <CardHeader title="Keamanan" />
-      <CardBody className="space-y-4">
-        <div className="rounded-2xl border border-gold/40 bg-gold-light/50 p-4 text-sm text-gold-dark">
-          <p className="font-bold">Ini prototipe — bukan sistem keamanan sungguhan.</p>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>Sesi hanya disimulasikan di peramban ini (LocalStorage).</li>
-            <li>Kata sandi tidak disimpan dan tidak diverifikasi.</li>
-            <li>Versi produksi: autentikasi server, sandi ter-hash, verifikasi dua langkah (OTP WhatsApp), otorisasi peran di server, dan log audit permanen.</li>
+      <CardBody className="space-y-5">
+        <div className="rounded-2xl border border-line p-4">
+          <p className="font-semibold">Ganti kata sandi</p>
+          <p className="text-sm text-muted">Setelah diganti, perangkat lain yang masih masuk akan dikeluarkan otomatis.</p>
+          <div className="mt-4 space-y-3">
+            <Field label="Kata sandi sekarang" htmlFor="pw-cur"><PasswordInput id="pw-cur" autoComplete="current-password" value={pw.current} onChange={(e) => setPw({ ...pw, current: e.target.value })} /></Field>
+            <Field label="Kata sandi baru" htmlFor="pw-new" hint="Minimal 8 karakter, berisi huruf dan angka"><PasswordInput id="pw-new" autoComplete="new-password" value={pw.next} onChange={(e) => setPw({ ...pw, next: e.target.value })} /></Field>
+            <StrengthBar password={pw.next} />
+            <Field label="Ulangi kata sandi baru" htmlFor="pw-again" error={mismatch ? "Kata sandi tidak sama" : undefined}><PasswordInput id="pw-again" autoComplete="new-password" value={pw.again} onChange={(e) => setPw({ ...pw, again: e.target.value })} /></Field>
+            <Button
+              size="lg"
+              disabled={isDemo || !pw.current || pw.next.length < 8 || mismatch || !pw.again}
+              loading={busy}
+              onClick={async () => {
+                setBusy(true);
+                const r = await changePassword(pw.current, pw.next);
+                setBusy(false);
+                if (done(r, "Kata sandi berhasil diganti")) setPw({ current: "", next: "", again: "" });
+              }}
+            >
+              Simpan kata sandi baru
+            </Button>
+          </div>
+        </div>
+        <div className="rounded-2xl bg-mint/50 p-4 text-sm text-emerald-900">
+          <ul className="list-disc space-y-1 pl-5">
+            <li>Kata sandi disimpan dalam bentuk hash (bcrypt) — tidak bisa dibaca siapa pun.</li>
+            <li>Setelah 5 kali salah kata sandi, login dikunci 15 menit.</li>
+            <li>Sesi login berakhir otomatis setelah 30 hari tidak dipakai.</li>
+            <li>Semua login dan perubahan data tercatat di Log Aktivitas.</li>
           </ul>
         </div>
         <div className="flex items-center justify-between rounded-2xl border border-line p-4">
-          <div><p className="font-semibold">Sesi aktif di perangkat ini</p><p className="text-sm text-muted">Dimulai {session ? new Date(session.startedAt).toLocaleString("id-ID") : "—"}</p></div>
+          <div><p className="font-semibold">Sesi di perangkat ini</p><p className="text-sm text-muted">Dimulai {session ? new Date(session.startedAt).toLocaleString("id-ID") : "—"}</p></div>
           <Button variant="outline" onClick={() => setConfirm(true)}><LogOut className="h-4 w-4" /> Keluar</Button>
         </div>
-        <Link href="/lupa-sandi" className={buttonClass("outline", "lg", "w-full")}><KeyRound className="h-4 w-4" /> Ubah kata sandi (alur simulasi)</Link>
-        <Switch checked={false} onChange={() => toast("Fitur ini direncanakan untuk versi produksi.")} label="Verifikasi dua langkah" description="Belum tersedia di prototipe." />
       </CardBody>
       <ConfirmDialog open={confirm} onClose={() => setConfirm(false)} title="Keluar dari aplikasi?" onConfirm={() => router.push("/keluar")} confirmLabel="Keluar" />
     </Card>
@@ -336,7 +372,7 @@ function Branding() {
           <div className="h-1 bg-gold" />
           <div className="flex justify-end p-4 text-right text-sm"><div><p className="text-muted">{b.signatoryRole}</p><p className="mt-6 font-bold">{b.signatoryName}</p></div></div>
         </div>
-        {!ro && <div className="flex justify-end"><Button size="lg" onClick={() => { update({ branding: b }); toast.success("Kop laporan disimpan"); }}>Simpan</Button></div>}
+        {!ro && <div className="flex justify-end"><Button size="lg" onClick={async () => done(await update({ branding: b }), "Kop laporan disimpan")}>Simpan</Button></div>}
       </CardBody>
     </Card>
   );
@@ -346,6 +382,7 @@ function Appearance() {
   const prefs = useStore((s) => s.prefs);
   const setPrefs = useStore((s) => s.setPreferences);
   const resetData = useStore((s) => s.resetData);
+  const isDemo = useStore((s) => s.mode === "demo");
   const [confirm, setConfirm] = useState(false);
   const router = useRouter();
   return (
@@ -358,12 +395,17 @@ function Appearance() {
         </div>
         <Switch checked={prefs.reduceMotion} onChange={(v) => setPrefs({ reduceMotion: v })} label="Kurangi animasi" description="Matikan sebagian besar animasi dan transisi." />
         <div className="rounded-2xl border border-line p-4">
+          <p className="font-semibold">Pasang aplikasi di HP</p>
+          <p className="text-sm text-muted">Tambahkan PURA ke layar utama agar bisa dibuka seperti aplikasi biasa.</p>
+          <div className="mt-3"><InstallAppButton /></div>
+        </div>
+        {isDemo && <div className="rounded-2xl border border-line p-4">
           <p className="font-semibold">Data demo</p>
           <p className="text-sm text-muted">Kembalikan seluruh data prototipe ke kondisi awal.</p>
           <Button variant="outline" className="mt-3" onClick={() => setConfirm(true)}><RotateCcw className="h-4 w-4" /> Atur ulang data demo</Button>
-        </div>
+        </div>}
       </CardBody>
-      <ConfirmDialog open={confirm} onClose={() => setConfirm(false)} tone="danger" title="Atur ulang data demo?" description="Semua perubahan Anda akan dibuang dan diganti dengan data contoh awal." confirmLabel="Ya, atur ulang" onConfirm={() => { resetData(); useStore.getState().replaceAll({ data: useStore.getState().data, session: { userId: "u_made", activeTempleId: "t_durgandhini", startedAt: new Date().toISOString() } }); setConfirm(false); toast.success("Data demo diatur ulang"); router.push("/app"); }} />
+      <ConfirmDialog open={confirm} onClose={() => setConfirm(false)} tone="danger" title="Atur ulang data demo?" description="Semua perubahan Anda akan dibuang dan diganti dengan data contoh awal." confirmLabel="Ya, atur ulang" onConfirm={() => { resetData(); setConfirm(false); toast.success("Data demo diatur ulang"); router.push("/app"); }} />
     </Card>
   );
 }

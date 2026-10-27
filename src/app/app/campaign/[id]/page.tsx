@@ -42,6 +42,7 @@ function CampaignAdmin() {
   const verify = useStore((s) => s.verifyDonation);
   const reject = useStore((s) => s.rejectDonation);
   const simulate = useStore((s) => s.simulateDonation);
+  const isDemo = useStore((s) => s.mode === "demo");
   const setStatus = useStore((s) => s.setCampaignStatus);
   const addUpdate = useStore((s) => s.addCampaignUpdate);
   const [tab, setTab] = useState<"ringkasan" | "verifikasi" | "donasi" | "kabar">((params.get("tab") as "verifikasi") || "ringkasan");
@@ -104,6 +105,7 @@ function CampaignAdmin() {
           {manage && c.status === "active" && (
             <>
               <Button size="lg" className="w-full" onClick={() => setManual(true)}><Plus className="h-5 w-5" /> Catat donasi manual</Button>
+              {isDemo && (
               <Button
                 size="lg"
                 variant="outline"
@@ -118,6 +120,7 @@ function CampaignAdmin() {
               >
                 <FlaskConical className="h-5 w-5" /> Simulasikan donasi masuk
               </Button>
+              )}
             </>
           )}
           {c.status !== "draft" && (
@@ -247,9 +250,9 @@ function CampaignAdmin() {
         title="Verifikasi donasi ini?"
         description={verifying && <>Pastikan <strong>{rupiah(verifying.amount)}</strong> dari <strong>{verifying.donorName}</strong> sudah benar-benar diterima. Sistem akan mencatat satu transaksi pemasukan dan memperbarui progres campaign.</>}
         confirmLabel="Ya, sudah diterima"
-        onConfirm={() => {
+        onConfirm={async () => {
           if (!verifying) return;
-          const r = verify(verifying.id);
+          const r = await verify(verifying.id);
           setVerifying(null);
           r.ok ? toast.success("Donasi terverifikasi", { description: `Tercatat sebagai ${r.value.number}. Dashboard & halaman publik diperbarui.` }) : toast.error(r.error);
         }}
@@ -267,9 +270,9 @@ function CampaignAdmin() {
               size="lg"
               className="flex-1"
               disabled={rejectReason.trim().length < 5}
-              onClick={() => {
+              onClick={async () => {
                 if (!rejecting) return;
-                const r = reject(rejecting.id, rejectReason.trim());
+                const r = await reject(rejecting.id, rejectReason.trim());
                 setRejecting(null);
                 r.ok ? toast.success("Donasi ditolak") : toast.error(r.error);
               }}
@@ -289,9 +292,11 @@ function CampaignAdmin() {
         title={closing === "completed" ? "Tutup penggalangan dana?" : "Terbitkan campaign?"}
         description={closing === "completed" ? "Halaman publik tetap ada dengan status Selesai. Donasi yang menunggu masih bisa diverifikasi." : "Campaign akan langsung tampil di portal publik."}
         confirmLabel={closing === "completed" ? "Ya, tutup" : "Ya, terbitkan"}
-        onConfirm={() => {
-          if (closing) setStatus(c.id, closing);
-          toast.success(closing === "completed" ? "Penggalangan ditutup" : "Campaign diterbitkan");
+        onConfirm={async () => {
+          if (!closing) return;
+          const r = await setStatus(c.id, closing);
+          if (r.ok) toast.success(closing === "completed" ? "Penggalangan ditutup" : "Campaign diterbitkan");
+          else toast.error(r.error);
           setClosing(null);
         }}
       />
@@ -304,8 +309,9 @@ function CampaignAdmin() {
             size="lg"
             className="w-full"
             disabled={upd.title.trim().length < 3 || upd.body.trim().length < 5}
-            onClick={() => {
-              addUpdate(c.id, { date: todayISO(), title: upd.title.trim(), body: upd.body.trim() });
+            onClick={async () => {
+              const r = await addUpdate(c.id, { date: todayISO(), title: upd.title.trim(), body: upd.body.trim() });
+              if (!r.ok) return toast.error(r.error);
               setUpd({ open: false, title: "", body: "" });
               toast.success("Kabar dipublikasikan");
             }}
@@ -346,8 +352,8 @@ function ManualDonationDialog({ open, onClose, campaignId, defaultPrivacy }: { o
     defaultValues: { donorName: "", amount: 0, date: todayISO(), channel: "tunai", privacy: defaultPrivacy, verifyNow: false },
   });
   const verifyNow = watch("verifyNow");
-  const onSubmit = handleSubmit((v) => {
-    const r = addDonation({ campaignId, donorName: v.donorName, amount: v.amount, date: v.date, channel: v.channel, privacy: v.privacy, evidence: v.evidence, verifyNow: v.verifyNow });
+  const onSubmit = handleSubmit(async (v) => {
+    const r = await addDonation({ campaignId, donorName: v.donorName, amount: v.amount, date: v.date, channel: v.channel, privacy: v.privacy, evidence: v.evidence, verifyNow: v.verifyNow });
     if (!r.ok) return toast.error(r.error);
     toast.success(v.verifyNow ? "Donasi dicatat & diverifikasi" : "Donasi dicatat, menunggu verifikasi");
     reset();

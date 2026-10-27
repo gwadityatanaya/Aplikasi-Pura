@@ -33,7 +33,7 @@ export function PublicFooter() {
         </div>
         <OrnamentDivider className="my-8" />
         <p className="text-center text-sm text-muted">
-          Prototipe untuk demonstrasi · Semua data fiktif · Tidak memproses pembayaran sungguhan.
+          PURA tidak memproses pembayaran — dana punia ditransfer langsung ke rekening resmi pura dan diverifikasi oleh pengurus.
         </p>
       </div>
     </footer>

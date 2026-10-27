@@ -96,10 +96,12 @@ function Wizard() {
     setErrors(e);
     return !Object.keys(e).length;
   }
-  function submit(status: "draft" | "active") {
+  async function submit(status: "draft" | "active") {
     for (let i = 0; i < 3; i++) if (!validate(i)) return setStep(i);
-    const c = save({ ...f, activityId: f.activityId || undefined }, status, editing?.id);
+    const r = await save({ ...f, activityId: f.activityId || undefined }, status, editing?.id);
     setConfirm(false);
+    if (!r.ok) return toast.error(r.error);
+    const c = r.value;
     setPublished({ id: c.id, slug: c.slug, status });
     toast.success(status === "active" ? "Campaign diterbitkan!" : "Draf campaign disimpan");
   }

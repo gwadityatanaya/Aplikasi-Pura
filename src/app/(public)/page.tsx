@@ -108,12 +108,20 @@ export default function HomePage() {
                   </div>
                 </div>
               </Link>
+            ) : hydrated ? (
+              <div className="overflow-hidden rounded-[2rem] bg-white shadow-lift ring-1 ring-black/5">
+                <TempleCover variant="emerald" className="h-44" />
+                <div className="p-5">
+                  <p className="font-bold text-forest">Penggalangan dana pura akan tampil di sini</p>
+                  <p className="mt-1 text-sm text-muted">Setiap rupiah yang terkumpul ditampilkan setelah diverifikasi pengurus pura.</p>
+                </div>
+              </div>
             ) : (
               <Skeleton className="h-[330px] rounded-[2rem]" />
             )}
             <div className="relative -mt-3 ml-auto mr-4 w-[78%] overflow-hidden rounded-3xl bg-forest p-5 text-white shadow-card">
               <PatternBg />
-              <p className="relative text-xs font-medium text-white/70">Laporan Triwulan III 2026</p>
+              <p className="relative text-xs font-medium text-white/70">Laporan keuangan</p>
               <p className="relative mt-1 text-sm font-semibold">Dipublikasikan untuk krama</p>
               <div className="relative mt-3 flex items-center gap-2 text-xs text-gold-light">
                 <ShieldCheck className="h-4 w-4" /> Setiap angka berasal dari transaksi tercatat
@@ -158,6 +166,7 @@ export default function HomePage() {
                 <CampaignCard key={c.id} campaign={c} temple={temples.find((t) => t.id === c.templeId)} donations={donations} href={`/donasi/${c.slug}`} />
               ))}
         </div>
+        {hydrated && active.length === 0 && <p className="mt-2 rounded-2xl border border-dashed border-line p-8 text-center text-muted">Belum ada penggalangan dana yang aktif.</p>}
       </section>
 
       {/* FEATURED TEMPLES */}
@@ -186,6 +195,7 @@ export default function HomePage() {
                 </Link>
               ))}
         </div>
+        {hydrated && temples.length === 0 && <p className="mt-2 rounded-2xl border border-dashed border-line p-8 text-center text-muted">Belum ada pura yang dipublikasikan.</p>}
       </section>
 
       {/* BENEFITS */}

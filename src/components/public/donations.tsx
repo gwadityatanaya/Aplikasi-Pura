@@ -29,7 +29,7 @@ export function DonorList({ donations, limit = 8 }: { donations: Donation[]; lim
     [donations]
   );
   const visible = verified.filter((d) => d.privacy !== "private");
-  const privateCount = verified.length - visible.length;
+  const privateCount = verified.filter((d) => d.privacy === "private").reduce((n, d) => n + (d.count ?? 1), 0);
   const privateSum = verified.filter((d) => d.privacy === "private").reduce((s, d) => s + d.amount, 0);
   const list = showAll ? visible : visible.slice(0, limit);
 
@@ -89,7 +89,7 @@ export function DonationFeed({ donations }: { donations: Donation[] }) {
   const items = useMemo(
     () =>
       donations
-        .filter((d) => d.status === "verified" || (d.status === "pending" && d.simulated))
+        .filter((d) => (d.status === "verified" && !d.count) || (d.status === "pending" && d.simulated))
         .sort((a, b) => (b.verifiedAt ?? b.createdAt).localeCompare(a.verifiedAt ?? a.createdAt))
         .slice(0, 6),
     [donations]
@@ -169,7 +169,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export function ConfirmDonationDialog({ campaign, open, onClose }: { campaign: Campaign; open: boolean; onClose: () => void }) {
-  const addDonation = useStore((s) => s.addDonation);
+  const submit = useStore((s) => s.submitPublicDonation);
   const [done, setDone] = useState(false);
   const { register, control, handleSubmit, formState, reset } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -182,8 +182,8 @@ export function ConfirmDonationDialog({ campaign, open, onClose }: { campaign: C
       reset();
     }, 300);
   }
-  const onSubmit = handleSubmit((v) => {
-    const r = addDonation({ campaignId: campaign.id, donorName: v.donorName, amount: v.amount, date: todayISO(), privacy: v.privacy, message: v.message, evidence: v.evidence, channel: "transfer" });
+  const onSubmit = handleSubmit(async (v) => {
+    const r = await submit({ campaignId: campaign.id, donorName: v.donorName, amount: v.amount, privacy: v.privacy, message: v.message || undefined, evidence: v.evidence });
     if (!r.ok) return toast.error(r.error);
     setDone(true);
   });
@@ -214,7 +214,7 @@ export function ConfirmDonationDialog({ campaign, open, onClose }: { campaign: C
             Pengurus pura akan mencocokkan dengan mutasi rekening. Punia Anda masuk ke total setelah terverifikasi.
           </p>
           <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
-            Prototipe: tidak ada uang yang benar-benar dikirim.
+            Konfirmasi ini belum dihitung sebelum dicocokkan dengan mutasi rekening pura.
           </p>
         </div>
       ) : (

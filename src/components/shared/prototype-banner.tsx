@@ -2,9 +2,13 @@
 import { useState } from "react";
 import { FlaskConical } from "lucide-react";
 import { Dialog } from "@/components/ui/dialog";
+import { useStore } from "@/lib/store";
 
+/** Badge shown only in demo mode, explaining that the data is fictional. */
 export function PrototypeNotice() {
   const [open, setOpen] = useState(false);
+  const isDemo = useStore((s) => s.mode === "demo");
+  if (!isDemo) return null;
   return (
     <>
       <button
@@ -12,19 +16,18 @@ export function PrototypeNotice() {
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1.5 rounded-full bg-gold-light px-2.5 py-1 text-xs font-bold text-gold-dark ring-1 ring-gold/30 hover:bg-[#efe1c4]"
       >
-        <FlaskConical className="h-3.5 w-3.5" aria-hidden /> Prototipe
+        <FlaskConical className="h-3.5 w-3.5" aria-hidden /> Mode demo
       </button>
-      <Dialog open={open} onClose={() => setOpen(false)} title="Tentang prototipe ini" size="md">
+      <Dialog open={open} onClose={() => setOpen(false)} title="Tentang mode demo" size="md">
         <div className="space-y-3 text-[15px] leading-relaxed text-charcoal">
           <p>
-            PURA versi ini adalah <strong>prototipe interaktif</strong> untuk demonstrasi. Semua nama, transaksi, rekening dan
-            nominal adalah <strong>data fiktif</strong>.
+            Anda sedang memakai <strong>mode demo</strong>. Semua nama, transaksi, rekening dan nominal adalah <strong>data contoh fiktif</strong>.
           </p>
           <ul className="list-disc space-y-1.5 pl-5 text-muted">
-            <li>Login dan sesi hanya simulasi di peramban Anda — bukan sistem keamanan sungguhan. Kata sandi tidak disimpan.</li>
-            <li>Data tersimpan di LocalStorage perangkat ini dan dapat diatur ulang kapan saja.</li>
-            <li>Tidak ada pembayaran sungguhan. Donasi &quot;simulasi&quot; ditandai dengan jelas.</li>
-            <li>Versi produksi akan memakai server yang aman, autentikasi dan otorisasi di sisi server, serta verifikasi mutasi bank.</li>
+            <li>Data demo hanya ada di peramban ini dan tidak dikirim ke server.</li>
+            <li>Data pura sungguhan tidak tersentuh sama sekali.</li>
+            <li>Donasi &quot;simulasi&quot; ditandai dengan jelas dan bukan uang sungguhan.</li>
+            <li>Keluar dari mode demo melalui menu profil atau tombol &quot;Keluar demo&quot;.</li>
           </ul>
         </div>
       </Dialog>

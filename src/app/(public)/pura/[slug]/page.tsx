@@ -191,7 +191,7 @@ export default function TempleProfilePage() {
                   <Copy className="h-4 w-4" /> Salin nomor rekening
                 </Button>
                 <p className="mt-3 flex gap-2 text-xs text-muted">
-                  <Wallet className="h-4 w-4 shrink-0" /> Data rekening pada prototipe ini fiktif. Selalu pastikan rekening langsung ke pengurus pura.
+                  <Wallet className="h-4 w-4 shrink-0" /> Pastikan nama penerima sesuai. Bila ragu, konfirmasi langsung ke pengurus pura.
                 </p>
               </CardBody>
             </Card>

@@ -25,6 +25,7 @@ export default function CampaignPage() {
   const { slug } = useParams<{ slug: string }>();
   const { hydrated, temples, campaigns, donations, accounts } = usePublicData();
   const simulate = useStore((s) => s.simulateDonation);
+  const isDemo = useStore((s) => s.mode === "demo");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const campaign = campaigns.find((c) => c.slug === slug);
   const temple = temples.find((t) => t.id === campaign?.templeId);
@@ -136,7 +137,7 @@ export default function CampaignPage() {
                 >
                   <Copy className="h-4 w-4" /> Salin nomor rekening
                 </Button>
-                <p className="mt-2 text-xs text-muted">Rekening fiktif untuk prototipe — jangan mentransfer uang sungguhan.</p>
+                <p className="mt-2 text-xs text-muted">{isDemo ? "Mode demo: rekening fiktif — jangan mentransfer uang." : "Pastikan nama penerima sesuai sebelum mentransfer."}</p>
               </div>
             )}
           </Card>
@@ -145,9 +146,9 @@ export default function CampaignPage() {
             <CardHeader title="Aktivitas terbaru" />
             <CardBody>
               <DonationFeed donations={own} />
-              {campaign.status === "active" && (
+              {campaign.status === "active" && isDemo && (
                 <div className="mt-5 rounded-2xl border border-dashed border-amber-300 bg-amber-50/60 p-4">
-                  <p className="flex items-center gap-2 text-sm font-bold text-amber-900"><FlaskConical className="h-4 w-4" /> Mode prototipe</p>
+                  <p className="flex items-center gap-2 text-sm font-bold text-amber-900"><FlaskConical className="h-4 w-4" /> Mode demo</p>
                   <p className="mt-1 text-sm text-amber-900/80">Kirim donasi simulasi untuk melihat alur verifikasi. Bukan pembayaran sungguhan.</p>
                   <Button
                     variant="outline"

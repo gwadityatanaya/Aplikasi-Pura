@@ -4,10 +4,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
-import { DEMO_BACKUP_KEY, useStore } from "@/lib/store";
-import { createSeed } from "@/lib/seed";
+import { useStore } from "@/lib/store";
 import { cn, todayISO } from "@/lib/format";
-import type { DataState, Session } from "@/lib/types";
 
 const RUN_KEY = "pura-demo-running";
 
@@ -115,7 +113,7 @@ const STEPS: Step[] = [
           },
           "active"
         );
-        demoRefs.campaignId = c.id;
+        c.then((r) => r.ok && (demoRefs.campaignId = r.value.id));
         toast.success("Campaign dipublikasikan", { description: "Langsung tampil di portal publik." });
       }
       const r = s.addDonation({
@@ -128,7 +126,7 @@ const STEPS: Step[] = [
         simulated: true,
         message: "Rahajeng Piodalan! (simulasi)",
       });
-      if (r.ok) demoRefs.donationId = r.value.id;
+      r.then((x) => x.ok && (demoRefs.donationId = x.value.id));
       toast("Donasi baru (simulasi)", { description: "I Made Surya — Rp500.000 menunggu verifikasi." });
     },
   },
@@ -141,8 +139,7 @@ const STEPS: Step[] = [
     run: () => {
       const s = useStore.getState();
       if (demoRefs.donationId) {
-        const r = s.verifyDonation(demoRefs.donationId);
-        if (r.ok) toast.success("Donasi terverifikasi", { description: `Tercatat sebagai ${r.value.number}.` });
+        s.verifyDonation(demoRefs.donationId).then((r) => r.ok && toast.success("Donasi terverifikasi", { description: `Tercatat sebagai ${r.value.number}.` }));
       }
     },
   },
@@ -175,15 +172,6 @@ const STEPS: Step[] = [
   },
 ];
 
-function readBackup(): { data: DataState; session: Session | null } | null {
-  try {
-    const raw = localStorage.getItem(DEMO_BACKUP_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
 export function DemoTourProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -200,17 +188,13 @@ export function DemoTourProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     if (!hydrated) return;
     const runFlag = sessionStorage.getItem(RUN_KEY);
-    const backup = readBackup();
-    if (runFlag && backup) {
+    if (runFlag && useStore.getState().mode === "demo") {
       const st = JSON.parse(runFlag) as { index: number; ran: number[] };
       ranRef.current = new Set(st.ran);
       setIndex(st.index);
       setRunning(true);
       setPaused(true);
-    } else if (backup) {
-      useStore.getState().replaceAll(backup);
-      localStorage.removeItem(DEMO_BACKUP_KEY);
-    }
+    } else if (runFlag) sessionStorage.removeItem(RUN_KEY);
   }, [hydrated]);
 
   const persistRun = React.useCallback((i: number) => {
@@ -239,12 +223,7 @@ export function DemoTourProvider({ children }: { children: React.ReactNode }) {
   );
 
   const start = React.useCallback(() => {
-    const s = useStore.getState();
-    if (!readBackup()) {
-      localStorage.setItem(DEMO_BACKUP_KEY, JSON.stringify({ data: s.data, session: s.session }));
-    }
-    const fresh = createSeed();
-    s.replaceAll({ data: fresh, session: { userId: "u_made", activeTempleId: "t_durgandhini", startedAt: new Date().toISOString() } });
+    useStore.getState().enterDemo("u_made");
     ranRef.current = new Set();
     demoRefs.donationId = undefined;
     setRunning(true);
@@ -252,16 +231,14 @@ export function DemoTourProvider({ children }: { children: React.ReactNode }) {
     goTo(0);
   }, [goTo]);
 
-  const exit = React.useCallback(() => {
-    const backup = readBackup();
-    if (backup) useStore.getState().replaceAll(backup);
-    localStorage.removeItem(DEMO_BACKUP_KEY);
+  const exit = React.useCallback(async () => {
     sessionStorage.removeItem(RUN_KEY);
     setRunning(false);
     setFinished(false);
     setRect(null);
-    toast.success("Demo selesai", { description: "Data Anda telah dikembalikan seperti semula." });
-    router.push(backup?.session ? "/app" : "/");
+    await useStore.getState().exitDemo();
+    toast.success("Demo selesai", { description: "Kembali ke data sungguhan. Data demo tidak disimpan." });
+    router.push(useStore.getState().session ? "/app" : "/");
   }, [router]);
 
   const restart = React.useCallback(() => {
@@ -370,7 +347,7 @@ export function DemoTourProvider({ children }: { children: React.ReactNode }) {
                     </p>
                     <h3 className="mt-1.5 text-lg font-bold">Suksma telah mencoba PURA!</h3>
                     <p className="mt-1 text-sm leading-relaxed text-white/75">
-                      Semua perubahan selama demo akan dibuang dan data Anda dikembalikan seperti semula.
+                      Data demo hanya contoh dan tidak tersimpan ke server. Data pura sungguhan tidak tersentuh.
                     </p>
                     <div className="mt-4 flex gap-2">
                       <button onClick={restart} className="press inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-white/10 text-sm font-semibold hover:bg-white/20">
