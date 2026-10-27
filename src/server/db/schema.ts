@@ -75,6 +75,13 @@ export const temples = pgTable("temples", {
   address: text("address").notNull().default(""),
   description: text("description").notNull().default(""),
   phone: text("phone").notNull().default(""),
+  // Kemendagri region codes ("51", "51.03", "51.03.05", "51.03.05.2001"). Empty when the place was
+  // typed in by hand ("tidak ada di daftar") or entered before the dropdowns existed. The name
+  // columns above stay filled in either way, so old records keep reading normally.
+  provinceCode: text("province_code"),
+  regencyCode: text("regency_code"),
+  districtCode: text("district_code"),
+  villageCode: text("village_code"),
   cover: text("cover").notNull().default("emerald"),
   photo: text("photo"),
   established: text("established"),
@@ -98,9 +105,18 @@ export const banjars = pgTable("banjars", {
   district: text("district").notNull().default(""),
   regency: text("regency").notNull().default(""),
   province: text("province").notNull().default(""),
+  /** Street, number, gang, dusun … (optional) */
+  address: text("address").notNull().default(""),
+  // Kemendagri region codes ("51", "51.03", "51.03.05", "51.03.05.2001"). Empty when the place was
+  // typed in by hand ("tidak ada di daftar") or entered before the dropdowns existed. The name
+  // columns above stay filled in either way, so old records keep reading normally.
+  provinceCode: text("province_code"),
+  regencyCode: text("regency_code"),
+  districtCode: text("district_code"),
+  villageCode: text("village_code"),
   status: text("status").notNull().default("active"),
   createdAt: ts("created_at").notNull().defaultNow(),
-});
+}, (t) => [index("banjars_regency_code").on(t.regencyCode)]);
 
 export const templeBanjars = pgTable("temple_banjars", {
   templeId: text("temple_id").notNull().references(() => temples.id),

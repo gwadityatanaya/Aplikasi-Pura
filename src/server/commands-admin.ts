@@ -4,6 +4,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { db, schema as T } from "./db";
 import { ApiError, todayInAppTz } from "./http";
 import { requireSuperAdmin, requireTemple } from "./context";
+import { resolveAddress, type AddressInput } from "./wilayah";
 import { diff } from "./log";
 import { id, log, one, optId, optText, text, type Handler } from "./commands";
 import * as m from "./map";
@@ -13,17 +14,35 @@ import { callNameOf, slugify, uid } from "@/lib/format";
 const email = z.string().trim().toLowerCase().email("Email belum benar").max(200);
 
 /** Back Office — every command here is for Admin Utama only. */
+/**
+ * Address from the cascading dropdowns: per level an optional Kemendagri code (picked from the list)
+ * and/or a name (typed by hand when "tidak ada di daftar"). All optional. resolveAddress() checks the
+ * codes against the bundled region list and fills the names from it.
+ */
+const wilayahCode = z.string().trim().max(13).regex(/^[\d.]*$/).optional().nullable();
+const addressFields = {
+  province: text(100).default(""), regency: text(100).default(""), district: text(100).default(""), village: text(100).default(""),
+  provinceCode: wilayahCode, regencyCode: wilayahCode, districtCode: wilayahCode, villageCode: wilayahCode,
+  address: text(300).default(""),
+};
+function splitAddress<T extends { address: string } & AddressInput>(i: T) {
+  const { province, regency, district, village, provinceCode, regencyCode, districtCode, villageCode, ...rest } = i;
+  return { rest, address: resolveAddress({ province, regency, district, village, provinceCode, regencyCode, districtCode, villageCode }) };
+}
+
 export const adminCommands: Record<string, Handler> = {
   async saveBanjar(ctx, p) {
     await requireSuperAdmin(ctx, "mengelola banjar");
     const i = z
       .object({
-        id: optId, name: text(120).min(3), village: text(80), district: text(80), regency: text(80), province: text(80),
+        id: optId, name: text(120).min(3), ...addressFields,
         status: z.enum(["active", "inactive"]).default("active"),
       })
       .parse(p);
+    const { rest, address } = splitAddress(i);
     return db.transaction(async (tx) => {
-      const { id: bid, ...values } = i;
+      const { id: bid, ...base } = rest;
+      const values = { ...base, ...address };
       if (bid) {
         const cur = await one(tx.select().from(T.banjars).where(eq(T.banjars.id, bid)), "Banjar tidak ditemukan.");
         await tx.update(T.banjars).set(values).where(eq(T.banjars.id, bid));
@@ -46,15 +65,16 @@ export const adminCommands: Record<string, Handler> = {
       .object({
         // Required: name and banjar pengempon. Everything else is optional (a temple has no email).
         id: optId, name: text(120).min(4, "Nama pura minimal 4 huruf"),
-        province: text(80).default(""), regency: text(80).default(""), district: text(80).default(""), village: text(80).default(""),
-        address: text(300).default(""), description: text(600).default(""), phone: text(20).default(""), status: z.enum(["active", "pending"]).default("active"),
+        ...addressFields, description: text(600).default(""), phone: text(20).default(""), status: z.enum(["active", "pending"]).default("active"),
         banjarIds: z.array(id).min(1, "Pilih minimal satu banjar pengempon").max(10),
       })
       .parse(p);
     return db.transaction(async (tx) => {
       const banjars = await tx.select().from(T.banjars).where(inArray(T.banjars.id, i.banjarIds));
       if (banjars.length !== i.banjarIds.length) throw new ApiError(400, "Banjar tidak ditemukan.");
-      const { id: tid, banjarIds, ...values } = i;
+      const { rest, address } = splitAddress(i);
+      const { id: tid, banjarIds, ...base } = rest;
+      const values = { ...base, ...address };
       let templeId = tid;
       if (templeId) {
         const cur = await one(tx.select().from(T.temples).where(eq(T.temples.id, templeId)), "Pura tidak ditemukan.");

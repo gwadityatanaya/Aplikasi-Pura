@@ -55,6 +55,11 @@ export interface Temple {
   address: string;
   description: string;
   phone: string;
+  /** Kemendagri region codes (empty when typed by hand or entered before the dropdowns) */
+  provinceCode?: string;
+  regencyCode?: string;
+  districtCode?: string;
+  villageCode?: string;
   cover: CoverVariant;
   /** Optional uploaded photo (data URL, compressed) */
   photo?: string;
@@ -96,6 +101,12 @@ export interface Banjar {
   district: string;
   regency: string;
   province: string;
+  address: string;
+  /** Kemendagri region codes (empty when typed by hand or entered before the dropdowns) */
+  provinceCode?: string;
+  regencyCode?: string;
+  districtCode?: string;
+  villageCode?: string;
   status: "active" | "inactive";
   createdAt: string;
 }

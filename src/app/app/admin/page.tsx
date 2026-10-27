@@ -1,4 +1,5 @@
 "use client";
+import { WilayahPicker, emptyAddress, type AddressValue } from "@/components/app/wilayah-picker";
 import { useRouter } from "next/navigation";
 import { templeLocation } from "@/lib/temple";
 import Link from "next/link";
@@ -30,8 +31,12 @@ interface AdminData {
   banjarMembers: BanjarMember[];
 }
 
-const emptyTemple = { id: "", name: "", province: "", regency: "", district: "", village: "", address: "", description: "", phone: "", status: "active" as "active" | "pending", banjarIds: [] as string[] };
-const emptyBanjar = { id: "", name: "", village: "", district: "", regency: "", province: "Nusa Tenggara Barat", status: "active" as "active" | "inactive" };
+const pickAddress = (x: AddressValue): AddressValue => ({
+  province: x.province, regency: x.regency, district: x.district, village: x.village,
+  provinceCode: x.provinceCode ?? null, regencyCode: x.regencyCode ?? null, districtCode: x.districtCode ?? null, villageCode: x.villageCode ?? null,
+});
+const emptyTemple = { id: "", name: "", ...emptyAddress, address: "", description: "", phone: "", status: "active" as "active" | "pending", banjarIds: [] as string[] };
+const emptyBanjar = { id: "", name: "", ...emptyAddress, address: "", status: "active" as "active" | "inactive" };
 
 export default function BackOfficePage() {
   // Back Office belongs to the Admin Utama ACCOUNT, not to a temple role: it must work even before
@@ -139,7 +144,7 @@ export default function BackOfficePage() {
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 pl-9">
                     <Button size="sm" onClick={async () => { const r = await setActive(t.id); if (!r.ok) return toast.error(r.error); router.push("/app"); }}><Eye className="h-4 w-4" /> Buka dashboard</Button>
-                    <Button size="sm" variant="outline" onClick={() => setTempleForm({ id: t.id, name: t.name, province: t.province, regency: t.regency, district: t.district, village: t.village, address: t.address, description: t.description, phone: t.phone, status: t.status === "active" ? "active" : "pending", banjarIds: t.banjarIds })}><Pencil className="h-4 w-4" /> Ubah data</Button>
+                    <Button size="sm" variant="outline" onClick={() => setTempleForm({ id: t.id, name: t.name, ...pickAddress(t), address: t.address, description: t.description, phone: t.phone, status: t.status === "active" ? "active" : "pending", banjarIds: t.banjarIds })}><Pencil className="h-4 w-4" /> Ubah data</Button>
                     <Button size="sm" variant="outline" onClick={() => setBankFor({ t, bankName: t.bankName ?? "", bankAccountNumber: t.bankAccountNumber ?? "", bankAccountHolder: t.bankAccountHolder ?? "" })}><Landmark className="h-4 w-4" /> Rekening</Button>
                     <Button size="sm" variant="outline" onClick={() => { setNewStaff({ email: "", name: "", role: "pengurus" }); setStaffFor({ kind: "temple", t }); }}><Users className="h-4 w-4" /> Pengurus</Button>
                   </div>
@@ -174,7 +179,7 @@ export default function BackOfficePage() {
                   <p className="mt-3 text-sm font-semibold">Pengurus Banjar ({members.length})</p>
                   <p className="text-sm text-muted">{members.map((m) => userById(m.userId)?.name).join(", ") || "Belum ada"}</p>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setBanjarForm({ id: b.id, name: b.name, village: b.village, district: b.district, regency: b.regency, province: b.province, status: b.status })}><Pencil className="h-4 w-4" /> Ubah</Button>
+                    <Button size="sm" variant="outline" onClick={() => setBanjarForm({ id: b.id, name: b.name, ...pickAddress(b), address: b.address ?? "", status: b.status })}><Pencil className="h-4 w-4" /> Ubah</Button>
                     <Button size="sm" variant="outline" onClick={() => { setNewStaff({ email: "", name: "", role: "pengurus" }); setStaffFor({ kind: "banjar", b }); }}><Users className="h-4 w-4" /> Pengurus Banjar</Button>
                   </div>
                 </Card>
@@ -269,13 +274,11 @@ export default function BackOfficePage() {
                 ))}
               </div>
             </Field>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Desa / Kelurahan (opsional)" htmlFor="tp-vil"><Input id="tp-vil" value={templeForm.village} onChange={(e) => setTempleForm({ ...templeForm, village: e.target.value })} /></Field>
-              <Field label="Kecamatan (opsional)" htmlFor="tp-dis"><Input id="tp-dis" value={templeForm.district} onChange={(e) => setTempleForm({ ...templeForm, district: e.target.value })} /></Field>
-              <Field label="Kabupaten / Kota (opsional)" htmlFor="tp-reg"><Input id="tp-reg" value={templeForm.regency} onChange={(e) => setTempleForm({ ...templeForm, regency: e.target.value })} /></Field>
-              <Field label="Provinsi (opsional)" htmlFor="tp-prov"><Input id="tp-prov" value={templeForm.province} onChange={(e) => setTempleForm({ ...templeForm, province: e.target.value })} /></Field>
-            </div>
-            <Field label="Alamat / lokasi (opsional)" htmlFor="tp-addr"><Input id="tp-addr" value={templeForm.address} onChange={(e) => setTempleForm({ ...templeForm, address: e.target.value })} /></Field>
+            <fieldset className="space-y-3 rounded-2xl border border-line p-4">
+              <legend className="px-1 text-[15px] font-bold">Lokasi pura (opsional)</legend>
+              <WilayahPicker idPrefix="tp" value={pickAddress(templeForm)} onChange={(a) => setTempleForm({ ...templeForm, ...a })} />
+            </fieldset>
+            <Field label="Alamat detail (opsional)" hint="Jalan, nomor, gang, dusun/banjar dinas, patokan." htmlFor="tp-addr"><Input id="tp-addr" value={templeForm.address} onChange={(e) => setTempleForm({ ...templeForm, address: e.target.value })} /></Field>
             <Field label="Catatan / deskripsi (opsional)" htmlFor="tp-desc"><Textarea id="tp-desc" rows={3} value={templeForm.description} onChange={(e) => setTempleForm({ ...templeForm, description: e.target.value })} /></Field>
             <Field label="Telepon / WA kontak (opsional)" htmlFor="tp-phone"><Input id="tp-phone" value={templeForm.phone} onChange={(e) => setTempleForm({ ...templeForm, phone: e.target.value })} /></Field>
             <Field label="Status" htmlFor="tp-status">
@@ -298,12 +301,14 @@ export default function BackOfficePage() {
         {banjarForm && (
           <div className="space-y-4">
             <Field label="Nama banjar" htmlFor="bj-name"><Input id="bj-name" value={banjarForm.name} onChange={(e) => setBanjarForm({ ...banjarForm, name: e.target.value })} placeholder="Banjar Adat …" /></Field>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Desa" htmlFor="bj-vil"><Input id="bj-vil" value={banjarForm.village} onChange={(e) => setBanjarForm({ ...banjarForm, village: e.target.value })} /></Field>
-              <Field label="Kecamatan" htmlFor="bj-dis"><Input id="bj-dis" value={banjarForm.district} onChange={(e) => setBanjarForm({ ...banjarForm, district: e.target.value })} /></Field>
-              <Field label="Kabupaten" htmlFor="bj-reg"><Input id="bj-reg" value={banjarForm.regency} onChange={(e) => setBanjarForm({ ...banjarForm, regency: e.target.value })} /></Field>
-              <Field label="Provinsi" htmlFor="bj-prov"><Input id="bj-prov" value={banjarForm.province} onChange={(e) => setBanjarForm({ ...banjarForm, province: e.target.value })} /></Field>
-            </div>
+            <fieldset className="space-y-3 rounded-2xl border border-line p-4">
+              <legend className="px-1 text-[15px] font-bold">Wilayah banjar (opsional)</legend>
+              <p className="text-sm text-muted">Kode wilayah dipakai nanti untuk ringkasan per desa/kecamatan/kabupaten.</p>
+              <WilayahPicker idPrefix="bj" value={pickAddress(banjarForm)} onChange={(a) => setBanjarForm({ ...banjarForm, ...a })} />
+            </fieldset>
+            <Field label="Alamat detail (opsional)" hint="Jalan, nomor, gang, dusun, patokan." htmlFor="bj-addr">
+              <Input id="bj-addr" value={banjarForm.address} onChange={(e) => setBanjarForm({ ...banjarForm, address: e.target.value })} />
+            </Field>
             <Field label="Status" htmlFor="bj-status">
               <Select id="bj-status" value={banjarForm.status} onChange={(e) => setBanjarForm({ ...banjarForm, status: e.target.value as "active" | "inactive" })}>
                 <option value="active">Aktif</option>
