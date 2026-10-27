@@ -388,7 +388,7 @@ export const coreCommands: Record<string, Handler> = {
     // Name, location, banjar pengempon and bank details are managed in the Back Office (Admin Utama).
     const i = z
       .object({
-        description: text(600), phone: text(20), email: optText(120), cover: coverVariant, photo: image, established: optText(20),
+        description: text(600), phone: text(20), cover: coverVariant, photo: image, established: optText(20),
         transparency: transparencySchema,
         branding: z.object({ headerTitle: text(160), signatoryName: text(120), signatoryRole: text(80), footerNote: text(200) }),
       })

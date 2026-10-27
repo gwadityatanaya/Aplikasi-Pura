@@ -44,8 +44,10 @@ export const adminCommands: Record<string, Handler> = {
     await requireSuperAdmin(ctx, "mengelola pura");
     const i = z
       .object({
-        id: optId, name: text(120).min(4), province: text(80).min(2), regency: text(80).min(2), district: text(80).min(2), village: text(80).min(2),
-        address: text(300).min(4), description: text(600), phone: text(20), status: z.enum(["active", "pending"]).default("active"),
+        // Required: name and banjar pengempon. Everything else is optional (a temple has no email).
+        id: optId, name: text(120).min(4, "Nama pura minimal 4 huruf"),
+        province: text(80).default(""), regency: text(80).default(""), district: text(80).default(""), village: text(80).default(""),
+        address: text(300).default(""), description: text(600).default(""), phone: text(20).default(""), status: z.enum(["active", "pending"]).default("active"),
         banjarIds: z.array(id).min(1, "Pilih minimal satu banjar pengempon").max(10),
       })
       .parse(p);

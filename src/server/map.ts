@@ -31,7 +31,7 @@ export const DEFAULT_TRANSPARENCY: Required<TransparencySettings> = {
 
 export const toTemple = (r: Row<typeof schema.temples>): Temple => ({
   id: r.id, slug: r.slug, name: r.name, province: r.province, regency: r.regency, district: r.district, village: r.village,
-  address: r.address, description: r.description, phone: r.phone, email: u(r.email), cover: r.cover as Temple["cover"], photo: u(r.photo),
+  address: r.address, description: r.description, phone: r.phone, cover: r.cover as Temple["cover"], photo: u(r.photo),
   established: u(r.established), status: r.status as Temple["status"], createdAt: r.createdAt.toISOString(),
   transparency: { ...DEFAULT_TRANSPARENCY, ...r.transparency }, branding: r.branding,
   bankName: u(r.bankName), bankAccountNumber: u(r.bankAccountNumber), bankAccountHolder: u(r.bankAccountHolder),

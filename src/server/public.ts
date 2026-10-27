@@ -78,7 +78,6 @@ export async function loadPublic(): Promise<PublicData> {
     const tp = t.transparency;
     const out: PublicTemple = {
       ...t,
-      email: t.email,
       banjarIds,
       banjarNames: banjarRows.filter((b) => banjarIds.includes(b.id)).map((b) => b.name),
       pengurusCount: undefined,

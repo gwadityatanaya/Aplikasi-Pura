@@ -3,6 +3,7 @@ import type { DataState, Temple, Transaction } from "./types";
 import { activitySummary, byCategory, campaignStats, expenseOf, incomeOf, monthlyCashflow, summarize } from "./ledger";
 import { formatDate, formatDateShort, slugify } from "./format";
 import { PURPOSE_LABEL } from "./permissions";
+import { templeLocation } from "./temple";
 
 export type ReportType = "summary" | "income" | "expense" | "cashflow" | "activity" | "campaign" | "punia" | "detail";
 
@@ -71,7 +72,7 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
     fileName: `${slugify(`${typeLabel} ${temple.name}`)}_${f.from}_${f.to}`,
     title: typeLabel === "Ringkasan keuangan" ? temple.branding.headerTitle : `${typeLabel}`,
     templeName: temple.name,
-    templeAddress: `${temple.regency}, ${temple.province}`,
+    templeAddress: [templeLocation(temple), temple.province].filter(Boolean).join(", "),
     period,
     signatory: { name: temple.branding.signatoryName, role: temple.branding.signatoryRole },
     footerNote: temple.branding.footerNote,

@@ -36,6 +36,13 @@
       "when": 1793106445122,
       "tag": "0004_phase3_anonymize",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793118609212,
+      "tag": "0005_phase31_temple_optional",
+      "breakpoints": true
     }
   ]
 }

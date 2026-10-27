@@ -1,4 +1,5 @@
 "use client";
+import { templeLocation } from "@/lib/temple";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -211,7 +212,7 @@ function TopBar() {
         <Link href="/app" className="lg:hidden" aria-label="Beranda"><Logo compact /></Link>
         <div className="min-w-0 flex-1 lg:hidden">
           <p className="truncate text-[15px] font-bold leading-tight text-forest">{temple?.name ?? "Dashboard"}</p>
-          <p className="truncate text-xs text-muted">{temple?.regency}</p>
+          <p className="truncate text-xs text-muted">{temple ? templeLocation(temple) : ""}</p>
         </div>
         <div className="hidden flex-1 lg:block" />
         <Link href="/umat" className="press inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-white px-3 text-sm font-semibold hover:bg-ivory" title="Beralih ke Tampilan Umat">

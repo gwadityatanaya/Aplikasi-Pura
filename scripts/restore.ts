@@ -25,8 +25,11 @@ async function main() {
         }
         continue;
       }
-      for (let i = 0; i < rows.length; i += 200) {
-        await tx`insert into ${tx(table)} ${tx(rows.slice(i, i + 200) as any)}`;
+      // Older backups may contain columns that were removed since (e.g. temples.email): skip those.
+      const cols = new Set((await tx`select column_name from information_schema.columns where table_schema = 'public' and table_name = ${table}`).map((c) => c.column_name as string));
+      const clean = rows.map((r) => Object.fromEntries(Object.entries(r).filter(([k]) => cols.has(k))));
+      for (let i = 0; i < clean.length; i += 200) {
+        await tx`insert into ${tx(table)} ${tx(clean.slice(i, i + 200) as any)}`;
       }
     }
     await tx`select setval(pg_get_serial_sequence('activity_log', 'id'), coalesce((select max(id) from activity_log), 1))`;

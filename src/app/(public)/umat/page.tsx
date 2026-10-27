@@ -1,4 +1,5 @@
 "use client";
+import { templeLocation } from "@/lib/temple";
 import Link from "next/link";
 import { ChevronRight, HandHeart, History, LayoutDashboard, MapPin, UserRound } from "lucide-react";
 import { TempleCover } from "@/components/brand/temple-cover";
@@ -61,8 +62,9 @@ export default function UmatHome() {
             <TempleCover variant={t.cover} image={t.photo} alt="" className="h-20 w-20 shrink-0 rounded-xl" />
             <div className="min-w-0 flex-1">
               <Link href={`/pura/${t.slug}`} className="font-bold hover:underline">{t.name}</Link>
-              <p className="flex items-center gap-1 truncate text-sm text-muted"><MapPin className="h-3.5 w-3.5 shrink-0" /> {t.village}</p>
+              {templeLocation(t) && <p className="flex items-center gap-1 truncate text-sm text-muted"><MapPin className="h-3.5 w-3.5 shrink-0" /> {templeLocation(t)}</p>}
               {t.banjarNames.length > 0 && <p className="truncate text-xs text-muted">Pengempon: {t.banjarNames.join(", ")}</p>}
+              {!t.hasPengurus && <p className="text-xs font-semibold text-sky-800">Pengurus pura belum terdaftar</p>}
             </div>
             {t.acceptsPunia ? (
               <Link href={`/pura/${t.slug}/punia`} className={buttonClass("primary", "md", "shrink-0")}><HandHeart className="h-4 w-4" /> Punia</Link>

@@ -1,4 +1,5 @@
 "use client";
+import { templeLocation } from "@/lib/temple";
 import Link from "next/link";
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -15,7 +16,7 @@ function Directory() {
   const { hydrated, temples, campaigns } = usePublicData();
   const [q, setQ] = useState(params.get("q") ?? "");
   const [regency, setRegency] = useState("");
-  const regencies = useMemo(() => Array.from(new Set(temples.map((t) => t.regency))).sort(), [temples]);
+  const regencies = useMemo(() => Array.from(new Set(temples.map((t) => t.regency).filter(Boolean))).sort(), [temples]);
   const list = temples.filter((t) => {
     const s = `${t.name} ${t.regency} ${t.district} ${t.village} ${t.province}`.toLowerCase();
     return (!q || s.includes(q.toLowerCase())) && (!regency || t.regency === regency);
@@ -55,9 +56,11 @@ function Directory() {
                   <TempleCover variant={t.cover} image={t.photo} alt={`Sampul ${t.name}`} className="h-40" />
                   <div className="p-5">
                     <h2 className="text-lg font-bold text-charcoal group-hover:text-emerald-800">{t.name}</h2>
-                    <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
-                      <MapPin className="h-4 w-4 shrink-0" aria-hidden /> {t.village}, {t.district}, {t.regency}
-                    </p>
+                    {templeLocation(t) && (
+                      <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
+                        <MapPin className="h-4 w-4 shrink-0" aria-hidden /> {templeLocation(t)}
+                      </p>
+                    )}
                     <div className="mt-4 flex items-center justify-between">
                       {n > 0 ? (
                         <Badge tone="emerald"><Megaphone className="h-3.5 w-3.5" /> {n} penggalangan aktif</Badge>

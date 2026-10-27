@@ -1,9 +1,10 @@
 "use client";
+import { templeLocation } from "@/lib/temple";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, ArrowDownLeft, ArrowUpRight, Copy, Download, FileText, HandHeart, Info, Landmark, Mail, MapPin, Phone, Users } from "lucide-react";
+import { AlertTriangle, ArrowDownLeft, ArrowUpRight, Copy, Download, FileText, HandHeart, Info, Landmark, MapPin, Phone, Users } from "lucide-react";
 import { toast } from "sonner";
 import { TempleCover } from "@/components/brand/temple-cover";
 import { OrnamentDivider } from "@/components/brand/ornament";
@@ -65,7 +66,7 @@ export default function TemplePage() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-5 md:p-10">
             <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-3xl font-extrabold text-white md:text-5xl">{temple.name}</motion.h1>
-            <p className="mt-1.5 flex items-center gap-1.5 text-white/90"><MapPin className="h-4 w-4" aria-hidden /> {temple.village}, {temple.district}, {temple.regency}</p>
+            {templeLocation(temple) && <p className="mt-1.5 flex items-center gap-1.5 text-white/90"><MapPin className="h-4 w-4" aria-hidden /> {templeLocation(temple)}</p>}
           </div>
         </TempleCover>
       </div>
@@ -151,12 +152,14 @@ export default function TemplePage() {
             </section>
           )}
 
-          <Card>
-            <CardBody>
-              <h2 className="text-lg font-bold">Tentang pura</h2>
-              <p className="mt-2 leading-relaxed text-charcoal/80">{temple.description || "—"}</p>
-            </CardBody>
-          </Card>
+          {temple.description && (
+            <Card>
+              <CardBody>
+                <h2 className="text-lg font-bold">Tentang pura</h2>
+                <p className="mt-2 whitespace-pre-line leading-relaxed text-charcoal/80">{temple.description}</p>
+              </CardBody>
+            </Card>
+          )}
         </div>
 
         <aside className="space-y-5 lg:sticky lg:top-20 lg:self-start">
@@ -183,14 +186,15 @@ export default function TemplePage() {
               )}
             </div>
           </Card>
-          <Card>
-            <CardHeader title="Kontak" />
-            <CardBody className="space-y-3 text-[15px]">
-              <p className="flex gap-3"><MapPin className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" /> {temple.address}</p>
-              {temple.phone && <a href={`tel:${temple.phone.replace(/[^\d+]/g, "")}`} className="flex gap-3 hover:text-emerald-700"><Phone className="h-5 w-5 shrink-0 text-emerald-700" /> {temple.phone}</a>}
-              {temple.email && <a href={`mailto:${temple.email}`} className="flex gap-3 break-all hover:text-emerald-700"><Mail className="h-5 w-5 shrink-0 text-emerald-700" /> {temple.email}</a>}
-            </CardBody>
-          </Card>
+          {(temple.address || temple.phone) && (
+            <Card>
+              <CardHeader title="Kontak" />
+              <CardBody className="space-y-3 text-[15px]">
+                {temple.address && <p className="flex gap-3"><MapPin className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" /> {temple.address}</p>}
+                {temple.phone && <a href={`tel:${temple.phone.replace(/[^\d+]/g, "")}`} className="flex gap-3 hover:text-emerald-700"><Phone className="h-5 w-5 shrink-0 text-emerald-700" /> {temple.phone}</a>}
+              </CardBody>
+            </Card>
+          )}
           <Card>
             <CardHeader title="Bagikan halaman pura" description="Gantikan broadcast di grup WhatsApp" />
             <CardBody>

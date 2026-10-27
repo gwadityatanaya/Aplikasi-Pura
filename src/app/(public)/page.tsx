@@ -1,4 +1,5 @@
 "use client";
+import { templeLocation } from "@/lib/temple";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -190,7 +191,7 @@ export default function HomePage() {
                   <div className="p-4">
                     <h3 className="font-bold text-charcoal group-hover:text-emerald-800">{t.name}</h3>
                     <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
-                      <MapPin className="h-4 w-4" aria-hidden /> {t.regency}, {t.province === "Nusa Tenggara Barat" ? "NTB" : t.province}
+                      <MapPin className="h-4 w-4" aria-hidden /> {templeLocation(t) || "Lokasi belum diisi"}
                     </p>
                   </div>
                 </Link>

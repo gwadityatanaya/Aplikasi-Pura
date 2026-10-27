@@ -91,10 +91,10 @@ async function main() {
   ];
   const temples: Record<string, string> = {};
   for (const t of templeDefs) {
-    const r = await run<{ id: string }>(admin, null, "adminSaveTemple", {
-      ...base, name: t.name, address: `Jalan Contoh No. ${templeDefs.indexOf(t) + 1}`,
-      description: `${t.name} adalah pura fiktif untuk data contoh aplikasi PURA.`, banjarIds: t.banjarIds,
-    });
+    // Pura Melanting is registered with the bare minimum (name + banjar): no address, phone or email.
+    const r = await run<{ id: string }>(admin, null, "adminSaveTemple", t.key === "melanting"
+      ? { name: t.name, banjarIds: t.banjarIds }
+      : { ...base, name: t.name, address: `Jalan Contoh No. ${templeDefs.indexOf(t) + 1}`, description: `${t.name} adalah pura fiktif untuk data contoh aplikasi PURA.`, banjarIds: t.banjarIds });
     temples[t.key] = r.id;
     await run(admin, null, "setTempleBank", { templeId: r.id, bankName: t.bank[0], bankAccountNumber: t.bank[1], bankAccountHolder: t.bank[2] });
   }

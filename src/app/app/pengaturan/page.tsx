@@ -23,6 +23,7 @@ import { accountBalance } from "@/lib/ledger";
 import { cn, rupiah } from "@/lib/format";
 import type { Account, Category, CoverVariant, Temple } from "@/lib/types";
 import { InstallAppButton } from "@/components/pwa";
+import { templeLocation } from "@/lib/temple";
 import type { Result } from "@/lib/store";
 import { LogoutEverywhere } from "@/components/shared/logout-everywhere";
 
@@ -107,15 +108,12 @@ function TempleProfile() {
         {ro && <ReadOnlyNote />}
         <div className="rounded-2xl bg-ivory p-4 text-[15px]">
           <p className="font-bold">{temple!.name}</p>
-          <p className="text-muted">{temple!.address} · {temple!.village}, {temple!.district}, {temple!.regency}</p>
+          {(temple!.address || templeLocation(temple!)) && <p className="text-muted">{[temple!.address, templeLocation(temple!)].filter(Boolean).join(" · ")}</p>}
           <p className="mt-1 text-muted">Banjar Pengempon: {banjars.filter((b) => temple!.banjarIds?.includes(b.id)).map((b) => b.name).join(", ") || "—"}</p>
           <p className="mt-2 text-sm text-muted">Nama, lokasi, banjar pengempon dan rekening diatur Admin Utama di Back Office.</p>
         </div>
-        <Field label="Deskripsi" htmlFor="t-desc"><Textarea id="t-desc" disabled={ro} rows={4} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Telepon / WhatsApp" htmlFor="t-phone"><Input id="t-phone" disabled={ro} value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>
-          <Field label="Email" htmlFor="t-email"><Input id="t-email" disabled={ro} value={f.email ?? ""} onChange={(e) => setF({ ...f, email: e.target.value })} /></Field>
-        </div>
+        <Field label="Deskripsi / catatan (opsional)" htmlFor="t-desc"><Textarea id="t-desc" disabled={ro} rows={4} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></Field>
+        <Field label="Telepon / WhatsApp kontak (opsional)" htmlFor="t-phone"><Input id="t-phone" inputMode="tel" disabled={ro} value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>
         <Field label="Sampul">
           <div className="flex flex-wrap gap-2">
             {covers.map((c) => (
@@ -128,7 +126,7 @@ function TempleProfile() {
         </Field>
         {!ro && <div className="flex justify-end"><Button size="lg" onClick={() => setConfirm(true)}>Simpan perubahan</Button></div>}
       </CardBody>
-      <ConfirmDialog open={confirm} onClose={() => setConfirm(false)} title="Simpan profil pura?" description="Perubahan langsung tampil di halaman pura untuk umat." onConfirm={async () => { const r = await update({ description: f.description, phone: f.phone, email: f.email, cover: f.cover, photo: f.photo ?? null } as Partial<Temple>); setConfirm(false); done(r, "Profil pura disimpan"); }} />
+      <ConfirmDialog open={confirm} onClose={() => setConfirm(false)} title="Simpan profil pura?" description="Perubahan langsung tampil di halaman pura untuk umat." onConfirm={async () => { const r = await update({ description: f.description, phone: f.phone, cover: f.cover, photo: f.photo ?? null } as Partial<Temple>); setConfirm(false); done(r, "Profil pura disimpan"); }} />
     </Card>
   );
 }

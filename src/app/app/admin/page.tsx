@@ -1,4 +1,5 @@
 "use client";
+import { templeLocation } from "@/lib/temple";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Building2, Crown, DatabaseBackup, Download, Landmark, MapPin, Pencil, Plus, Search, ShieldCheck, UserCheck, UserPlus, UserX, Users, X } from "lucide-react";
@@ -29,7 +30,7 @@ interface AdminData {
   banjarMembers: BanjarMember[];
 }
 
-const emptyTemple = { id: "", name: "", province: "Nusa Tenggara Barat", regency: "", district: "", village: "", address: "", description: "", phone: "", status: "active" as "active" | "pending", banjarIds: [] as string[] };
+const emptyTemple = { id: "", name: "", province: "", regency: "", district: "", village: "", address: "", description: "", phone: "", status: "active" as "active" | "pending", banjarIds: [] as string[] };
 const emptyBanjar = { id: "", name: "", village: "", district: "", regency: "", province: "Nusa Tenggara Barat", status: "active" as "active" | "inactive" };
 
 export default function BackOfficePage() {
@@ -121,7 +122,7 @@ export default function BackOfficePage() {
                     <div className="min-w-0 flex-1">
                       <Link href={`/pura/${t.slug}`} target="_blank" className="text-[17px] font-bold hover:text-emerald-700">{t.name}</Link>
                       <p className="text-sm text-muted">Banjar Pengempon: {t.banjarIds.map(banjarName).join(", ") || "—"}</p>
-                      <p className="flex items-center gap-1 text-sm text-muted"><MapPin className="h-3.5 w-3.5" /> {t.village}, {t.district}, {t.regency}</p>
+                      {templeLocation(t) && <p className="flex items-center gap-1 text-sm text-muted"><MapPin className="h-3.5 w-3.5" /> {templeLocation(t)}</p>}
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {t.status !== "active" && <Badge tone="gray">Nonaktif</Badge>}
                         {t.pengurusCount === 0 ? <Badge tone="amber">Pengurus pura belum terdaftar</Badge> : t.pengurusCount === 1 ? <Badge tone="amber">Hanya 1 pengurus</Badge> : <Badge tone="green">{t.pengurusCount} pengurus</Badge>}
@@ -246,8 +247,9 @@ export default function BackOfficePage() {
       >
         {templeForm && (
           <div className="space-y-4">
-            <Field label="Nama pura" htmlFor="tp-name"><Input id="tp-name" value={templeForm.name} onChange={(e) => setTempleForm({ ...templeForm, name: e.target.value })} placeholder="Pura Dalem …" /></Field>
-            <Field label="Banjar Pengempon" hint="Boleh lebih dari satu. Pengurus semua banjar yang dipilih dapat membuka pura ini.">
+            <p className="rounded-xl bg-ivory p-3 text-sm text-muted">Wajib: nama pura dan banjar pengempon. Pura tidak perlu email — email hanya untuk pengurus yang masuk. Rekening diisi lewat tombol <b>Rekening</b> setelah pura disimpan; tanpa rekening umat belum bisa berpunia.</p>
+            <Field label="Nama pura" htmlFor="tp-name" required><Input id="tp-name" value={templeForm.name} onChange={(e) => setTempleForm({ ...templeForm, name: e.target.value })} placeholder="Pura Dalem …" /></Field>
+            <Field label="Banjar Pengempon" required hint="Boleh lebih dari satu. Pengurus semua banjar yang dipilih dapat membuka pura ini.">
               <div className="space-y-2">
                 {data?.banjars.map((b) => (
                   <label key={b.id} className="flex items-center gap-3 rounded-xl border border-line p-3">
@@ -258,14 +260,14 @@ export default function BackOfficePage() {
               </div>
             </Field>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Desa / Kelurahan" htmlFor="tp-vil"><Input id="tp-vil" value={templeForm.village} onChange={(e) => setTempleForm({ ...templeForm, village: e.target.value })} /></Field>
-              <Field label="Kecamatan" htmlFor="tp-dis"><Input id="tp-dis" value={templeForm.district} onChange={(e) => setTempleForm({ ...templeForm, district: e.target.value })} /></Field>
-              <Field label="Kabupaten / Kota" htmlFor="tp-reg"><Input id="tp-reg" value={templeForm.regency} onChange={(e) => setTempleForm({ ...templeForm, regency: e.target.value })} /></Field>
-              <Field label="Provinsi" htmlFor="tp-prov"><Input id="tp-prov" value={templeForm.province} onChange={(e) => setTempleForm({ ...templeForm, province: e.target.value })} /></Field>
+              <Field label="Desa / Kelurahan (opsional)" htmlFor="tp-vil"><Input id="tp-vil" value={templeForm.village} onChange={(e) => setTempleForm({ ...templeForm, village: e.target.value })} /></Field>
+              <Field label="Kecamatan (opsional)" htmlFor="tp-dis"><Input id="tp-dis" value={templeForm.district} onChange={(e) => setTempleForm({ ...templeForm, district: e.target.value })} /></Field>
+              <Field label="Kabupaten / Kota (opsional)" htmlFor="tp-reg"><Input id="tp-reg" value={templeForm.regency} onChange={(e) => setTempleForm({ ...templeForm, regency: e.target.value })} /></Field>
+              <Field label="Provinsi (opsional)" htmlFor="tp-prov"><Input id="tp-prov" value={templeForm.province} onChange={(e) => setTempleForm({ ...templeForm, province: e.target.value })} /></Field>
             </div>
-            <Field label="Alamat" htmlFor="tp-addr"><Input id="tp-addr" value={templeForm.address} onChange={(e) => setTempleForm({ ...templeForm, address: e.target.value })} /></Field>
-            <Field label="Deskripsi singkat" htmlFor="tp-desc"><Textarea id="tp-desc" rows={3} value={templeForm.description} onChange={(e) => setTempleForm({ ...templeForm, description: e.target.value })} /></Field>
-            <Field label="Telepon / WhatsApp pura" htmlFor="tp-phone"><Input id="tp-phone" value={templeForm.phone} onChange={(e) => setTempleForm({ ...templeForm, phone: e.target.value })} /></Field>
+            <Field label="Alamat / lokasi (opsional)" htmlFor="tp-addr"><Input id="tp-addr" value={templeForm.address} onChange={(e) => setTempleForm({ ...templeForm, address: e.target.value })} /></Field>
+            <Field label="Catatan / deskripsi (opsional)" htmlFor="tp-desc"><Textarea id="tp-desc" rows={3} value={templeForm.description} onChange={(e) => setTempleForm({ ...templeForm, description: e.target.value })} /></Field>
+            <Field label="Telepon / WA kontak (opsional)" htmlFor="tp-phone"><Input id="tp-phone" value={templeForm.phone} onChange={(e) => setTempleForm({ ...templeForm, phone: e.target.value })} /></Field>
             <Field label="Status" htmlFor="tp-status">
               <Select id="tp-status" value={templeForm.status} onChange={(e) => setTempleForm({ ...templeForm, status: e.target.value as "active" | "pending" })}>
                 <option value="active">Aktif — tampil untuk umat</option>

@@ -51,7 +51,6 @@ export interface Temple {
   address: string;
   description: string;
   phone: string;
-  email?: string;
   cover: CoverVariant;
   /** Optional uploaded photo (data URL, compressed) */
   photo?: string;
