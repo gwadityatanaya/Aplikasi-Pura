@@ -13,7 +13,7 @@ Daftar ini berisi pilihan yang **tidak bisa saya putuskan sendiri** karena menya
 
 - ✅ Nama akun di Log Aktivitas (khusus Admin Utama) dibiarkan sebagai jejak keamanan. **Sampaikan ke pengurus saat pilot:** "ANONIM" berarti anonim di **tampilan publik** dan laporan versi umum. Nama asli pengirim tetap diketahui oleh pengurus pura tujuan, Pengurus Banjar pengemponnya, dan Admin Utama.
 - ✅ Gabung akun: tidak dibuat. Pengurus yang punya dua email memakai email yang didaftarkan Admin Utama.
-- ⏳ Skrip ganti email Admin Utama: dikerjakan di **Phase 3.2**, bersama aturan pengesahan pengeluaran.
+- ⏳ Skrip ganti email Admin Utama: dipindah ke **Phase 3.4**. Aturan pengesahan pengeluaran menunggu batas nominal dari pengurus banjar.
 
 ## Alamat bertingkat (baru)
 
@@ -22,38 +22,26 @@ Daftar ini berisi pilihan yang **tidak bisa saya putuskan sendiri** karena menya
 3. **Alamat lama tanpa kode.** Banjar/pura yang dulu diisi teks bebas tetap tampil apa adanya tetapi belum punya kode. Perlu saya buatkan bantuan "cocokkan otomatis" (mencari kode berdasarkan nama) yang hasilnya Anda periksa sebelum disimpan? *Saran: belum perlu*; untuk pilot, cukup pilih ulang dari dropdown saat mengedit.
 4. **Pengurus pura belum bisa mengubah lokasi pura** (hanya Admin Utama di Back Office), sama seperti sebelumnya. Tetap begitu?
 
-## Phase 3.2 — perlu keputusan Anda
+## Phase 3.2 — sudah diputuskan
 
-Semua sudah berjalan dengan pilihan "saran" di bawah. Cukup jawab jika ingin mengubahnya.
+- ✅ Lampiran pesan bantuan dihapus otomatis **30 hari** setelah pesan Selesai.
+- ✅ **Banjar diarsipkan:** Pengurus Banjar-nya tetap bisa **melihat** laporan dan riwayat pura yang diempon (baca saja), tetapi tidak bisa mencatat, mengesahkan, menolak, atau mengoreksi.
+- ✅ **Pura dengan punia menunggu tidak bisa diarsipkan** sampai semua punia itu disahkan atau ditolak (dijaga aplikasi dan database).
+- ✅ **Foto dihapus Admin Utama:** pemiliknya mendapat satu kalimat pemberitahuan di aplikasi, tanpa alasan rinci.
+- ⏳ **Skrip ganti email Admin Utama** → Phase 3.4.
+- ⏳ **Batas nominal pengesahan pengeluaran** → menunggu angka dari pengurus banjar.
 
-**Laporan & Excel**
+## Phase 3.2 — masih terbuka (sudah berjalan dengan saran saya)
 
 1. **Kertas F4.** PDF memakai F4 21,5 × 33 cm. Excel tidak punya ukuran "F4", jadi memakai **Folio 8½ × 13 inci** (21,6 × 33 cm) — selisih 1 mm, hasil cetak sama. *Saran: biarkan.*
 2. **Pemisah ribuan di Excel** mengikuti bahasa komputer (Rp1.050.000 di Windows berbahasa Indonesia, Rp1,050,000 di Windows berbahasa Inggris). Bisa dipaksa selalu titik, tetapi angkanya lalu menjadi teks dan **tidak bisa dijumlah lagi**. *Saran: biarkan sebagai angka.*
 3. **Pilihan tanda tangan bawaan** saat membuka halaman Laporan: "Ketua, Sekretaris, dan Bendahara", tanpa "Mengetahui". Perlu diganti, misalnya selalu dengan "Mengetahui: Kelian Banjar"?
-
-**Arsip & hapus**
-
-4. **Pengurus Banjar dari banjar yang diarsipkan** kehilangan akses (juga ke pura yang diempon bersama banjar lain) sampai banjarnya diaktifkan kembali. Pura dan Pengurus Banjar lainnya tidak terganggu. *Saran: tetap begitu.*
-5. **Yang dihitung "data"** sehingga pura tidak bisa dihapus permanen: transaksi, punia, kegiatan (selain "Operasional Pura" otomatis), **campaign**, **laporan terbit**, foto/nota, dan saldo awal kas. *Saran: tetap begitu* (lebih aman).
-6. **Punia yang masih menunggu saat pura diarsipkan** tidak bisa disahkan atau ditolak sampai pura diaktifkan kembali. Dialog arsip sudah memberi peringatan jumlahnya. Perlu **dilarang** mengarsipkan pura yang masih punya punia menunggu? *Saran: cukup peringatan.*
-
-**Foto profil**
-
-7. **Pemeriksa tidak melihat foto profil** (hanya pemilik, Pengurus Pura/Banjar terkait, dan Admin Utama). *Saran: tetap begitu.*
-8. **Foto Admin Utama** terlihat oleh semua Pengurus Pura/Banjar, karena Admin Utama terhubung ke semua pura. *Saran: tetap begitu.*
-9. Saat Admin Utama menghapus foto yang tidak pantas, pemiliknya **tidak diberi tahu** (hanya tercatat di Log). Perlu pemberitahuan (notifikasi/email)?
-
-**Pusat bantuan**
-
-10. **Lampiran dihapus otomatis berapa hari setelah pesan Selesai?** Sekarang **30 hari**. Pilihan lain: 14 hari (lebih hemat dan privat) atau 90 hari (lebih lama untuk ditelusuri). *Saran: 30 hari.* Isi pesan tetap disimpan.
-11. **Batas 5 pesan per jam** per orang. *Saran: tetap.*
-12. **Laporan "penyalahgunaan atau pura mencurigakan"** hanya masuk ke Admin Utama, **tidak** ke Pengurus Banjar (karena bisa jadi yang dilaporkan justru pengurus setempat). *Saran: tetap begitu.*
-13. **Isi pesan bantuan** disimpan selama aplikasi dipakai; saat akun dihapus, pesan tetap ada dengan nama "Akun dihapus" tetapi gambar lampirannya ikut dihapus. Perlu pesan juga dihapus bersama akun?
-
-**Sisa dari Phase 3.1** (belum ada di daftar Phase 3.2, jadi belum saya kerjakan)
-
-14. ⏳ **Skrip ganti email Admin Utama** dan **aturan pengesahan pengeluaran** (mis. pengeluaran di atas nominal tertentu perlu disetujui pengurus kedua). Kapan dikerjakan, dan berapa batas nominalnya?
+4. **Yang dihitung "data"** sehingga pura tidak bisa dihapus permanen: transaksi, punia, kegiatan (selain "Operasional Pura" otomatis), **campaign**, **laporan terbit**, foto/nota, dan saldo awal kas. *Saran: tetap begitu* (lebih aman).
+5. **Pemeriksa tidak melihat foto profil** (hanya pemilik, Pengurus Pura/Banjar terkait, dan Admin Utama). *Saran: tetap begitu.*
+6. **Foto Admin Utama** terlihat oleh semua Pengurus Pura/Banjar, karena Admin Utama terhubung ke semua pura. *Saran: tetap begitu.*
+7. **Batas 5 pesan per jam** per orang. *Saran: tetap.*
+8. **Laporan "penyalahgunaan atau pura mencurigakan"** hanya masuk ke Admin Utama, **tidak** ke Pengurus Banjar (karena bisa jadi yang dilaporkan justru pengurus setempat). *Saran: tetap begitu.*
+9. **Isi pesan bantuan** disimpan selama aplikasi dipakai; saat akun dihapus, pesan tetap ada dengan nama "Akun dihapus" tetapi gambar lampirannya ikut dihapus. Perlu pesan juga dihapus bersama akun?
 
 ## Bahan pilot (dijawab sebelum pilot, tidak perlu untuk demo)
 

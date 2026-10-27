@@ -63,6 +63,15 @@ export async function templeAccess(user: UserRow): Promise<Map<string, Role>> {
     const tb = await db.select().from(schema.templeBanjars).where(inArray(schema.templeBanjars.banjarId, banjarIds));
     tb.forEach((r) => put(r.templeId, "banjar"));
   }
+  // Archived banjar: its Pengurus Banjar keep READ-ONLY access to the temples it supports, so the
+  // old records stay within reach (a stronger role from elsewhere still wins).
+  const archived = await db
+    .select({ templeId: schema.templeBanjars.templeId })
+    .from(schema.banjarMembers)
+    .innerJoin(schema.banjars, eq(schema.banjars.id, schema.banjarMembers.banjarId))
+    .innerJoin(schema.templeBanjars, eq(schema.templeBanjars.banjarId, schema.banjarMembers.banjarId))
+    .where(and(eq(schema.banjarMembers.userId, user.id), eq(schema.banjarMembers.status, "active"), eq(schema.banjars.status, "inactive")));
+  archived.forEach((r) => put(r.templeId, "banjar_arsip"));
   return map;
 }
 

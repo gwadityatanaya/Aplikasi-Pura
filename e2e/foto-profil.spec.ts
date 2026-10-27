@@ -90,6 +90,17 @@ test("Admin Utama menghapus foto yang tidak pantas (dengan alasan, tercatat); fo
   expect(log).toContain("Foto tidak pantas untuk aplikasi pura");
   // A pengurus cannot remove someone else's photo.
   expect((await command(await as("komang@contoh.id"), "adminRemoveAvatar", { userId: madeId, reason: "coba-coba" })).ok).toBe(false);
+
+  // The owner gets one sentence in the app — not the detailed reason — and can close it.
+  await signInUi(page, "made@contoh.id");
+  await page.goto("/app");
+  const notice = page.getByRole("status").filter({ hasText: "Foto profil Anda telah dihapus oleh Admin Utama" });
+  await expect(notice).toBeVisible();
+  await expect(notice).not.toContainText("Foto tidak pantas untuk aplikasi pura");
+  await notice.getByRole("button", { name: "Tutup pemberitahuan" }).click();
+  await expect(notice).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText("Foto profil Anda telah dihapus")).toHaveCount(0);
 });
 
 test("umat: foto di Akun saya; menghapus akun ikut menghapus fotonya", async ({ page }) => {

@@ -9,6 +9,8 @@ import { destroySession, rateLimit } from "./auth";
 import { checkAvatar } from "./images";
 import { uid } from "@/lib/format";
 
+export const AVATAR_REMOVED_NOTICE = "Foto profil Anda telah dihapus oleh Admin Utama karena tidak sesuai untuk aplikasi ini.";
+
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 /** Removes a person's profile photo (the stored image itself, not only the link). */
@@ -33,6 +35,13 @@ export const accountCommands: Record<string, Handler> = {
       await tx.update(T.users).set({ avatarId: id, avatarAt: new Date() }).where(eq(T.users.id, ctx.user.id));
       await log(ctx, tx, { action: "Mengganti foto profil", entity: "user", entityId: ctx.user.id, detail: ctx.user.name, templeId: null });
     });
+    return null;
+  },
+
+  /** Closes the one-sentence in-app message (e.g. "foto profil dihapus"). */
+  async dismissNotice(ctx) {
+    await db.update(T.users).set({ notice: null }).where(eq(T.users.id, ctx.user.id));
+    ctx.user.notice = null; // the state sent back with this answer is built from ctx.user
     return null;
   },
 

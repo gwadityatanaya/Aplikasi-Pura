@@ -27,7 +27,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
         <li><b>Umum:</b> jika Anda memilih TAMPIL, nama dan nominal punia yang sudah disahkan dapat terlihat di halaman pura. Jika memilih ANONIM, yang tampil hanya &quot;Anonim&quot; — nama asli tidak dikirim ke halaman publik sama sekali.</li>
         <li><b>Pengurus pura tujuan, Pengurus Banjar pengempon pura tersebut, dan Admin Utama:</b> dapat melihat nama asli dan foto bukti untuk keperluan verifikasi.</li>
         <li>Pengurus pura lain dan umat lain <b>tidak</b> dapat melihat data Anda.</li>
-        <li><b>Foto profil</b> hanya terlihat oleh Anda sendiri, Pengurus Pura dan Pengurus Banjar yang bekerja bersama Anda di pura/banjar yang sama, dan Admin Utama. Foto profil <b>tidak pernah</b> tampil di halaman publik, laporan publik, atau di samping punia — termasuk punia ANONIM. Admin Utama dapat menghapus foto yang tidak pantas; tindakan itu tercatat.</li>
+        <li><b>Foto profil</b> hanya terlihat oleh Anda sendiri, Pengurus Pura dan Pengurus Banjar yang bekerja bersama Anda di pura/banjar yang sama, dan Admin Utama. Foto profil <b>tidak pernah</b> tampil di halaman publik, laporan publik, atau di samping punia — termasuk punia ANONIM. Admin Utama dapat menghapus foto yang tidak pantas; tindakan itu tercatat dan Anda diberi tahu di aplikasi.</li>
       </ul>
     ),
   },

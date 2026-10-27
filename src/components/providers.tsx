@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { useStore } from "@/lib/store";
 import { PwaRegister } from "@/components/pwa";
 import { HelpButton } from "@/components/shared/help-button";
+import { NoticeBar } from "@/components/shared/notice-bar";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const prefs = useStore((s) => s.prefs);
@@ -22,6 +23,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <MotionConfig reducedMotion={prefs.reduceMotion ? "always" : "user"}>
       {children}
       <HelpButton />
+      <NoticeBar />
       <PwaRegister />
       <Toaster
         position="top-center"

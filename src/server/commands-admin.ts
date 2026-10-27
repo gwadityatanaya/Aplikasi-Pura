@@ -10,7 +10,7 @@ import { id, log, one, optId, optText, text, type Handler } from "./commands";
 import * as m from "./map";
 import { categoriesFor } from "@/lib/categories";
 import { callNameOf, slugify, uid } from "@/lib/format";
-import { dropAvatar } from "./commands-account";
+import { AVATAR_REMOVED_NOTICE, dropAvatar } from "./commands-account";
 
 const email = z.string().trim().toLowerCase().email("Email belum benar").max(200);
 
@@ -330,6 +330,8 @@ export const adminCommands: Record<string, Handler> = {
     return db.transaction(async (tx) => {
       const u = await one(tx.select().from(T.users).where(eq(T.users.id, i.userId)).for("update"), "Akun tidak ditemukan.");
       if (!(await dropAvatar(tx, u))) throw new ApiError(409, "Akun ini tidak memiliki foto profil.");
+      // The owner is told in one sentence on their next visit — without the detailed reason.
+      await tx.update(T.users).set({ notice: AVATAR_REMOVED_NOTICE }).where(eq(T.users.id, u.id));
       await log(ctx, tx, { action: "Menghapus foto profil orang lain", entity: "user", entityId: u.id, detail: `${u.name} — alasan: ${i.reason}`, templeId: null });
       return null;
     });
@@ -348,6 +350,9 @@ export const adminCommands: Record<string, Handler> = {
       const t = await one(tx.select().from(T.temples).where(eq(T.temples.id, i.id)).for("update"), "Pura tidak ditemukan.");
       checkTypedName(t.name, i.confirmName);
       if (t.status === "archived") throw new ApiError(409, "Pura ini sudah diarsipkan.");
+      // Umat already transferred real money: every waiting punia must be sahkan or tolak first.
+      const [{ n: pending }] = await tx.select({ n: sql<number>`count(*)::int` }).from(T.donations).where(and(eq(T.donations.templeId, t.id), eq(T.donations.status, "pending")));
+      if (pending) throw new ApiError(409, `Masih ada ${pending} punia menunggu verifikasi di pura ini. Sahkan atau tolak semuanya terlebih dahulu, baru pura bisa diarsipkan.`);
       await tx.update(T.temples).set({ status: "archived", archivedAt: new Date(), archiveReason: i.reason }).where(eq(T.temples.id, t.id));
       await tx.update(T.sessions).set({ emergencyTempleId: null, emergencyUntil: null, emergencyReason: null }).where(eq(T.sessions.emergencyTempleId, t.id));
       await log(ctx, tx, { action: "Mengarsipkan pura", entity: "settings", entityId: t.id, detail: `${t.name} — alasan: ${i.reason}`, changes: { status: { dari: t.status, menjadi: "archived" } }, templeId: t.id });
@@ -400,7 +405,7 @@ export const adminCommands: Record<string, Handler> = {
     });
   },
 
-  /** Hides a banjar from the public; its Pengurus Banjar lose access. Its temples stay as they are. */
+  /** Hides a banjar from the public; its Pengurus Banjar can only read. Its temples stay as they are. */
   async archiveBanjar(ctx, p) {
     await requireSuperAdmin(ctx, "mengarsipkan banjar");
     const i = confirmInput.parse(p);

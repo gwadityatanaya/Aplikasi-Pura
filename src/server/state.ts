@@ -1,3 +1,4 @@
+import { READ_ONLY_ROLES } from "@/lib/permissions";
 import "server-only";
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { db, schema } from "./db";
@@ -31,7 +32,7 @@ export function markDuplicates(list: Donation[]) {
  */
 function staffDonation(d: Donation, people: Map<string, User>, role: Role | undefined): Donation {
   const out: Donation = { ...d, inputByName: d.inputBy ? people.get(d.inputBy)?.name : undefined, correctedByName: d.correctedBy ? people.get(d.correctedBy)?.name : undefined };
-  if (role === "pemeriksa" && d.privacy !== "public") return { ...out, donorName: "Anonim", submitterEmail: undefined, message: undefined };
+  if (role && READ_ONLY_ROLES.includes(role) && d.privacy !== "public") return { ...out, donorName: "Anonim", submitterEmail: undefined, message: undefined };
   return out;
 }
 
@@ -118,7 +119,7 @@ export async function loadState(ctx: Ctx): Promise<ServerState> {
       audit: audit.map(m.toAudit),
     };
   }
-  const me = m.toUser(ctx.user);
+  const me = { ...m.toUser(ctx.user), notice: ctx.user.notice ?? undefined };
   scoped.users = [...scoped.users.filter((x) => x.id !== me.id), me];
 
   // Admin Utama: read-only ("admin_view") unless emergency mode is on for this temple.

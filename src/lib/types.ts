@@ -12,7 +12,8 @@ export type ID = string;
  * "superadmin" = Admin Utama in emergency mode for the open temple (may change its data);
  * "admin_view" = Admin Utama looking at a temple (read-only until emergency mode is switched on).
  */
-export type Role = "superadmin" | "admin_view" | "pengurus" | "banjar" | "pemeriksa";
+/** "banjar_arsip": Pengurus Banjar of an ARCHIVED banjar — may still read reports and history, change nothing. */
+export type Role = "superadmin" | "admin_view" | "pengurus" | "banjar" | "pemeriksa" | "banjar_arsip";
 /** Roles that can be assigned per temple (through the Back Office). */
 export type MemberRole = "pengurus" | "pemeriksa";
 
@@ -24,6 +25,8 @@ export interface User {
   email: string;
   phone?: string;
   avatarColor: string;
+  /** One short message for the signed-in person only (never sent about other people) */
+  notice?: string;
   /** Set when the person has a profile photo (served by /api/avatar/<id>, members only) */
   avatarVersion?: string;
   /** Admin Utama — set only through the secure setup step */

@@ -1,4 +1,5 @@
 "use client";
+import { READ_ONLY_ROLES } from "@/lib/permissions";
 import Link from "next/link";
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -68,7 +69,7 @@ function Reports() {
   const signed = useMemo(() => (canSign ? signatureBlock(ws, sign) : { missing: [] as string[] }), [ws, sign, canSign]);
   const doc = useMemo(() => {
     if (!ws.temple) return null;
-    const d = buildReport(ws, { ...f, version: role === "pemeriksa" ? "umum" : f.version });
+    const d = buildReport(ws, { ...f, version: role && READ_ONLY_ROLES.includes(role) ? "umum" : f.version });
     return signed.block ? { ...d, signatures: signed.block } : d;
   }, [ws, f, role, signed]);
   const blockedBySign = signed.missing.length > 0 && !sign.allowBlank;
@@ -112,7 +113,7 @@ function Reports() {
               {REPORT_TYPES.map((r) => <option key={r.value} value={r.value}>{r.label} — {r.desc}</option>)}
             </Select>
           </Field>
-          {role !== "pemeriksa" && (
+          {!(role && READ_ONLY_ROLES.includes(role)) && (
             <Field label="Versi" htmlFor="r-version" hint={f.version === "lengkap" ? "Berisi nama asli donatur anonim dan nama pencatat. Jangan dibagikan." : "Aman untuk paruman: donatur anonim tertulis \"Anonim\", tanpa nama pencatat."}>
               <Select id="r-version" value={f.version} onChange={(e) => set("version", e.target.value as ReportFilters["version"])}>
                 <option value="umum">Versi umum / paruman</option>

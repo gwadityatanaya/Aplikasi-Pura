@@ -27,6 +27,9 @@ export const POST = route(async (req: Request) => {
   const [t] = c ? await db.select({ status: schema.temples.status }).from(schema.temples).where(eq(schema.temples.id, c.templeId)) : [];
   if (!c || t?.status !== "active") throw new ApiError(404, "Penggalangan dana tidak ditemukan atau sudah ditutup.");
   await db.transaction(async (tx) => {
+    // Lock against a simultaneous archive (which refuses temples with punia waiting).
+    const [locked] = await tx.select({ status: schema.temples.status }).from(schema.temples).where(eq(schema.temples.id, c.templeId)).for("share");
+    if (locked?.status !== "active") throw new ApiError(404, "Penggalangan dana tidak ditemukan atau sudah ditutup.");
     const evidence = await persistImage(i.evidence, { templeId: c.templeId, isPublic: false, userId: null }, tx);
     const id = uid("dn");
     await tx.insert(schema.donations).values({

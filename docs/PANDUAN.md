@@ -330,12 +330,12 @@ Hanya Admin Utama, dari **Back Office → Pura** atau **Back Office → Banjar**
 
 | Tindakan | Kapan dipakai | Yang terjadi |
 | --- | --- | --- |
-| **Arsipkan pura** | Pura sudah punya data tetapi tidak dikelola lewat aplikasi lagi | Hilang dari daftar dan pencarian publik; halaman publiknya hanya menulis **"Pura tidak tersedia"** (tanpa data apa pun). Tidak bisa menerima punia atau transaksi baru — pengurus hanya bisa **melihat** dan **mengunduh laporan**. Semua data tetap ada di laporan, Riwayat Audit Pura, dan Log Aktivitas. Bisa **Aktifkan kembali** kapan saja. |
+| **Arsipkan pura** | Pura sudah punya data tetapi tidak dikelola lewat aplikasi lagi | **Hanya bisa jika tidak ada punia yang menunggu verifikasi** — umat sudah mentransfer uangnya, jadi sahkan atau tolak semuanya dulu. Hilang dari daftar dan pencarian publik; halaman publiknya hanya menulis **"Pura tidak tersedia"** (tanpa data apa pun). Tidak bisa menerima punia atau transaksi baru — pengurus hanya bisa **melihat** dan **mengunduh laporan**. Semua data tetap ada di laporan, Riwayat Audit Pura, dan Log Aktivitas. Bisa **Aktifkan kembali** kapan saja. |
 | **Hapus pura permanen** | Pura salah input / dobel dan **benar-benar kosong** | Hanya bisa jika belum ada transaksi, punia, kegiatan, campaign, laporan terbit, foto/nota, atau saldo awal kas. Peran Pengurus Pura dan Pemeriksa di pura itu dicabut (akun orangnya tetap ada). Tidak bisa dibatalkan. |
-| **Arsipkan banjar** | Banjar tidak aktif lagi | Hilang dari halaman publik; Pengurus Banjar-nya kehilangan akses sampai diaktifkan kembali. Pura yang diempon **tetap berjalan** — pura yang juga diempon banjar lain tetap bisa dibuka Pengurus Banjar lainnya dan pengurus puranya. |
+| **Arsipkan banjar** | Banjar tidak aktif lagi | Hilang dari halaman publik. Pengurus Banjar-nya tetap bisa **melihat** laporan dan riwayat pura yang diempon (**baca saja**: versi umum, donatur anonim tetap "Anonim"), tetapi tidak bisa mencatat, mengesahkan, menolak, atau mengoreksi sampai banjar diaktifkan kembali. Pura yang diempon **tetap berjalan** — pura yang juga diempon banjar lain tetap bisa dibuka Pengurus Banjar lainnya dan pengurus puranya. |
 | **Hapus banjar permanen** | Banjar salah input / dobel | Hanya bisa jika banjar **tidak mengempon pura satu pun** (pindahkan dulu puranya di **Ubah data** pura, atau arsipkan saja). Peran Pengurus Banjar dicabut. |
 
-Aturan "pura yang sudah punya data tidak boleh dihapus" dan "banjar yang masih mengempon pura tidak boleh dihapus" dijaga **dua kali**: oleh aplikasi dan oleh database. Database juga menolak punia atau transaksi baru untuk pura yang diarsipkan.
+Aturan "pura yang sudah punya data tidak boleh dihapus" dan "banjar yang masih mengempon pura tidak boleh dihapus" dijaga **dua kali**: oleh aplikasi dan oleh database. Database juga menolak punia atau transaksi baru untuk pura yang diarsipkan, dan menolak mengarsipkan pura yang masih punya punia menunggu.
 
 ### Foto profil
 
@@ -343,7 +343,7 @@ Aturan "pura yang sudah punya data tidak boleh dihapus" dan "banjar yang masih m
 - Foto dipotong persegi dan **diperkecil di HP** (sekitar 256×256 piksel, ±50 KB) sebelum dikirim, jadi hemat kuota. Hanya JPG, PNG, atau WEBP; file lain ditolak.
 - **Siapa yang bisa melihat:** pemiliknya, Pengurus Pura dan Pengurus Banjar yang bekerja bersama di pura/banjar yang sama, dan Admin Utama. **Tidak** terlihat oleh Pemeriksa, umat lain, atau pengunjung, dan **tidak pernah** tampil di halaman publik, laporan, atau di samping punia (termasuk punia ANONIM).
 - **Hapus foto** kapan saja dari tempat yang sama. Saat akun dihapus, fotonya ikut terhapus dari server.
-- Admin Utama dapat menghapus foto yang tidak pantas: **Back Office → Akun → Hapus foto** (alasan wajib, tercatat di Log Aktivitas).
+- Admin Utama dapat menghapus foto yang tidak pantas: **Back Office → Akun → Hapus foto** (alasan wajib, tercatat di Log Aktivitas). Pemiliknya mendapat **satu kalimat pemberitahuan** di aplikasi saat membuka aplikasi berikutnya (tanpa alasan rinci), yang bisa ditutup.
 
 ### Pusat bantuan
 
@@ -354,7 +354,7 @@ Aturan "pura yang sudah punya data tidak boleh dihapus" dan "banjar yang masih m
 - Riwayat pesan dan balasan: halaman **Bantuan** (tautan di formulir bantuan, atau buka `/bantuan`). Balasan baru ditandai lencana di tombol bantuan.
 - **Admin Utama:** **Back Office → Bantuan**. Lencana merah menunjukkan pesan yang belum dibaca (juga di menu Back Office / Lainnya). Buka pesan untuk membaca konteks dan gambar, **Kirim balasan**, lalu tandai **Diproses** atau **Selesai**. Membalas pesan berstatus Baru otomatis mengubahnya menjadi Diproses. Balasan, perubahan status, dan pesan baru tercatat di Log Aktivitas.
 - Jika email (SMTP) aktif, Admin Utama mendapat email saat ada pesan baru, dan pengirim mendapat email saat pesannya dibalas. Tanpa SMTP, semuanya tetap terlihat di aplikasi.
-- Gambar lampiran **dihapus otomatis 30 hari** setelah pesan ditandai Selesai (isi pesan tetap tersimpan). Angka 30 hari bisa diubah — lihat daftar keputusan.
+- Gambar lampiran **dihapus otomatis 30 hari** setelah pesan ditandai Selesai (isi pesan tetap tersimpan). (Keputusan: 30 hari.)
 
 
 ---

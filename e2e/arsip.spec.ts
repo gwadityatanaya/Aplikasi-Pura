@@ -44,9 +44,30 @@ test("pura dengan transaksi: hapus ditolak (aplikasi & database), arsip menyembu
   const made = await as("made@contoh.id");
   expect((await command(made, "archiveTemple", { id: segara.id, confirmName: SEGARA, reason: "bukan admin" })).ok).toBe(false);
 
-  // Archive through the Back Office screen: type the name + reason.
+  // A punia still waiting (umat already transferred money) blocks archiving — app AND database.
+  const umatPending = await as("kadek@contoh.id");
+  expect((await command(umatPending, "submitPunia", { templeId: segara.id, amount: 23_000, transferDate: today(), evidence: receiptDataUrl(4202), anonymous: false, purpose: "umum" })).ok).toBe(true);
+  const blocked = await command(admin, "archiveTemple", { id: segara.id, confirmName: SEGARA, reason: "punia masih menunggu" });
+  expect(blocked.ok).toBe(false);
+  expect(blocked.error).toMatch(/punia menunggu verifikasi.*Sahkan atau tolak/);
+  await expect(db`update temples set status = 'archived' where id = ${segara.id}`).rejects.toThrow(/menunggu verifikasi tidak boleh diarsipkan/);
+  // The archive screen says so and keeps the button disabled.
   await signInUi(page, "admin@contoh.id");
   await page.goto("/app/admin");
+  await page.locator("li").filter({ hasText: SEGARA }).getByRole("button", { name: "Arsipkan" }).click();
+  await expect(page.getByRole("dialog").getByRole("alert")).toContainText("punia menunggu verifikasi");
+  await page.getByRole("dialog").getByLabel("Alasan (wajib)").fill("Uji arsip saat punia menunggu");
+  await page.getByRole("dialog").getByLabel(/Ketik nama/).fill(SEGARA);
+  await expect(page.getByRole("dialog").getByRole("button", { name: "Arsipkan pura" })).toBeDisabled();
+  await page.keyboard.press("Escape");
+  // The pengurus settles every waiting punia; then archiving works.
+  expect((await command(made, "setActiveTemple", { templeId: segara.id })).ok).toBe(true);
+  const waiting = ((await (await made.get("/api/state")).json()).state.data.donations as { id: string; status: string }[]).filter((d) => d.status === "pending");
+  expect(waiting.length).toBeGreaterThan(0);
+  for (const d of waiting) expect((await command(made, "rejectPunia", { id: d.id, reason: "Uji: bukti tidak cocok dengan mutasi" })).ok).toBe(true);
+
+  // Archive through the Back Office screen: type the name + reason.
+  await page.reload();
   await page.locator("li").filter({ hasText: SEGARA }).getByRole("button", { name: "Arsipkan" }).click();
   const dlg = page.getByRole("dialog");
   await dlg.getByLabel("Alasan (wajib)").fill("Uji arsip: pura tidak lagi dikelola lewat aplikasi");
@@ -148,12 +169,27 @@ test("arsip banjar: pura yang diempon dua banjar tetap berjalan dan tetap bisa d
   // Pengurus Banjar of the OTHER banjar and the Pengurus Pura keep access.
   expect((await command(await as("ketut.banjar@contoh.id"), "setActiveTemple", { templeId: segara.id })).ok).toBe(true);
   expect((await command(await as("made@contoh.id"), "setActiveTemple", { templeId: segara.id })).ok).toBe(true);
-  // Pengurus Banjar of the archived banjar lose access until it is reactivated.
+  // Pengurus Banjar of the archived banjar keep READ-ONLY access: reports and history, no changes.
   const gede = await as("gede.banjar@contoh.id");
-  expect((await command(gede, "setActiveTemple", { templeId: segara.id })).ok).toBe(false);
+  expect((await command(gede, "setActiveTemple", { templeId: segara.id })).ok).toBe(true);
+  const st = (await (await gede.get("/api/state")).json()).state;
+  expect(st.role).toBe("banjar_arsip");
+  expect(st.data.transactions.length).toBeGreaterThan(0);
+  expect(st.data.audit.length).toBeGreaterThan(0);
+  const anyDonation = st.data.donations[0] as { id: string };
+  const correct = await command(gede, "correctPunia", { id: anyDonation.id, reason: "uji koreksi saat banjar diarsipkan" });
+  expect(correct.ok).toBe(false);
+  expect(correct.error).toMatch(/tidak diizinkan/);
+  expect((await command(gede, "rejectPunia", { id: anyDonation.id, reason: "uji tolak saat banjar diarsipkan" })).ok).toBe(false);
+  await signInUi(page, "gede.banjar@contoh.id");
+  await command(page.request, "setActiveTemple", { templeId: segara.id });
+  await page.goto("/app/laporan");
+  await expect(page.getByRole("button", { name: "CSV" })).toBeEnabled();
+  await expect(page.locator("#r-version")).toHaveCount(0); // only the shareable version
 
   expect((await command(admin, "unarchiveBanjar", { id: b.id, confirmName: BANJAR_B, reason: "Uji selesai" })).ok).toBe(true);
   expect((await command(gede, "setActiveTemple", { templeId: segara.id })).ok).toBe(true);
+  expect((await (await gede.get("/api/state")).json()).state.role).toBe("banjar");
   const log = await (await admin.get("/api/admin/log")).text();
   expect(log).toContain("Mengarsipkan banjar");
   expect(log).toContain("Mengaktifkan kembali banjar");

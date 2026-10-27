@@ -54,7 +54,8 @@ const TEXT: Record<ArchiveTarget["kind"], Record<ArchiveAction, { title: string;
       title: "Arsipkan banjar",
       button: "Arsipkan banjar",
       points: [
-        "Banjar disembunyikan dari halaman publik, dan Pengurus Banjar-nya kehilangan akses sampai diaktifkan kembali.",
+        "Banjar disembunyikan dari halaman publik.",
+        "Pengurus Banjar-nya tetap bisa MELIHAT laporan dan riwayat pura yang diempon (baca saja), tetapi tidak bisa mencatat, mengesahkan, menolak, atau mengoreksi.",
         "Pura yang diempon tetap berjalan seperti biasa — termasuk pura yang juga diempon banjar lain.",
         "Bisa diaktifkan kembali kapan saja.",
       ],
@@ -62,7 +63,7 @@ const TEXT: Record<ArchiveTarget["kind"], Record<ArchiveAction, { title: string;
     unarchive: {
       title: "Aktifkan kembali banjar",
       button: "Aktifkan kembali",
-      points: ["Banjar tampil lagi, dan Pengurus Banjar-nya mendapat akses kembali."],
+      points: ["Banjar tampil lagi, dan Pengurus Banjar-nya bisa mengesahkan dan mengoreksi punia lagi."],
     },
     delete: {
       title: "Hapus banjar permanen",
@@ -87,7 +88,8 @@ export function ArchiveDialog({ target, busy, onClose, onConfirm }: { target: Ar
     setReason("");
   }, [target]);
   const t = target ? TEXT[target.kind][target.action] : null;
-  const ok = !!target && norm(typed) === norm(target.name) && reason.trim().length >= 5;
+  const blocked = target?.kind === "temple" && target.action === "archive" && !!target.pending;
+  const ok = !!target && !blocked && norm(typed) === norm(target.name) && reason.trim().length >= 5;
   const danger = target?.action === "delete";
   const Icon = target?.action === "unarchive" ? ArchiveRestore : danger ? Trash2 : Archive;
   return (
@@ -108,7 +110,7 @@ export function ArchiveDialog({ target, busy, onClose, onConfirm }: { target: Ar
             <p className="flex items-center gap-2 font-bold"><AlertTriangle className="h-5 w-5 shrink-0" /> Yang akan terjadi</p>
             <ul className="mt-1.5 list-disc space-y-1 pl-5">{t.points.map((p) => <li key={p}>{p}</li>)}</ul>
             {target.action === "archive" && !!target.pending && (
-              <p className="mt-2 font-bold">Masih ada {target.pending} punia menunggu verifikasi. Sebaiknya selesaikan dulu: setelah diarsipkan, punia itu tidak bisa disahkan atau ditolak.</p>
+              <p className="mt-2 font-bold" role="alert">Masih ada {target.pending} punia menunggu verifikasi. Umat sudah mentransfer uangnya, jadi sahkan atau tolak semuanya terlebih dahulu — baru pura bisa diarsipkan.</p>
             )}
           </div>
           <Field label="Alasan (wajib)" hint="Dicatat di Log Aktivitas." htmlFor="arsip-alasan">

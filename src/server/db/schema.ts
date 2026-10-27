@@ -17,6 +17,8 @@ export const users = pgTable("users", {
   /** Profile photo (attachment id; 256×256, resized on the device). Never shown on public pages. */
   avatarId: text("avatar_id"),
   avatarAt: ts("avatar_at"),
+  /** One short in-app message for this person only (e.g. "foto profil dihapus"); cleared when read. */
+  notice: text("notice"),
   /** Legacy (Phase 2). Login now uses Google or one-time email links; no passwords are stored. */
   passwordHash: text("password_hash"),
   googleSub: text("google_sub").unique(),
@@ -120,7 +122,7 @@ export const banjars = pgTable("banjars", {
   regencyCode: text("regency_code"),
   districtCode: text("district_code"),
   villageCode: text("village_code"),
-  /** active | inactive (= diarsipkan: hidden from the public, its Pengurus Banjar lose access) */
+  /** active | inactive (= diarsipkan: hidden from the public, its Pengurus Banjar can only read) */
   status: text("status").notNull().default("active"),
   archivedAt: ts("archived_at"),
   archiveReason: text("archive_reason"),

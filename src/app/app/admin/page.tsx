@@ -195,7 +195,7 @@ export default function BackOfficePage() {
                   <p className="text-sm text-muted">{temples.map((t) => t.name).join(", ") || "Belum ada"}</p>
                   <p className="mt-3 text-sm font-semibold">Pengurus Banjar ({members.length})</p>
                   <p className="text-sm text-muted">{members.map((m) => userById(m.userId)?.name).join(", ") || "Belum ada"}</p>
-                  {b.status !== "active" && <p className="mt-2 text-sm text-muted">Diarsipkan{b.archiveReason ? `: ${b.archiveReason}` : ""}. Pengurus Banjar-nya tidak punya akses sampai diaktifkan kembali.</p>}
+                  {b.status !== "active" && <p className="mt-2 text-sm text-muted">Diarsipkan{b.archiveReason ? `: ${b.archiveReason}` : ""}. Pengurus Banjar-nya hanya bisa melihat (baca saja) sampai diaktifkan kembali.</p>}
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Button size="sm" variant="outline" onClick={() => setBanjarForm({ id: b.id, name: b.name, ...pickAddress(b), address: b.address ?? "" })}><Pencil className="h-4 w-4" /> Ubah</Button>
                     <Button size="sm" variant="outline" onClick={() => { setNewStaff({ email: "", name: "", role: "pengurus" }); setStaffFor({ kind: "banjar", b }); }}><Users className="h-4 w-4" /> Pengurus Banjar</Button>

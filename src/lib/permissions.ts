@@ -25,6 +25,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   pengurus: "Pengurus Pura",
   banjar: "Pengurus Banjar",
   pemeriksa: "Pemeriksa (lihat saja)",
+  banjar_arsip: "Pengurus Banjar (banjar diarsipkan — baca saja)",
 };
 
 export const ROLE_DESC: Record<Role, string> = {
@@ -33,6 +34,7 @@ export const ROLE_DESC: Record<Role, string> = {
   pengurus: "Memverifikasi punia, input manual, mencatat pengeluaran, membuat laporan, dan mengatur privasi pura miliknya.",
   banjar: "Membuka dashboard, mengesahkan, menolak dan mengoreksi punia di semua pura yang diempon banjarnya (termasuk pura tanpa pengurus). Tidak dapat mengubah rekening atau mengelola pengguna.",
   pemeriksa: "Hanya melihat transaksi, nota, laporan dan Riwayat Audit pura.",
+  banjar_arsip: "Banjarnya sedang diarsipkan: masih bisa melihat transaksi, laporan dan Riwayat Audit pura yang diempon, tetapi tidak bisa mencatat, mengesahkan, menolak atau mengoreksi.",
 };
 
 export const ROLE_TONE: Record<Role, string> = {
@@ -41,10 +43,11 @@ export const ROLE_TONE: Record<Role, string> = {
   pengurus: "bg-emerald-100 text-emerald-900",
   banjar: "bg-gold-light text-gold-dark",
   pemeriksa: "bg-violet-100 text-violet-900",
+  banjar_arsip: "bg-stone-100 text-stone-700",
 };
 
 /** Strength order — used when one person holds several roles for the same temple. */
-export const ROLE_RANK: Record<Role, number> = { superadmin: 5, admin_view: 4, pengurus: 3, banjar: 2, pemeriksa: 1 };
+export const ROLE_RANK: Record<Role, number> = { superadmin: 5, admin_view: 4, pengurus: 3, banjar: 2, pemeriksa: 1, banjar_arsip: 0 };
 
 const MATRIX: Record<Role, Permission[]> = {
   superadmin: [],
@@ -58,7 +61,11 @@ const MATRIX: Record<Role, Permission[]> = {
   // (incl. temples without pengurus). No other ledger changes.
   banjar: ["tx.view", "donation.manage", "donation.correct", "report.view", "report.export", "audit.view"],
   pemeriksa: ["tx.view", "report.view", "report.export", "audit.view"],
+  banjar_arsip: ["tx.view", "report.view", "report.export", "audit.view"],
 };
+
+/** Read-only roles: anonymous donors stay "Anonim" and only the shareable report version is offered. */
+export const READ_ONLY_ROLES: Role[] = ["pemeriksa", "banjar_arsip"];
 
 /** Permissions that change a temple's data — refused while the temple is archived (read-only). */
 export const WRITE_PERMS = new Set<Permission>([

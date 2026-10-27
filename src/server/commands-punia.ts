@@ -113,7 +113,8 @@ export const puniaCommands: Record<string, Handler> = {
     const hash = imageHash(i.evidence);
     if (!hash) throw new ApiError(400, "Format bukti tidak didukung. Gunakan foto JPG, PNG atau WEBP.");
     return db.transaction(async (tx) => {
-      const t = await one(tx.select().from(T.temples).where(eq(T.temples.id, i.templeId)), "Pura tidak ditemukan.");
+      // FOR SHARE: an archive running at the same moment waits for this punia (and then refuses).
+      const t = await one(tx.select().from(T.temples).where(eq(T.temples.id, i.templeId)).for("share"), "Pura tidak ditemukan.");
       if (t.status !== "active") throw new ApiError(409, "Pura ini belum aktif menerima punia.");
       if (!t.bankAccountNumber) throw new ApiError(409, "Pura ini belum memiliki info rekening. Punia belum bisa dikirim lewat aplikasi.");
       await checkGrouping(tx, t.id, i.activityId, i.campaignId);
