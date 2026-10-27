@@ -1,11 +1,13 @@
 "use client";
 import { useMemo } from "react";
 import { useStore, useRole } from "@/lib/store";
-import { can, type Permission } from "@/lib/permissions";
+import { WRITE_PERMS, can, type Permission } from "@/lib/permissions";
 
 export function useCan() {
   const role = useRole();
-  return (p: Permission) => can(role, p);
+  // An archived temple is read-only: hide every button that would change its data.
+  const archived = useStore((s) => s.data.temples.find((t) => t.id === s.session?.activeTempleId)?.status === "archived");
+  return (p: Permission) => can(role, p) && !(archived && WRITE_PERMS.has(p));
 }
 
 /** All data for the active temple workspace. Derived with useMemo (stable references). */

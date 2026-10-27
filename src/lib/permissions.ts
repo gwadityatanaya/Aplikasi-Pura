@@ -60,6 +60,12 @@ const MATRIX: Record<Role, Permission[]> = {
   pemeriksa: ["tx.view", "report.view", "report.export", "audit.view"],
 };
 
+/** Permissions that change a temple's data — refused while the temple is archived (read-only). */
+export const WRITE_PERMS = new Set<Permission>([
+  "tx.create", "tx.draft", "tx.confirm", "tx.reverse", "donation.manage", "donation.correct",
+  "campaign.manage", "activity.manage", "report.publish", "settings.manage",
+]);
+
 export function can(role: Role | undefined, perm: Permission) {
   if (!role) return false;
   if (role === "superadmin") return true; // Admin Utama in emergency mode for this temple

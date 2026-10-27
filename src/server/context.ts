@@ -3,7 +3,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { db, schema } from "./db";
 import { ApiError } from "./http";
 import { requireCurrent, type CurrentSession } from "./auth";
-import { ROLE_RANK, can, type Permission } from "@/lib/permissions";
+import { ROLE_RANK, WRITE_PERMS, can, type Permission } from "@/lib/permissions";
 import type { Role } from "@/lib/types";
 import { logActivity } from "./log";
 
@@ -18,11 +18,7 @@ export interface Ctx extends CurrentSession {
   templeArchived?: boolean;
 }
 
-/** Permissions that change a temple's data — refused while the temple is archived. */
-const WRITE_PERMS = new Set<Permission>([
-  "tx.create", "tx.draft", "tx.confirm", "tx.reverse", "donation.manage", "donation.correct",
-  "campaign.manage", "activity.manage", "report.publish", "settings.manage",
-]);
+
 
 /** Admin Utama may change a temple's data only while emergency mode is on for that temple. */
 export function emergencyActive(session: { emergencyTempleId: string | null; emergencyUntil: Date | null }, templeId: string | null) {
