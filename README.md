@@ -11,7 +11,7 @@ PURA is a mobile-first treasury and punia (donation) transparency app for Baline
 
 | Role | Scope |
 |---|---|
-| **Admin Utama** (one, protected by DB triggers) | Everything: banjar, temples, temple bank accounts, staff, Log Aktivitas, backups |
+| **Admin Utama** (one, protected by DB triggers) | Back Office: banjar, temples, temple bank accounts, staff (incl. changing a pengurus' email), Log Aktivitas, backups. Views every temple read-only (`admin_view`); changing a temple's records needs **Mode darurat** (reason required, 60 min, one temple, labelled in both logs) |
 | **Pengurus Banjar** | Dashboard + punia verification for every temple its banjar supports (`temple_banjars`), incl. temples without pengurus. No bank or user management |
 | **Pengurus Pura** | Own temple(s): verification, manual punia, expenses, reports, public-view settings, Riwayat Audit Pura |
 | **Pemeriksa** | Read-only for a temple |
@@ -31,7 +31,7 @@ npm run db:seed-demo -- --ya      # optional: fictional demo data (empty DB only
 npm run dev                       # http://localhost:3000 → /setup once
 ```
 
-Without `SMTP_HOST`, the email sign-in link is shown on screen in development (disabled in production).
+Email (SMTP) and Google are both optional: `/api/auth/options` tells the login page what to show. Without SMTP the email-link button is hidden and the digest is off; in development the link is shown on screen instead. Set `NEXT_PUBLIC_DEMO_MODE=true` only on the demo deployment (shows a "SITUS DEMO" banner).
 
 | Script | What it does |
 |---|---|
@@ -53,7 +53,8 @@ Deploy: import the repo in Vercel, set the variables from `.env.example`. `verce
   - `activity_log` is append-only;
   - Admin Utama cannot be deleted/demoted/disabled, and only one may exist;
   - confirmed transactions are immutable (the only allowed change is anonymising a punia entry when its donor deletes their account);
-  - `pura_guard_donation`: a punia cannot be verified by its own submitter (by user id or email), and verified punia cannot change amount/status/temple/date.
+  - `pura_guard_donation`: a punia cannot be verified by its own submitter (by user id or email); verified punia cannot change amount/status/temple/date, may only become more private, and a correction (`corrected_at`) can never be undone. Corrections are made with a reversal entry (`correctPunia`).
+- **Names:** the permanent Log Aktivitas and notifications never contain donor names. "dicatat oleh" (`inputByName`) is added for staff only; Pemeriksa see "Anonim". The punia report has a shareable version (Anonim) and an internal full version.
 - **Public data:** built only in `src/server/public.ts`. Anonymous donors become "Anonim" on the server; real names, emails, messages and proofs never leave it. Per-temple toggles for balance, recent transactions and punia list.
 - **Attachments:** magic-byte validated images stored in Postgres, served with access checks (temple staff, related Pengurus Banjar, Admin Utama, or the uploader).
 - **Duplicates:** same file hash, or same amount + date + reference, is refused; same amount + date is flagged for pengurus.
