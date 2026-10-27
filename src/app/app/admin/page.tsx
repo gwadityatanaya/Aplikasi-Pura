@@ -7,7 +7,6 @@ import { AlertTriangle, Building2, Crown, DatabaseBackup, Download, Eye, Landmar
 import { toast } from "sonner";
 import { PageHeader, NoAccess } from "@/components/app/page-header";
 import { Avatar } from "@/components/app/app-shell";
-import { useCan } from "@/components/app/hooks";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +16,7 @@ import { ConfirmDialog } from "@/components/ui/confirm";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
-import { api, useStore, type Result } from "@/lib/store";
+import { api, useAccess, useStore, type Result } from "@/lib/store";
 import { ROLE_LABEL, ROLE_TONE } from "@/lib/permissions";
 import { cn, relativeTime } from "@/lib/format";
 import type { Banjar, BanjarMember, Membership, Temple, User } from "@/lib/types";
@@ -35,7 +34,9 @@ const emptyTemple = { id: "", name: "", province: "", regency: "", district: "",
 const emptyBanjar = { id: "", name: "", village: "", district: "", regency: "", province: "Nusa Tenggara Barat", status: "active" as "active" | "inactive" };
 
 export default function BackOfficePage() {
-  const can = useCan();
+  // Back Office belongs to the Admin Utama ACCOUNT, not to a temple role: it must work even before
+  // any temple exists (right after /setup), exactly like the server check (requireSuperAdmin).
+  const isAdmin = useAccess().isSuperAdmin;
   const me = useStore((s) => s.session?.userId);
   const run = useStore((s) => s.run);
   const refreshState = useStore((s) => s.refresh);
@@ -62,8 +63,8 @@ export default function BackOfficePage() {
     else toast.error(json.error ?? "Gagal memuat Back Office.");
   }, []);
   useEffect(() => {
-    if (can("admin.manage")) load();
-  }, [load, can]);
+    if (isAdmin) load();
+  }, [load, isAdmin]);
 
   const banjarName = useCallback((id: string) => data?.banjars.find((b) => b.id === id)?.name ?? "—", [data]);
   const userById = useCallback((id: string) => data?.users.find((u) => u.id === id), [data]);
@@ -73,7 +74,7 @@ export default function BackOfficePage() {
   }, [data]);
   const users = useMemo(() => (data?.users ?? []).filter((u) => !q || `${u.name} ${u.email}`.toLowerCase().includes(q.toLowerCase())), [data, q]);
 
-  if (!can("admin.manage")) return <NoAccess what="Back Office" />;
+  if (!isAdmin) return <NoAccess what="Back Office" />;
 
   async function done<T>(p: Promise<Result<T>>, msg: string) {
     setBusy(true);

@@ -363,7 +363,7 @@ npm run db:seed-demo -- --ya
 ```
 Isinya (semuanya **fiktif**, berawalan "CONTOH"): 2 banjar, 6 pura (satu diempon dua banjar, satu tanpa pengurus dan tanpa alamat/email), Pengurus Banjar `ketut.banjar@contoh.id` dan `gede.banjar@contoh.id`, pengurus pura (`made@`, `komang@`, `wayan@`, `putu@`, `nengah@`, `kadek.taman@contoh.id`), dan umat (`ayu@`, `nyoman@`, `kadek@contoh.id`). Masuk dengan tautan email; di laptop tautannya tampil di layar.
 
-**Tes otomatis** — butuh database tes terpisah yang namanya mengandung `test` atau `e2e` (isinya dihapus setiap kali tes jalan):
+**Tes otomatis** — butuh database tes terpisah yang namanya mengandung `test` atau `e2e` (isinya dihapus setiap kali tes jalan). Tes juga otomatis membuat database kedua yang **kosong** (nama sama + `_setup`) untuk menguji langkah pertama: `/setup` → masuk → Back Office.
 ```
 E2E_DATABASE_URL="postgres://.../pura_e2e" npm run test:e2e
 ```
@@ -408,6 +408,9 @@ Setiap perubahan yang di-*push* ke GitHub (cabang `main`) otomatis dibangun ulan
 
 **Di halaman masuk tidak ada kolom "tautan email"**
 → Normal jika layanan email (SMTP) belum diatur. Umat dan pengurus masuk dengan Google. Untuk menyalakan, isi variabel SMTP di Vercel (Langkah 3–4) lalu Redeploy.
+
+**Back Office atau Log Aktivitas menampilkan "belum memiliki akses" padahal Anda Admin Utama**
+→ Ini bug di versi sebelum 28 Oktober 2026, yang muncul saat belum ada pura sama sekali (tepat setelah `/setup`). Sudah diperbaiki. Pastikan Vercel sudah menjalankan versi terbaru (**Deployments** → yang teratas berstatus **Ready**), lalu muat ulang halaman.
 
 **Admin Utama tidak bisa menekan Sahkan / Tolak di dashboard pura**
 → Admin Utama sedang dalam **mode lihat**. Tekan **Mode darurat** di pita atas dan tulis alasannya (lihat [Admin Utama: mode lihat dan mode darurat](#admin-utama-mode-lihat-dan-mode-darurat)).

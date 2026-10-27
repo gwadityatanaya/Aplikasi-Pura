@@ -2,14 +2,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { ChevronDown, Download, Globe2, KeyRound, Lock, LogIn, ReceiptText, ScrollText, Search, ShieldAlert, UserCog } from "lucide-react";
 import { PageHeader, NoAccess } from "@/components/app/page-header";
-import { useCan } from "@/components/app/hooks";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Field, Input, Select } from "@/components/ui/field";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useStore } from "@/lib/store";
+import { useAccess, useStore } from "@/lib/store";
 import { cn, formatDateTime } from "@/lib/format";
 import type { AuditEntry } from "@/lib/types";
 
@@ -54,7 +53,8 @@ function Changes({ value }: { value: unknown }) {
 }
 
 export default function ActivityLogPage() {
-  const can = useCan();
+  // Admin Utama only — checked on the account (like the server), not on the open temple's role.
+  const isAdmin = useAccess().isSuperAdmin;
   const temples = useStore((s) => s.data.temples);
   const [filters, setFilters] = useState({ kind: "all", q: "", from: "", to: "", temple: "" });
   const [entries, setEntries] = useState<AuditEntry[] | null>(null);
@@ -84,13 +84,13 @@ export default function ActivityLogPage() {
   );
 
   useEffect(() => {
-    if (can("log.view")) {
+    if (isAdmin) {
       const t = setTimeout(() => load(), 250);
       return () => clearTimeout(t);
     }
-  }, [load, can]);
+  }, [load, isAdmin]);
 
-  if (!can("log.view")) return <NoAccess what="Log Aktivitas" />;
+  if (!isAdmin) return <NoAccess what="Log Aktivitas" />;
 
   function exportCsv() {
     if (!entries) return;

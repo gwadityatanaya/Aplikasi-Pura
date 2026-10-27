@@ -13,6 +13,8 @@ const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 const demoHeaders = isDemo ? [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" }] : [];
 
 const nextConfig = {
+  // Lets the e2e tests run a second dev server (empty database) next to the first one.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {

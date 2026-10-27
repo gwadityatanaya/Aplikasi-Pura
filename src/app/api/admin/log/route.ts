@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, ilike, lt, lte, or, type SQL } from "drizzle-orm";
 import { db, schema } from "@/server/db";
-import { getCtx, requirePerm } from "@/server/context";
+import { getCtx, requireSuperAdmin } from "@/server/context";
 import { json, route } from "@/server/http";
 import * as m from "@/server/map";
 
@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 /** Read-only view of the immutable activity log. Admin Utama only. */
 export const GET = route(async (req: Request) => {
   const ctx = await getCtx(req);
-  await requirePerm(ctx, "log.view", "melihat Log Aktivitas");
+  // Admin Utama account check (not the open temple's role): works before any temple exists.
+  await requireSuperAdmin(ctx, "melihat Log Aktivitas");
   const p = new URL(req.url).searchParams;
   const L = schema.activityLog;
   const where: SQL[] = [];
