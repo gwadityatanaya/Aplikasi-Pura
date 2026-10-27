@@ -14,6 +14,8 @@ export const metadata: Metadata = {
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
   },
   formatDetection: { telephone: false },
+  // Demo site: keep it out of search engines.
+  ...(process.env.NEXT_PUBLIC_DEMO_MODE === "true" ? { robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } } } : {}),
 };
 
 export const viewport: Viewport = {

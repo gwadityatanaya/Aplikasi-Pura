@@ -7,12 +7,17 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
 ];
 
+// The DEMO deployment (fictional data, shared only with invited people) must never appear in
+// search engines: every response carries "noindex" (see also app/robots.ts and the page metadata).
+const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const demoHeaders = isDemo ? [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" }] : [];
+
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   async headers() {
     return [
-      { source: "/:path*", headers: securityHeaders },
+      { source: "/:path*", headers: [...securityHeaders, ...demoHeaders] },
       { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache" }, { key: "Service-Worker-Allowed", value: "/" }] },
     ];
   },

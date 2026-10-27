@@ -190,8 +190,12 @@ function PuniaQueue() {
                   <Button size="lg" loading={busy} onClick={() => approve([open.id])}><Check className="h-5 w-5" /> Sahkan</Button>
                 </div>
               )
-            ) : open.status === "verified" && !open.correctedAt && can("tx.reverse") ? (
+            ) : open.status === "verified" && !open.correctedAt && can("donation.correct") ? (
+              isOwn(open) ? (
+                <p className="w-full rounded-xl bg-violet-50 p-3 text-center text-[15px] text-violet-900">Ini punia Anda sendiri — koreksi harus dilakukan pengurus lain.</p>
+              ) : (
               <Button variant="outline" size="lg" className="w-full" onClick={() => { setCorrecting(open); setOpen(undefined); }}><Undo2 className="h-5 w-5" /> Koreksi punia ini</Button>
+              )
             ) : undefined
           }
         >

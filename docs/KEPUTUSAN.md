@@ -2,16 +2,20 @@
 
 Daftar ini berisi pilihan yang **tidak bisa saya putuskan sendiri** karena menyangkut kebijakan banjar, uang, atau tanggung jawab. Untuk tiap poin ada saran saya; tandai yang sudah Anda putuskan.
 
-## Baru dari Phase 3.1
+## Sudah diputuskan (Phase 3.1)
 
-1. **Nama pengurus yang mencatat punia manual disembunyikan dari umat.** Pengurus, Pengurus Banjar, dan Admin Utama melihat "dicatat oleh [nama]". Umat (di riwayat punianya dan di halaman pura) tidak melihat nama itu. *Saran: tetap disembunyikan.* Umat cukup tahu punianya "dicatat oleh pengurus".
-2. **Pemeriksa melihat "Anonim".** Aturan Anda menyebut nama asli hanya untuk pengurus pura, Pengurus Banjar terkait, dan Admin. Karena itu Pemeriksa (peran lihat-saja) juga melihat "Anonim" untuk donatur anonim, dan tidak bisa membuka laporan punia versi lengkap. *Saran: tetap begitu.* Jika Pemeriksa perlu mencocokkan nama, ia bisa minta pengurus.
-3. **Siapa boleh mengoreksi punia yang sudah disahkan?** Sekarang **Pengurus Pura** (dan Admin Utama lewat mode darurat). Pengurus Banjar hanya bisa mengesahkan atau menolak, tidak mengoreksi. Akibatnya, untuk **pura tanpa pengurus**, koreksi hanya bisa dilakukan Admin Utama lewat mode darurat. *Pilihan:* izinkan Pengurus Banjar mengoreksi punia di pura yang belum punya pengurus.
-4. **Lama mode darurat Admin Utama: 60 menit**, satu pura, alasan wajib. Urusan Back Office (banjar, data pura, rekening, pengurus, ganti email) tidak perlu mode darurat. Perlu lebih pendek atau lebih panjang?
-5. **Ganti email Admin Utama.** Tombol "Ganti email" sengaja tidak berlaku untuk Admin Utama. Jika email Anda sendiri perlu diganti, itu dilakukan bersama orang teknis: ubah `ADMIN_EMAIL` di Vercel, lalu ubah email di database. Perlu dibuatkan skrip khusus seperti `admin:reset`?
-6. **Ganti email ke alamat yang sudah dipakai akun umat.** Saat ini ditolak, agar dua akun tidak tercampur. Hal ini bisa terjadi jika pengurus sudah lebih dulu masuk dengan email barunya sebagai umat. Perlu fitur "gabungkan akun"? *Saran: belum perlu untuk pilot.*
-7. **Situs DEMO.** Siapa pun bisa masuk ke situs demo dan mencoba-coba. Perlukah data demo **dihapus dan diisi ulang** berkala (mis. tiap minggu), atau situs demo hanya dibagikan ke orang tertentu?
-8. **Pengirim email.** Untuk uji coba memakai Brevo Free + Gmail khusus proyek, yang lebih sering masuk Spam. Untuk pemakaian rutin, *saran: beli domain sendiri* (±Rp150–250 ribu/tahun) dan daftarkan di Brevo.
+- ✅ Nama pencatat ("dicatat oleh") disembunyikan dari umat.
+- ✅ Pemeriksa hanya melihat "Anonim" untuk donatur anonim.
+- ✅ Pengurus Banjar boleh mengoreksi punia di semua pura yang diempon banjarnya (termasuk pura tanpa pengurus), dengan alasan wajib, tidak untuk punianya sendiri.
+- ✅ Mode darurat Admin Utama: 60 menit.
+- ✅ Situs demo hanya untuk orang tertentu, tidak diindeks mesin pencari, isi ulang manual dengan `npm run db:reset-demo`.
+- ✅ Email uji coba: Brevo Free + Gmail khusus proyek; domain sendiri ditunda sampai pilot.
+
+## Masih terbuka
+
+1. **Nama akun umat di Log Aktivitas (khusus Admin Utama).** Log mencatat *siapa* melakukan tindakan, termasuk umat yang mengirim punia ANONIM. Log ini tidak bisa diedit, jadi nama akun tetap tersimpan di sana walaupun umat kemudian menghapus akunnya. Catatan ini hanya bisa dilihat Admin Utama, dan sejak Phase 3.1 tidak lagi muncul di Riwayat Audit Pura. *Saran: biarkan* — ini jejak keamanan yang wajar — tetapi sebutkan di kebijakan privasi.
+2. **Ganti email Admin Utama.** Tombol "Ganti email" sengaja tidak berlaku untuk Admin Utama. Perlu dibuatkan skrip khusus (seperti `admin:reset`)?
+3. **Ganti email ke alamat yang sudah dipakai akun umat** masih ditolak. Perlu fitur "gabungkan akun"? *Saran: belum perlu untuk pilot.*
 
 ## A. Sebelum uji coba (pilot) dimulai
 

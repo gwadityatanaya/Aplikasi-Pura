@@ -231,3 +231,69 @@ test("data contoh jelas fiktif: nama pura berawalan CONTOH dan rekening karangan
     expect(t.bankAccountHolder).toContain("CONTOH");
   }
 });
+
+test("Pengurus Banjar mengoreksi punia di pura banjarnya (termasuk tanpa pengurus), tidak di banjar lain, tidak punianya sendiri", async ({ page }) => {
+  const pub = await publicData(page.request);
+  const find = (s: string) => pub.temples.find((t) => t.name.includes(s))!;
+  const dalem = find("Dalem Kahyangan");
+  const melanting = find("Melanting");
+  const segara = find("Segara");
+  const taman = find("Taman Tunjung");
+  const kadek = await as("kadek@contoh.id");
+  const ketut = await as("ketut.banjar@contoh.id");
+
+  // 1) Temple WITHOUT pengurus: the Pengurus Banjar sahkan and then corrects.
+  const m = await command<{ id: string }>(kadek, "submitPunia", { templeId: melanting.id, amount: 51_100, transferDate: today(), evidence: receiptDataUrl(3201), anonymous: true, purpose: "umum" });
+  expect(m.ok, m.error).toBe(true);
+  await command(ketut, "setActiveTemple", { templeId: melanting.id });
+  expect((await command(ketut, "verifyPunia", { ids: [m.value.id] })).ok).toBe(true);
+  expect((await command(ketut, "correctPunia", { id: m.value.id, reason: "" })).ok).toBe(false); // reason required
+  const c1 = await command<{ number: string }>(ketut, "correctPunia", { id: m.value.id, reason: "Transfer tidak ada di mutasi" });
+  expect(c1.ok, c1.error).toBe(true);
+
+  // 2) Temple WITH pengurus in the same banjar: also allowed.
+  const d = await command<{ id: string }>(kadek, "submitPunia", { templeId: dalem.id, amount: 51_200, transferDate: today(), evidence: receiptDataUrl(3202), anonymous: true, purpose: "umum" });
+  const komang = await as("komang@contoh.id");
+  expect((await command(komang, "verifyPunia", { ids: [d.value.id] })).ok).toBe(true);
+
+  // 3) Another banjar's Pengurus Banjar cannot reach it at all.
+  const gede = await as("gede.banjar@contoh.id");
+  expect((await command(gede, "setActiveTemple", { templeId: dalem.id })).ok).toBe(false);
+  await command(gede, "setActiveTemple", { templeId: taman.id });
+  expect((await command(gede, "correctPunia", { id: d.value.id, reason: "Mencoba dari banjar lain" })).ok).toBe(false);
+
+  await command(ketut, "setActiveTemple", { templeId: dalem.id });
+  const c2 = await command(ketut, "correctPunia", { id: d.value.id, reason: "Nominal tidak sesuai mutasi" });
+  expect(c2.ok, c2.error).toBe(true);
+
+  // 4) Own punia: never.
+  const own = await command<{ id: string }>(ketut, "submitPunia", { templeId: segara.id, amount: 51_300, transferDate: today(), evidence: receiptDataUrl(3203), anonymous: false, purpose: "umum" });
+  const nengah = await as("nengah@contoh.id");
+  await command(nengah, "setActiveTemple", { templeId: segara.id });
+  expect((await command(nengah, "verifyPunia", { ids: [own.value.id] })).ok).toBe(true);
+  await command(ketut, "setActiveTemple", { templeId: segara.id });
+  const self = await command(ketut, "correctPunia", { id: own.value.id, reason: "Koreksi punia sendiri" });
+  expect(self.ok).toBe(false);
+  expect(self.error).toMatch(/sendiri/);
+
+  // 5) Logged in Riwayat Audit Pura without the anonymous donor's name.
+  const audit = JSON.stringify((await (await komang.get("/api/state")).json()).state.data.audit);
+  expect(audit).toContain("Mengoreksi punia");
+  expect(audit).toContain("Nominal tidak sesuai mutasi");
+  expect(audit).toContain("I Ketut Wirawan");
+  expect(audit).not.toContain("Kadek Surya");
+  // Admin Utama's Log Aktivitas: the correction entries never name the anonymous donor.
+  const entries = (await (await (await as("admin@contoh.id")).get("/api/admin/log")).json()).entries as { action: string; detail: string }[];
+  const corrections = entries.filter((e) => e.action.startsWith("Mengoreksi punia"));
+  expect(corrections.some((e) => e.detail.includes("Transfer tidak ada di mutasi"))).toBe(true);
+  for (const e of corrections) expect(e.detail).not.toContain("Kadek Surya");
+});
+
+test("situs demo tidak diindeks mesin pencari", async ({ page }) => {
+  const res = await page.goto("/");
+  expect(res!.headers()["x-robots-tag"]).toContain("noindex");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+  await expect(page.getByText(/SITUS DEMO/)).toBeVisible();
+  const robots = await (await page.request.get("/robots.txt")).text();
+  expect(robots).toMatch(/Disallow: \/\s*$/m);
+});

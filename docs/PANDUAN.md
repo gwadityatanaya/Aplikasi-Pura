@@ -62,7 +62,7 @@ Pengaman yang tetap berlaku:
 | Peran | Bisa melakukan | Diberikan oleh |
 |---|---|---|
 | **Admin Utama** (Anda) | Back Office: banjar, pura, **rekening pura**, mendaftarkan/mencabut pengurus, **ganti email pengurus**, Log Aktivitas, cadangan. Melihat dashboard **semua** pura (mode lihat); mengesahkan/menolak/mengoreksi hanya lewat **Mode darurat**. | Langkah setup |
-| **Pengurus Banjar** | Melihat dashboard dan memverifikasi punia di **semua pura yang diempon banjarnya**. Memverifikasi punia pura yang **belum punya pengurus**. Tidak bisa mengubah rekening atau mengatur akun. | Admin Utama |
+| **Pengurus Banjar** | Melihat dashboard, **mengesahkan, menolak, dan mengoreksi punia** di **semua pura yang diempon banjarnya**, termasuk pura yang **belum punya pengurus**. Tidak bisa mengubah rekening, mencatat transaksi lain, atau mengatur akun. | Admin Utama |
 | **Pengurus Pura** | Hanya pura yang ditugaskan: verifikasi punia, input punia manual (tunai/WhatsApp), catat pengeluaran + foto nota, laporan PDF/Excel, pengaturan tampilan untuk umat, Riwayat Audit Pura. Satu orang boleh memegang beberapa pura, dan boleh juga menjadi Pengurus Banjar. | Admin Utama |
 | **Pemeriksa** | Hanya melihat (transaksi, nota, laporan, Riwayat Audit Pura). Donatur anonim tetap tampil "Anonim". | Admin Utama |
 | **Umat** | Akun sendiri: kirim punia, lihat riwayat punia sendiri, hapus akun. | Daftar sendiri (otomatis) |
@@ -103,6 +103,14 @@ Cara membuatnya:
 5. Google: di OAuth client yang sama, tambahkan **dua** redirect URI (lihat Langkah 5).
 
 Data contoh mudah dikenali: semua nama pura dan banjar berawalan **CONTOH**, nama orang bertanda **(contoh)**, bank bernama **Bank CONTOH (fiktif)**, dan nomor rekening berupa **000-000-000x**.
+
+**Situs demo hanya untuk orang tertentu.** Bagikan alamatnya secara pribadi, jangan di grup umum. Dengan `NEXT_PUBLIC_DEMO_MODE=true`, situs demo otomatis meminta mesin pencari (Google dan lainnya) **tidak mengindeks** halaman mana pun: lewat `robots.txt`, tanda `noindex` di setiap halaman, dan header `X-Robots-Tag`. Jadi situs demo tidak akan muncul di hasil pencarian.
+
+**Mengisi ulang data demo** (jika sudah berantakan setelah dipakai latihan): dari laptop, isi `DATABASE_URL` di `.env` dengan alamat database **demo**, lalu jalankan
+```
+npm run db:reset-demo -- --ya-hapus-data-demo
+```
+Perintah ini menghapus seluruh isi database demo lalu mengisinya lagi dengan data contoh yang baru. Pengamannya: perintah **menolak** berjalan jika ada satu saja pura yang namanya tidak berawalan "CONTOH". Jadi perintah ini tidak bisa menghapus database pilot. Akun Admin Utama demo dibuat ulang dari `ADMIN_EMAIL`.
 
 ---
 
@@ -259,7 +267,7 @@ Pengurus pura lalu mengisi sendiri di **Pengaturan**: deskripsi & kontak pura (o
 4. *(Opsional, hemat waktu)* **Cocokkan mutasi (CSV):** unduh mutasi rekening dari internet banking dalam format CSV, lalu unggah di halaman Verifikasi Punia. Aplikasi menandai punia yang nominalnya sama dan tanggalnya selisih paling lama 2 hari, lalu Anda bisa mengesahkan semuanya sekaligus. File mutasi hanya dibaca di perangkat Anda dan tidak disimpan. Tetap periksa nama pengirimnya.
 5. Punia tunai atau lewat WhatsApp: **Input punia manual**. Tulis **nama donatur** secara bebas (donatur tidak perlu punya akun), pilih **TAMPIL** atau **ANONIM**. Punia langsung tercatat dan disahkan, kecuali email donaturnya adalah email Anda sendiri — itu harus disahkan pengurus lain.
    - Di setiap punia manual tertulis kecil **"dicatat oleh [nama Anda]"**. Tulisan ini hanya terlihat oleh pengurus pura, Pengurus Banjar, dan Admin Utama — **tidak** oleh umat.
-6. **Salah catat?** Buka punia yang sudah disahkan → **Koreksi punia ini** → tulis alasannya. Catatan asli **tidak diubah**: aplikasi membuat **entri koreksi** yang membatalkan pemasukannya, dan punia itu ditandai "Dikoreksi — tidak dihitung". Jika nominalnya yang salah, catat ulang punia yang benar.
+6. **Salah catat?** Buka punia yang sudah disahkan → **Koreksi punia ini** → tulis alasannya (wajib). Yang boleh mengoreksi: Pengurus Pura, dan **Pengurus Banjar** untuk semua pura yang diempon banjarnya (termasuk pura tanpa pengurus). Tidak ada yang boleh mengoreksi punia yang dikirim dari email/akunnya sendiri — dijaga aplikasi **dan** database. Koreksi tercatat di Log Aktivitas dan Riwayat Audit Pura, tanpa nama donatur anonim. Catatan asli **tidak diubah**: aplikasi membuat **entri koreksi** yang membatalkan pemasukannya, dan punia itu ditandai "Dikoreksi — tidak dihitung". Jika nominalnya yang salah, catat ulang punia yang benar.
 7. Pengeluaran: **+ → Catat Pengeluaran** dengan kategori, catatan, dan foto nota.
 8. Untuk paruman: **Laporan** → pilih jenis dan periode → unduh **PDF** atau **Excel**. Laporan punia ada **dua versi**:
    - **Versi umum / paruman** — aman dibagikan: donatur anonim tertulis "Anonim", nama pencatat tidak dicantumkan.

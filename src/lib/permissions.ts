@@ -7,6 +7,7 @@ export type Permission =
   | "tx.confirm"
   | "tx.reverse"
   | "donation.manage"
+  | "donation.correct"
   | "campaign.manage"
   | "activity.manage"
   | "report.view"
@@ -30,7 +31,7 @@ export const ROLE_DESC: Record<Role, string> = {
   superadmin: "Melihat semua pura, data, laporan dan Log Aktivitas; mengelola banjar, pura, rekening dan semua akun. Mengubah data keuangan pura hanya lewat Mode darurat (dengan alasan, tercatat). Tidak dapat dihapus atau diturunkan.",
   admin_view: "Admin Utama yang sedang melihat dashboard pura. Untuk mengesahkan, menolak atau mengoreksi, aktifkan Mode darurat dengan alasan.",
   pengurus: "Memverifikasi punia, input manual, mencatat pengeluaran, membuat laporan, dan mengatur privasi pura miliknya.",
-  banjar: "Membuka dashboard dan memverifikasi punia di semua pura yang diempon banjarnya. Tidak dapat mengubah rekening atau mengelola pengguna.",
+  banjar: "Membuka dashboard, mengesahkan, menolak dan mengoreksi punia di semua pura yang diempon banjarnya (termasuk pura tanpa pengurus). Tidak dapat mengubah rekening atau mengelola pengguna.",
   pemeriksa: "Hanya melihat transaksi, nota, laporan dan Riwayat Audit pura.",
 };
 
@@ -50,10 +51,12 @@ const MATRIX: Record<Role, Permission[]> = {
   // Admin Utama looking at a temple: everything visible, Back Office available, temple data read-only.
   admin_view: ["tx.view", "report.view", "report.export", "audit.view", "bank.manage", "admin.manage", "log.view"],
   pengurus: [
-    "tx.view", "tx.create", "tx.draft", "tx.confirm", "tx.reverse", "donation.manage", "campaign.manage",
+    "tx.view", "tx.create", "tx.draft", "tx.confirm", "tx.reverse", "donation.manage", "donation.correct", "campaign.manage",
     "activity.manage", "report.view", "report.publish", "report.export", "settings.manage", "audit.view",
   ],
-  banjar: ["tx.view", "donation.manage", "report.view", "report.export", "audit.view"],
+  // Pengurus Banjar: sahkan / tolak / koreksi punia at every temple its banjar supports
+  // (incl. temples without pengurus). No other ledger changes.
+  banjar: ["tx.view", "donation.manage", "donation.correct", "report.view", "report.export", "audit.view"],
   pemeriksa: ["tx.view", "report.view", "report.export", "audit.view"],
 };
 
@@ -69,7 +72,8 @@ export const PERMISSION_LABEL: Record<Permission, string> = {
   "tx.draft": "Membuat draf transaksi",
   "tx.confirm": "Mengonfirmasi transaksi",
   "tx.reverse": "Membuat koreksi",
-  "donation.manage": "Verifikasi & input manual punia",
+  "donation.manage": "Mengesahkan, menolak & input manual punia",
+  "donation.correct": "Mengoreksi punia yang sudah disahkan",
   "campaign.manage": "Mengelola kegiatan/odalan & campaign",
   "activity.manage": "Mengelola kegiatan",
   "report.view": "Melihat laporan",

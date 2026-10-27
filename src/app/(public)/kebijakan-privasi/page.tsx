@@ -34,7 +34,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
   },
   {
     title: "Menghapus akun",
-    body: "Buka Punia Saya → Akun saya → Hapus akun. Nama, email, dan No. HP Anda dihapus. Punia yang sudah disahkan tetap tersimpan sebagai arsip keuangan pura dengan nama \"Anonim\".",
+    body: "Buka Punia Saya → Akun saya → Hapus akun. Nama, email, dan No. HP Anda dihapus. Punia yang sudah disahkan tetap tersimpan sebagai arsip keuangan pura dengan nama \"Anonim\". Catatan keamanan (Log Aktivitas) yang hanya bisa dilihat Admin Utama tetap menyimpan nama akun yang pernah melakukan tindakan, karena catatan itu sengaja dibuat tidak bisa diubah.",
   },
   {
     title: "Email dari aplikasi",

@@ -12,7 +12,7 @@ PURA is a mobile-first treasury and punia (donation) transparency app for Baline
 | Role | Scope |
 |---|---|
 | **Admin Utama** (one, protected by DB triggers) | Back Office: banjar, temples, temple bank accounts, staff (incl. changing a pengurus' email), Log Aktivitas, backups. Views every temple read-only (`admin_view`); changing a temple's records needs **Mode darurat** (reason required, 60 min, one temple, labelled in both logs) |
-| **Pengurus Banjar** | Dashboard + punia verification for every temple its banjar supports (`temple_banjars`), incl. temples without pengurus. No bank or user management |
+| **Pengurus Banjar** | Dashboard + sahkan / tolak / koreksi punia for every temple its banjar supports (`temple_banjars`), incl. temples without pengurus. No other ledger changes, no bank or user management |
 | **Pengurus Pura** | Own temple(s): verification, manual punia, expenses, reports, public-view settings, Riwayat Audit Pura |
 | **Pemeriksa** | Read-only for a temple |
 | **Umat** | Self-registered; own punia history and account only |
@@ -31,12 +31,13 @@ npm run db:seed-demo -- --ya      # optional: fictional demo data (empty DB only
 npm run dev                       # http://localhost:3000 → /setup once
 ```
 
-Email (SMTP) and Google are both optional: `/api/auth/options` tells the login page what to show. Without SMTP the email-link button is hidden and the digest is off; in development the link is shown on screen instead. Set `NEXT_PUBLIC_DEMO_MODE=true` only on the demo deployment (shows a "SITUS DEMO" banner).
+Email (SMTP) and Google are both optional: `/api/auth/options` tells the login page what to show. Without SMTP the email-link button is hidden and the digest is off; in development the link is shown on screen instead. Set `NEXT_PUBLIC_DEMO_MODE=true` only on the demo deployment: it shows a "SITUS DEMO" banner and keeps the site out of search engines (`robots.txt`, `noindex` meta, `X-Robots-Tag`).
 
 | Script | What it does |
 |---|---|
 | `npm run db:migrate` | Creates/updates tables (idempotent) |
 | `npm run db:seed-demo -- --ya` | Fictional data: 2 banjar, 6 temples (one shared, one without pengurus), staff, umat. Refuses a non-empty DB |
+| `npm run db:reset-demo -- --ya-hapus-data-demo` | Wipes and re-seeds the DEMO database. Refuses if any temple name does not start with "CONTOH " |
 | `npm run test:e2e` | Playwright end-to-end tests. Needs `E2E_DATABASE_URL` pointing to a throw-away DB whose name contains `test`/`e2e` |
 | `npm run backup` / `npm run restore -- <file>` | Full JSON backup incl. photos / restore into an empty DB |
 | `npm run admin:reset` | Emergency one-time sign-in link for Admin Utama (requires DB access) |

@@ -19,6 +19,7 @@ export default defineConfig({
     url: `http://localhost:${PORT}/api/health`,
     timeout: 180_000,
     reuseExistingServer: false,
-    env: { DATABASE_URL: DB, ADMIN_EMAIL: "admin@contoh.id", SMTP_HOST: "", APP_TIMEZONE: "Asia/Makassar" },
+    // Tests run against fictional demo data, so the server runs as a DEMO site (noindex, banner).
+    env: { DATABASE_URL: DB, ADMIN_EMAIL: "admin@contoh.id", SMTP_HOST: "", APP_TIMEZONE: "Asia/Makassar", NEXT_PUBLIC_DEMO_MODE: "true" },
   },
 });

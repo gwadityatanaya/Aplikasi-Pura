@@ -129,7 +129,10 @@ export const puniaCommands: Record<string, Handler> = {
         })
         .returning();
       await notify(tx, { templeId: t.id, kind: "donation_pending", title: "Punia baru menunggu verifikasi", body: `${rupiah(i.amount)} (${PURPOSE_LABEL[i.purpose]})${i.anonymous ? " — anonim" : ""}.`, href: `/app/punia?id=${donationId}` });
-      await log(ctx, tx, { action: "Mengirim punia", entity: "donation", entityId: donationId, detail: `${rupiah(i.amount)} ke ${t.name}${i.anonymous ? " (anonim)" : ""}`, templeId: t.id });
+      // The sender is the actor of this entry, so for an ANONIM punia the entry itself would reveal who
+      // gave. It therefore goes to the Admin Utama's Log Aktivitas only (templeId null), never to the
+      // temple's Riwayat Audit Pura (which a Pemeriksa can read).
+      await log(ctx, tx, { action: "Mengirim punia", entity: "donation", entityId: donationId, detail: `${rupiah(i.amount)} ke ${t.name}${i.anonymous ? " (anonim)" : ""}`, templeId: null });
       return m.toDonation(row);
     });
   },
@@ -149,7 +152,7 @@ export const puniaCommands: Record<string, Handler> = {
         .set({ status: "pending", amount: i.amount, transferDate: i.transferDate, referenceNo: i.referenceNo, evidence, evidenceHash: newHash, rejectedReason: null })
         .where(eq(T.donations.id, d.id));
       await notify(tx, { templeId: d.templeId, kind: "donation_pending", title: "Punia dikirim ulang", body: `${rupiah(i.amount)}${d.privacy === "public" ? "" : " (anonim)"} menunggu verifikasi.`, href: `/app/punia?id=${d.id}` });
-      await log(ctx, tx, { action: "Mengirim ulang punia", entity: "donation", entityId: d.id, detail: `${rupiah(i.amount)} (sebelumnya ditolak: ${d.rejectedReason ?? "-"})`, templeId: d.templeId });
+      await log(ctx, tx, { action: "Mengirim ulang punia", entity: "donation", entityId: d.id, detail: `${rupiah(i.amount)} (sebelumnya ditolak: ${d.rejectedReason ?? "-"})`, templeId: null });
       return null;
     });
   },
@@ -234,12 +237,14 @@ export const puniaCommands: Record<string, Handler> = {
    */
   async correctPunia(ctx, p) {
     const templeId = requireTemple(ctx);
-    await requirePerm(ctx, "tx.reverse", "mengoreksi punia");
+    await requirePerm(ctx, "donation.correct", "mengoreksi punia");
     const i = z.object({ id, reason: text(300).min(5, "Tuliskan alasan koreksi") }).parse(p);
     return db.transaction(async (tx) => {
       const d = await one(tx.select().from(T.donations).where(and(eq(T.donations.id, i.id), eq(T.donations.templeId, templeId))).for("update"), "Punia tidak ditemukan.");
       if (d.status !== "verified") throw new ApiError(409, "Hanya punia yang sudah disahkan yang dikoreksi. Punia yang belum disahkan cukup ditolak.");
       if (d.correctedAt) throw new ApiError(409, "Punia ini sudah pernah dikoreksi.");
+      // Same rule as for sahkan: nobody corrects a punia sent from their own account or email.
+      if (isSelf(ctx, d)) throw new ApiError(403, "Ini punia Anda sendiri — koreksi harus dilakukan pengurus lain.");
       const cur = d.transactionId ? (await tx.select().from(T.transactions).where(eq(T.transactions.id, d.transactionId)).for("update"))[0] : undefined;
       let number: string | undefined;
       if (cur && !cur.reversedBy) {
