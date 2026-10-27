@@ -2,8 +2,9 @@ import type { ReportDoc, ReportTable } from "./export";
 import type { DataState, Temple, Transaction } from "./types";
 import { activitySummary, byCategory, campaignStats, expenseOf, incomeOf, monthlyCashflow, summarize } from "./ledger";
 import { formatDate, formatDateShort, slugify } from "./format";
+import { PURPOSE_LABEL } from "./permissions";
 
-export type ReportType = "summary" | "income" | "expense" | "cashflow" | "activity" | "campaign" | "detail";
+export type ReportType = "summary" | "income" | "expense" | "cashflow" | "activity" | "campaign" | "punia" | "detail";
 
 export const REPORT_TYPES: { value: ReportType; label: string; desc: string }[] = [
   { value: "summary", label: "Ringkasan keuangan", desc: "Saldo awal, pemasukan, pengeluaran, saldo akhir" },
@@ -12,6 +13,7 @@ export const REPORT_TYPES: { value: ReportType; label: string; desc: string }[] 
   { value: "cashflow", label: "Arus kas bulanan", desc: "Saldo awal & akhir setiap bulan" },
   { value: "activity", label: "Laporan per kegiatan", desc: "Pemasukan & pengeluaran tiap kegiatan" },
   { value: "campaign", label: "Pertanggungjawaban campaign", desc: "Dana terkumpul dan penggunaannya" },
+  { value: "punia", label: "Laporan punia", desc: "Punia terverifikasi per tujuan & kegiatan (anonim tetap Anonim)" },
   { value: "detail", label: "Rincian transaksi", desc: "Daftar lengkap seluruh transaksi" },
 ];
 
@@ -174,6 +176,42 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
       const tot = body.reduce((x, r) => x + (r[2] as number), 0);
       const used = body.reduce((x, r) => x + (r[4] as number), 0);
       return { ...base, period: `Sampai ${formatDate(f.to)}`, summary: [{ label: "Total terkumpul", value: tot }, { label: "Telah digunakan", value: used }, { label: "Sisa dana campaign", value: tot - used }], tables, note: "Hanya donasi terverifikasi yang dihitung. Data pribadi donatur tidak dicantumkan." };
+    }
+    case "punia": {
+      const list = data.donations
+        .filter((d) => d.templeId === ws.templeId && d.status === "verified")
+        .filter((d) => { const day = d.transferDate ?? d.date; return day >= f.from && day <= f.to; })
+        .filter((d) => !f.campaignId || d.campaignId === f.campaignId)
+        .sort((a, b) => (a.transferDate ?? a.date).localeCompare(b.transferDate ?? b.date));
+      const total = list.reduce((x, d) => x + d.amount, 0);
+      const campName = (id?: string) => data.campaigns.find((c) => c.id === id)?.title ?? "—";
+      const purposes = (Object.keys(PURPOSE_LABEL) as (keyof typeof PURPOSE_LABEL)[])
+        .map((k) => { const g = list.filter((d) => (d.purpose ?? "umum") === k); return [PURPOSE_LABEL[k], g.length, g.reduce((x, d) => x + d.amount, 0)] as (string | number)[]; })
+        .filter((r) => (r[1] as number) > 0);
+      const camps = Array.from(new Set(list.map((d) => d.campaignId).filter(Boolean))) as string[];
+      const channel = { transfer: "Transfer", tunai: "Tunai", whatsapp: "WhatsApp", simulasi: "Simulasi" } as const;
+      const tables: ReportTable[] = [{ title: "Per tujuan punia", head: ["Tujuan", "Jumlah", "Nominal"], body: purposes, foot: ["Total", list.length, total], money: [2] }];
+      if (camps.length) {
+        tables.push({
+          title: "Per kegiatan / odalan",
+          head: ["Kegiatan", "Jumlah", "Nominal"],
+          body: camps.map((id) => { const g = list.filter((d) => d.campaignId === id); return [campName(id), g.length, g.reduce((x, d) => x + d.amount, 0)]; }),
+          money: [2],
+        });
+      }
+      tables.push({
+        title: `Rincian punia (${list.length})`,
+        head: ["Tgl transfer", "Nama", "Tujuan", "Kegiatan", "Lewat", "Nominal"],
+        body: list.map((d) => [formatDateShort(d.transferDate ?? d.date), d.privacy === "public" ? d.donorName : "Anonim", PURPOSE_LABEL[d.purpose ?? "umum"], campName(d.campaignId), channel[d.channel], d.amount]),
+        foot: ["", "", "", "", "Total", total],
+        money: [5],
+      });
+      return {
+        ...base,
+        summary: [{ label: "Total punia terverifikasi", value: total }, { label: "Jumlah punia", value: list.length }].slice(0, 1),
+        tables,
+        note: "Hanya punia yang sudah diverifikasi pengurus. Umat yang memilih ANONIM dicantumkan sebagai \"Anonim\".",
+      };
     }
     case "detail":
     default:
