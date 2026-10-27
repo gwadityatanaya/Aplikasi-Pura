@@ -88,12 +88,20 @@ export async function loadState(ctx: Ctx): Promise<ServerState> {
       // Riwayat Audit Pura: business actions only — login records stay in the Admin Utama log.
       db.select().from(schema.activityLog).where(and(eq(schema.activityLog.templeId, templeId), ne(schema.activityLog.entity, "session"))).orderBy(desc(schema.activityLog.at)).limit(300),
     ]);
+    // Profile photos of this temple's active staff, only for Pengurus Pura / Pengurus Banjar / Admin
+    // Utama (the same rule as /api/avatar). Everyone else gets initials.
+    const viewerRole = access.get(templeId);
+    const seePhotos = ctx.user.isSuperAdmin || viewerRole === "pengurus" || viewerRole === "banjar";
+    const staffUser = (u: typeof schema.users.$inferSelect, active: boolean) => {
+      const x = m.toUser(u);
+      return seePhotos && active ? x : { ...x, avatarVersion: undefined };
+    };
     const people = new Map<string, User>();
-    members.forEach((x) => people.set(x.u.id, m.toUser(x.u)));
-    banjarMembers.forEach((x) => people.set(x.u.id, m.toUser(x.u)));
-    // Names of people who recorded entries but are no longer staff.
+    members.forEach((x) => people.set(x.u.id, staffUser(x.u, x.m.status === "active")));
+    banjarMembers.forEach((x) => people.set(x.u.id, staffUser(x.u, x.b.status === "active")));
+    // Names of people who recorded entries but are no longer staff (no photo).
     const extraIds = Array.from(new Set([...txs.map((t) => t.createdBy), ...donations.flatMap((d) => [d.verifiedBy, d.inputBy, d.correctedBy]).filter(Boolean)] as string[])).filter((id) => !people.has(id));
-    if (extraIds.length) (await db.select().from(schema.users).where(inArray(schema.users.id, extraIds))).forEach((u) => people.set(u.id, m.toUser(u)));
+    if (extraIds.length) (await db.select().from(schema.users).where(inArray(schema.users.id, extraIds))).forEach((u) => people.set(u.id, staffUser(u, false)));
     scoped = {
       users: Array.from(people.values()),
       memberships: members.map((x) => m.toMembership(x.m)),
@@ -110,7 +118,7 @@ export async function loadState(ctx: Ctx): Promise<ServerState> {
     };
   }
   const me = m.toUser(ctx.user);
-  if (!scoped.users.some((x) => x.id === me.id)) scoped.users.push(me);
+  scoped.users = [...scoped.users.filter((x) => x.id !== me.id), me];
 
   // Admin Utama: read-only ("admin_view") unless emergency mode is on for this temple.
   let role = templeId ? access.get(templeId) : undefined;

@@ -118,3 +118,16 @@ export function requireTemple(ctx: Ctx): string {
   if (!ctx.templeId) throw new ApiError(400, "Pilih pura terlebih dahulu.");
   return ctx.templeId;
 }
+
+/**
+ * Who may see a profile photo: the owner, Admin Utama, and Pengurus Pura / Pengurus Banjar who look
+ * after a temple (or banjar) together with the owner. Never the public, never a Pemeriksa or umat,
+ * so a photo can never sit next to an anonymous punia.
+ */
+export async function canSeeAvatar(viewer: UserRow, owner: UserRow) {
+  if (viewer.id === owner.id || viewer.isSuperAdmin) return true;
+  const [mine, theirs] = await Promise.all([templeAccess(viewer), templeAccess(owner)]);
+  for (const [templeId, role] of Array.from(mine)) if ((role === "pengurus" || role === "banjar") && theirs.has(templeId)) return true;
+  const [vb, ob] = await Promise.all([banjarIdsOf(viewer.id), banjarIdsOf(owner.id)]);
+  return vb.some((b) => ob.includes(b));
+}

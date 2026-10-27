@@ -10,6 +10,7 @@ import { id, log, one, optId, optText, text, type Handler } from "./commands";
 import * as m from "./map";
 import { categoriesFor } from "@/lib/categories";
 import { callNameOf, slugify, uid } from "@/lib/format";
+import { dropAvatar } from "./commands-account";
 
 const email = z.string().trim().toLowerCase().email("Email belum benar").max(200);
 
@@ -318,6 +319,18 @@ export const adminCommands: Record<string, Handler> = {
         changes: { jabatan: { dari: label(row.position, row.positionTitle), menjadi: label(i.position, title) } },
         templeId: i.kind === "temple" ? scopeId : null,
       });
+      return null;
+    });
+  },
+
+  /** Admin Utama removes an inappropriate profile photo (reason required, logged). */
+  async adminRemoveAvatar(ctx, p) {
+    await requireSuperAdmin(ctx, "menghapus foto profil orang lain");
+    const i = z.object({ userId: id, reason: z.string().trim().min(5, "Tuliskan alasannya (minimal 5 huruf).").max(300) }).parse(p);
+    return db.transaction(async (tx) => {
+      const u = await one(tx.select().from(T.users).where(eq(T.users.id, i.userId)).for("update"), "Akun tidak ditemukan.");
+      if (!(await dropAvatar(tx, u))) throw new ApiError(409, "Akun ini tidak memiliki foto profil.");
+      await log(ctx, tx, { action: "Menghapus foto profil orang lain", entity: "user", entityId: u.id, detail: `${u.name} — alasan: ${i.reason}`, templeId: null });
       return null;
     });
   },

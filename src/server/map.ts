@@ -16,6 +16,7 @@ export const toUser = (r: Row<typeof schema.users>): User => ({
   email: r.email,
   phone: u(r.phone),
   avatarColor: r.avatarColor,
+  avatarVersion: r.avatarId && r.avatarAt ? r.avatarAt.toISOString() : undefined,
   isSuperAdmin: r.isSuperAdmin,
   status: r.status as User["status"],
   emailDigest: r.emailDigest,

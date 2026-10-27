@@ -11,17 +11,12 @@ import { PatternBg } from "@/components/brand/ornament";
 import { Dialog } from "@/components/ui/dialog";
 import { useAccess, useActiveTemple, useCurrentUser, useRole, useStore } from "@/lib/store";
 import { ROLE_LABEL, ROLE_TONE, can } from "@/lib/permissions";
-import { cn, initials } from "@/lib/format";
+import { cn } from "@/lib/format";
 import { NAV, isActive, type NavItem } from "./nav";
 import { toast } from "sonner";
+import { Avatar, avatarSrc } from "@/components/shared/avatar";
 
-export function Avatar({ name, color, size = 40 }: { name: string; color?: string; size?: number }) {
-  return (
-    <span className="grid shrink-0 place-items-center rounded-full font-bold text-white" style={{ background: color ?? "#087F6D", width: size, height: size, fontSize: size * 0.36 }} aria-hidden>
-      {initials(name)}
-    </span>
-  );
-}
+export { Avatar, avatarSrc } from "@/components/shared/avatar";
 
 function useUnread() {
   const templeId = useStore((s) => s.session?.activeTempleId);
@@ -106,7 +101,7 @@ export function ProfileMenu({ open, onClose }: { open: boolean; onClose: () => v
   return (
     <Dialog open={open} onClose={onClose} title="Akun saya" size="sm">
       <div className="flex items-center gap-3 rounded-2xl bg-ivory p-3">
-        <Avatar name={user.name} color={user.avatarColor} size={48} />
+        <Avatar name={user.name} color={user.avatarColor} src={avatarSrc(user)} size={48} />
         <div className="min-w-0">
           <p className="truncate font-bold">{user.name}</p>
           <p className="truncate text-sm text-muted">{user.email}</p>
@@ -191,7 +186,7 @@ function Sidebar() {
         )}
         {user && (
           <button onClick={() => setProfile(true)} className="press flex items-center gap-3 rounded-2xl bg-white/10 p-3 text-left ring-1 ring-white/10 hover:bg-white/15">
-            <Avatar name={user.name} color={user.avatarColor} size={38} />
+            <Avatar name={user.name} color={user.avatarColor} src={avatarSrc(user)} size={38} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-semibold">{user.name}</span>
               <span className="block truncate text-xs text-gold-light">{role ? ROLE_LABEL[role] : ""}</span>
@@ -231,7 +226,7 @@ function TopBar() {
         </Link>
         {user && (
           <button onClick={() => setProfile(true)} className="press rounded-full lg:hidden" aria-label="Akun saya">
-            <Avatar name={user.name} color={user.avatarColor} size={38} />
+            <Avatar name={user.name} color={user.avatarColor} src={avatarSrc(user)} size={38} />
           </button>
         )}
       </div>

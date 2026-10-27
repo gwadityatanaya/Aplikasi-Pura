@@ -85,6 +85,13 @@
       "when": 1793139182255,
       "tag": "0011_archive_delete",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793140010934,
+      "tag": "0012_profile_photo",
+      "breakpoints": true
     }
   ]
 }

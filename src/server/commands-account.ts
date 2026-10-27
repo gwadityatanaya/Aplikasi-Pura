@@ -5,9 +5,45 @@ import { db, schema as T } from "./db";
 import { ApiError } from "./http";
 import { templeAccess } from "./context";
 import { log, type Handler } from "./commands";
-import { destroySession } from "./auth";
+import { destroySession, rateLimit } from "./auth";
+import { checkAvatar } from "./images";
+import { uid } from "@/lib/format";
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/** Removes a person's profile photo (the stored image itself, not only the link). */
+export async function dropAvatar(tx: Tx, user: { id: string; avatarId: string | null }) {
+  if (!user.avatarId) return false;
+  await tx.update(T.users).set({ avatarId: null, avatarAt: null }).where(eq(T.users.id, user.id));
+  await tx.delete(T.attachments).where(eq(T.attachments.id, user.avatarId));
+  return true;
+}
 
 export const accountCommands: Record<string, Handler> = {
+  /** Profile photo, already cropped square and resized on the device (≈256×256, ≈50 KB). */
+  async setMyAvatar(ctx, p) {
+    const { image } = z.object({ image: z.string().max(200_000) }).parse(p);
+    await rateLimit(`avatar:${ctx.user.id}`, 20, 60);
+    const { mime, buf } = checkAvatar(image);
+    await db.transaction(async (tx) => {
+      const [me] = await tx.select().from(T.users).where(eq(T.users.id, ctx.user.id)).for("update");
+      await dropAvatar(tx, me);
+      const id = uid("av");
+      await tx.insert(T.attachments).values({ id, templeId: null, mime, data: buf, size: buf.length, isPublic: false, createdBy: ctx.user.id });
+      await tx.update(T.users).set({ avatarId: id, avatarAt: new Date() }).where(eq(T.users.id, ctx.user.id));
+      await log(ctx, tx, { action: "Mengganti foto profil", entity: "user", entityId: ctx.user.id, detail: ctx.user.name, templeId: null });
+    });
+    return null;
+  },
+
+  async removeMyAvatar(ctx) {
+    await db.transaction(async (tx) => {
+      const [me] = await tx.select().from(T.users).where(eq(T.users.id, ctx.user.id)).for("update");
+      if (await dropAvatar(tx, me)) await log(ctx, tx, { action: "Menghapus foto profil", entity: "user", entityId: ctx.user.id, detail: ctx.user.name, templeId: null });
+    });
+    return null;
+  },
+
   /** Signs this account out on every device (e.g. a lost phone), including this one. */
   async logoutEverywhere(ctx) {
     await db.transaction(async (tx) => {
@@ -34,7 +70,9 @@ export const accountCommands: Record<string, Handler> = {
         await tx.update(T.donations).set({ donorName: "Anonim (akun dihapus)", privacy: "anonymous", submitterEmail: null, message: null }).where(inArray(T.donations.id, ids));
         await tx.update(T.transactions).set({ source: "Anonim", description: "Punia: Anonim (akun dihapus)" }).where(and(inArray(T.transactions.donationId, ids)));
       }
-      await log(ctx, tx, { action: "Menghapus akun sendiri", entity: "user", entityId: ctx.user.id, detail: `Akun umat dihapus; ${ids.length} catatan punia dianonimkan.`, templeId: null });
+      const [me] = await tx.select().from(T.users).where(eq(T.users.id, ctx.user.id)).for("update");
+      const hadPhoto = await dropAvatar(tx, me);
+      await log(ctx, tx, { action: "Menghapus akun sendiri", entity: "user", entityId: ctx.user.id, detail: `Akun umat dihapus; ${ids.length} catatan punia dianonimkan${hadPhoto ? "; foto profil dihapus" : ""}.`, templeId: null });
       await tx
         .update(T.users)
         .set({ status: "deleted", deletedAt: new Date(), name: "Akun dihapus", callName: "Umat", email: `dihapus+${ctx.user.id}@pura.invalid`, phone: null, googleSub: null, passwordHash: null })

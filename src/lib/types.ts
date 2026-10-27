@@ -24,6 +24,8 @@ export interface User {
   email: string;
   phone?: string;
   avatarColor: string;
+  /** Set when the person has a profile photo (served by /api/avatar/<id>, members only) */
+  avatarVersion?: string;
   /** Admin Utama — set only through the secure setup step */
   isSuperAdmin?: boolean;
   status?: "active" | "disabled" | "deleted";

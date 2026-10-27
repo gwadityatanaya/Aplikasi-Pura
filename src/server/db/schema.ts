@@ -14,6 +14,9 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   phone: text("phone"),
   avatarColor: text("avatar_color").notNull().default("#087F6D"),
+  /** Profile photo (attachment id; 256×256, resized on the device). Never shown on public pages. */
+  avatarId: text("avatar_id"),
+  avatarAt: ts("avatar_at"),
   /** Legacy (Phase 2). Login now uses Google or one-time email links; no passwords are stored. */
   passwordHash: text("password_hash"),
   googleSub: text("google_sub").unique(),

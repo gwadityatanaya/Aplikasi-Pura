@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { templeLocation } from "@/lib/temple";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Archive, ArchiveRestore, Building2, Crown, DatabaseBackup, Download, Eye, Landmark, Mail, MapPin, Pencil, Plus, Search, ShieldCheck, Trash2, UserCheck, UserPlus, UserX, Users, X } from "lucide-react";
+import { AlertTriangle, Archive, ArchiveRestore, Building2, Crown, DatabaseBackup, Download, Eye, ImageOff, Landmark, Mail, MapPin, Pencil, Plus, Search, ShieldCheck, Trash2, UserCheck, UserPlus, UserX, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, NoAccess } from "@/components/app/page-header";
-import { Avatar } from "@/components/app/app-shell";
+import { Avatar, avatarSrc } from "@/components/app/app-shell";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +63,8 @@ export default function BackOfficePage() {
   const [newEmail, setNewEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [archiveFor, setArchiveFor] = useState<ArchiveTarget | null>(null);
+  const [photoFor, setPhotoFor] = useState<User | null>(null);
+  const [photoReason, setPhotoReason] = useState("");
 
   const load = useCallback(async () => {
     const { json } = await api<AdminData>("/api/admin/users");
@@ -215,7 +217,7 @@ export default function BackOfficePage() {
                 const roles = rolesOf(u);
                 return (
                   <li key={u.id} className="flex flex-wrap items-center gap-3 p-4">
-                    <Avatar name={u.name} color={u.avatarColor} size={44} />
+                    <Avatar name={u.name} color={u.avatarColor} src={avatarSrc(u)} size={44} />
                     <div className="min-w-0 flex-1">
                       <p className="flex flex-wrap items-center gap-2 font-bold">
                         {u.name} {u.id === me && <span className="text-sm font-medium text-muted">(Anda)</span>}
@@ -233,6 +235,7 @@ export default function BackOfficePage() {
                     ) : (
                       <div className="flex flex-wrap gap-1">
                       {u.status !== "deleted" && <Button size="sm" variant="ghost" onClick={() => { setNewEmail(""); setEmailFor(u); }}><Mail className="h-4 w-4" /> Ganti email</Button>}
+                      {u.avatarVersion && <Button size="sm" variant="ghost" className="text-expense" onClick={() => { setPhotoReason(""); setPhotoFor(u); }}><ImageOff className="h-4 w-4" /> Hapus foto</Button>}
                       <Button size="sm" variant={u.status === "disabled" ? "secondary" : "ghost"} className={u.status === "disabled" ? "" : "text-expense"} onClick={() => setStatusFor(u)}>
                         {u.status === "disabled" ? <><UserCheck className="h-4 w-4" /> Aktifkan</> : <><UserX className="h-4 w-4" /> Nonaktifkan</>}
                       </Button>
@@ -324,6 +327,16 @@ export default function BackOfficePage() {
             </Field>
           </div>
         )}
+      </Dialog>
+
+      <Dialog
+        open={!!photoFor}
+        onClose={() => setPhotoFor(null)}
+        title="Hapus foto profil?"
+        description={photoFor ? `${photoFor.name} — misalnya karena foto tidak pantas. Tindakan ini tercatat di Log Aktivitas.` : undefined}
+        footer={<Button size="lg" variant="danger" className="w-full" disabled={busy || photoReason.trim().length < 5} onClick={async () => { if (photoFor && (await done(run("adminRemoveAvatar", { userId: photoFor.id, reason: photoReason }), "Foto profil dihapus"))) setPhotoFor(null); }}><ImageOff className="h-5 w-5" /> Hapus foto</Button>}
+      >
+        <Field label="Alasan (wajib)" htmlFor="foto-alasan"><Textarea id="foto-alasan" rows={2} value={photoReason} onChange={(e) => setPhotoReason(e.target.value)} /></Field>
       </Dialog>
 
       <ArchiveDialog

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { AlertTriangle, Check, Mail, Minus } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
-import { Avatar } from "@/components/app/app-shell";
+import { Avatar, avatarSrc } from "@/components/app/app-shell";
 import { useWorkspace } from "@/components/app/hooks";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -45,7 +45,7 @@ export default function PengurusPage() {
             if (!u) return null;
             return (
               <li key={r.key} className="flex flex-wrap items-center gap-3 p-4">
-                <Avatar name={u.name} color={u.avatarColor} size={44} />
+                <Avatar name={u.name} color={u.avatarColor} src={avatarSrc(u)} size={44} />
                 <div className="min-w-0 flex-1">
                   <p className="font-bold">{u.name} {u.id === me && <span className="text-sm font-medium text-muted">(Anda)</span>}</p>
                   <p className="flex items-center gap-1.5 text-sm text-muted"><Mail className="h-3.5 w-3.5" /> {u.email}</p>

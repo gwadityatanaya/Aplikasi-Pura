@@ -9,6 +9,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
       <ul className="list-disc space-y-1 pl-5">
         <li>Nama dan alamat email Anda (dari Google atau tautan email) untuk masuk.</li>
         <li>No. HP jika Anda mengisinya sendiri.</li>
+        <li>Foto profil jika Anda mengunggahnya sendiri (opsional). Foto dipotong persegi dan diperkecil di perangkat Anda (sekitar 256×256 piksel) sebelum dikirim.</li>
         <li>Catatan punia: nominal, tanggal transfer, tujuan, foto bukti transfer, dan pilihan TAMPIL/ANONIM.</li>
         <li>Catatan masuk (waktu dan perangkat) untuk keamanan akun.</li>
       </ul>
@@ -25,6 +26,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
         <li><b>Umum:</b> jika Anda memilih TAMPIL, nama dan nominal punia yang sudah disahkan dapat terlihat di halaman pura. Jika memilih ANONIM, yang tampil hanya &quot;Anonim&quot; — nama asli tidak dikirim ke halaman publik sama sekali.</li>
         <li><b>Pengurus pura tujuan, Pengurus Banjar pengempon pura tersebut, dan Admin Utama:</b> dapat melihat nama asli dan foto bukti untuk keperluan verifikasi.</li>
         <li>Pengurus pura lain dan umat lain <b>tidak</b> dapat melihat data Anda.</li>
+        <li><b>Foto profil</b> hanya terlihat oleh Anda sendiri, Pengurus Pura dan Pengurus Banjar yang bekerja bersama Anda di pura/banjar yang sama, dan Admin Utama. Foto profil <b>tidak pernah</b> tampil di halaman publik, laporan publik, atau di samping punia — termasuk punia ANONIM. Admin Utama dapat menghapus foto yang tidak pantas; tindakan itu tercatat.</li>
       </ul>
     ),
   },
@@ -34,7 +36,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
   },
   {
     title: "Menghapus akun",
-    body: "Buka Punia Saya → Akun saya → Hapus akun. Nama, email, dan No. HP Anda dihapus. Punia yang sudah disahkan tetap tersimpan sebagai arsip keuangan pura dengan nama \"Anonim\". Catatan keamanan (Log Aktivitas) yang hanya bisa dilihat Admin Utama tetap menyimpan nama akun yang pernah melakukan tindakan, karena catatan itu sengaja dibuat tidak bisa diubah.",
+    body: "Buka Punia Saya → Akun saya → Hapus akun. Nama, email, No. HP, dan foto profil Anda dihapus. Foto profil juga bisa dihapus kapan saja tanpa menghapus akun. Punia yang sudah disahkan tetap tersimpan sebagai arsip keuangan pura dengan nama \"Anonim\". Catatan keamanan (Log Aktivitas) yang hanya bisa dilihat Admin Utama tetap menyimpan nama akun yang pernah melakukan tindakan, karena catatan itu sengaja dibuat tidak bisa diubah.",
   },
   {
     title: "Email dari aplikasi",

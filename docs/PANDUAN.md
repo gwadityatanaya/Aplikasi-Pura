@@ -22,6 +22,7 @@ Waktu yang dibutuhkan: sekitar **60 menit** untuk pertama kali (termasuk mengatu
 12. [Alur punia sehari-hari](#alur-punia-sehari-hari)
 13. [Admin Utama: mode lihat dan mode darurat](#admin-utama-mode-lihat-dan-mode-darurat)
     - [Mengarsipkan atau menghapus pura dan banjar](#mengarsipkan-atau-menghapus-pura-dan-banjar)
+    - [Foto profil](#foto-profil)
 14. [Memasang aplikasi di HP](#memasang-aplikasi-di-hp)
 15. [Cadangan data mingguan](#cadangan-data-mingguan)
 16. [Memulihkan data](#memulihkan-data)
@@ -334,6 +335,15 @@ Hanya Admin Utama, dari **Back Office → Pura** atau **Back Office → Banjar**
 | **Hapus banjar permanen** | Banjar salah input / dobel | Hanya bisa jika banjar **tidak mengempon pura satu pun** (pindahkan dulu puranya di **Ubah data** pura, atau arsipkan saja). Peran Pengurus Banjar dicabut. |
 
 Aturan "pura yang sudah punya data tidak boleh dihapus" dan "banjar yang masih mengempon pura tidak boleh dihapus" dijaga **dua kali**: oleh aplikasi dan oleh database. Database juga menolak punia atau transaksi baru untuk pura yang diarsipkan.
+
+### Foto profil
+
+- Setiap orang bisa memasang foto profil sendiri: pengurus di **Pengaturan → Profil saya**, umat di **Punia Saya → Akun saya**. Tekan **Pilih foto**, geser dan perbesar di kotak potong, lalu **Simpan foto**. Tanpa foto, yang tampil adalah **inisial nama**.
+- Foto dipotong persegi dan **diperkecil di HP** (sekitar 256×256 piksel, ±50 KB) sebelum dikirim, jadi hemat kuota. Hanya JPG, PNG, atau WEBP; file lain ditolak.
+- **Siapa yang bisa melihat:** pemiliknya, Pengurus Pura dan Pengurus Banjar yang bekerja bersama di pura/banjar yang sama, dan Admin Utama. **Tidak** terlihat oleh Pemeriksa, umat lain, atau pengunjung, dan **tidak pernah** tampil di halaman publik, laporan, atau di samping punia (termasuk punia ANONIM).
+- **Hapus foto** kapan saja dari tempat yang sama. Saat akun dihapus, fotonya ikut terhapus dari server.
+- Admin Utama dapat menghapus foto yang tidak pantas: **Back Office → Akun → Hapus foto** (alasan wajib, tercatat di Log Aktivitas).
+
 
 ---
 

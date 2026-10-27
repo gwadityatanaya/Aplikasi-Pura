@@ -27,6 +27,7 @@ import { templeLocation } from "@/lib/temple";
 import { useSignInOptions } from "@/lib/sign-in-options";
 import type { Result } from "@/lib/store";
 import { LogoutEverywhere } from "@/components/shared/logout-everywhere";
+import { AvatarEditor } from "@/components/shared/avatar-editor";
 
 /** Shows the right toast for a save result; returns true on success. */
 function done(r: Result<unknown>, msg: string) {
@@ -140,6 +141,7 @@ function AdminProfile() {
     <Card>
       <CardHeader title="Profil saya" />
       <CardBody className="space-y-4">
+        {user && <AvatarEditor user={user} />}
         <Field label="Nama lengkap" htmlFor="u-name"><Input id="u-name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
         <Field label="Nama sapaan" htmlFor="u-call" hint='Dipakai pada sapaan dashboard, mis. "Pak Made".'><Input id="u-call" value={f.callName} onChange={(e) => setF({ ...f, callName: e.target.value })} /></Field>
         <Field label="Nomor WhatsApp" htmlFor="u-phone"><Input id="u-phone" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>

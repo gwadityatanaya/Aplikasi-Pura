@@ -11,6 +11,7 @@ import { Field, Input } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRequireLogin } from "@/components/umat/use-umat";
 import { LogoutEverywhere } from "@/components/shared/logout-everywhere";
+import { AvatarEditor } from "@/components/shared/avatar-editor";
 import { useStore } from "@/lib/store";
 
 export default function MyAccountPage() {
@@ -62,6 +63,7 @@ export default function MyAccountPage() {
       <h1 className="mt-2 text-3xl font-extrabold text-forest">Akun saya</h1>
 
       <Card className="mt-6 space-y-4 p-5">
+        <AvatarEditor user={me} />
         <Field label="Email (untuk masuk)"><Input value={me.email} disabled /></Field>
         <Field label="Nama lengkap" htmlFor="ak-name" hint="Nama ini dipakai jika Anda memilih TAMPIL saat berpunia."><Input id="ak-name" value={name} onChange={(e) => setName(e.target.value)} /></Field>
         <Field label="Nama panggilan" htmlFor="ak-call"><Input id="ak-call" value={callName} onChange={(e) => setCallName(e.target.value)} /></Field>
