@@ -16,6 +16,13 @@ const nextConfig = {
   // Lets the e2e tests run a second dev server (empty database) next to the first one.
   distDir: process.env.NEXT_DIST_DIR || ".next",
   reactStrictMode: true,
+  // The region list is read from a file at run time: make sure Vercel ships it with these routes.
+  experimental: {
+    outputFileTracingIncludes: {
+      "/api/wilayah": ["./src/data/wilayah/wilayah.json"],
+      "/api/commands": ["./src/data/wilayah/wilayah.json"],
+    },
+  },
   poweredByHeader: false,
   async headers() {
     return [

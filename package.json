@@ -15,7 +15,8 @@
     "admin:reset": "tsx scripts/admin-reset.ts",
     "db:seed-demo": "tsx --require ./scripts/allow-server-only.cjs scripts/seed-demo.ts",
     "test:e2e": "playwright test",
-    "db:reset-demo": "tsx scripts/reset-demo.ts"
+    "db:reset-demo": "tsx scripts/reset-demo.ts",
+    "wilayah:update": "tsx scripts/wilayah-update.ts"
   },
   "dependencies": {
     "@fontsource-variable/plus-jakarta-sans": "^5.1.1",
