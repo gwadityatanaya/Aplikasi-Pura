@@ -137,6 +137,7 @@ function Sidebar() {
   const visible = useVisibleNav();
   const unread = useUnread();
   const pending = usePendingPunia();
+  const helpInbox = useAccess().help.inbox;
   const user = useCurrentUser();
   const role = useRole();
   const temple = useActiveTemple();
@@ -170,6 +171,7 @@ function Sidebar() {
                           <span className="relative">{n.label}</span>
                           {n.href === "/app/notifikasi" && <Badge n={unread} />}
                           {n.href === "/app/punia" && <Badge n={pending} />}
+                          {n.href === "/app/admin" && <Badge n={helpInbox} />}
                         </Link>
                       </li>
                     );
@@ -280,6 +282,7 @@ export function QuickActions({ open, onClose }: { open: boolean; onClose: () => 
 function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const visible = useVisibleNav();
   const unread = useUnread();
+  const helpInbox = useAccess().help.inbox;
   const temple = useActiveTemple();
   const items = NAV.filter((n) => !["/app", "/app/punia", "/app/transaksi"].includes(n.href) && visible(n));
   return (
@@ -291,6 +294,7 @@ function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
             <n.icon className="h-6 w-6 text-emerald-700" />
             {n.label}
             {n.href === "/app/notifikasi" && unread > 0 && <span className="absolute right-2 top-2 rounded-full bg-expense px-1.5 text-[11px] font-bold text-white">{unread}</span>}
+            {n.href === "/app/admin" && helpInbox > 0 && <span className="absolute right-2 top-2 rounded-full bg-expense px-1.5 text-[11px] font-bold text-white" aria-label={`${helpInbox} pesan bantuan baru`}>{helpInbox}</span>}
           </Link>
         ))}
         <Link href="/umat" onClick={onClose} className="press flex flex-col items-center gap-2 rounded-2xl border border-line bg-white px-2 py-4 text-center text-sm font-semibold hover:bg-ivory">
@@ -310,6 +314,7 @@ function BottomNav() {
   const [more, setMore] = useState(false);
   const role = useRole();
   const pending = usePendingPunia();
+  const helpInbox = useAccess().help.inbox;
   const canAct = can(role, "donation.manage") || can(role, "tx.create");
   const item = (href: string, label: string, Icon: typeof Home, badge = 0) => {
     const active = isActive(pathname, href);
@@ -339,8 +344,9 @@ function BottomNav() {
             )}
           </div>
           {item("/app/transaksi", "Kas", ReceiptText)}
-          <button onClick={() => setMore(true)} className="flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-semibold text-muted" aria-label="Menu lainnya">
+          <button onClick={() => setMore(true)} className="relative flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-semibold text-muted" aria-label="Menu lainnya">
             <span className="grid h-8 w-14 place-items-center rounded-full"><Menu className="h-[22px] w-[22px]" /></span>
+            {helpInbox > 0 && <span className="absolute right-2 top-1 rounded-full bg-expense px-1.5 text-[11px] font-bold text-white">{helpInbox}</span>}
             Lainnya
           </button>
         </div>

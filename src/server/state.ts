@@ -1,6 +1,7 @@
 import "server-only";
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { db, schema } from "./db";
+import { helpCounts } from "./commands-help";
 import { banjarIdsOf, emergencyActive, templeAccess, type Ctx } from "./context";
 import * as m from "./map";
 import type { DataState, Donation, Role, Session, User } from "@/lib/types";
@@ -8,7 +9,7 @@ import type { DataState, Donation, Role, Session, User } from "@/lib/types";
 export interface ServerState {
   me: User;
   role: Role | undefined;
-  access: { isSuperAdmin: boolean; isStaff: boolean; banjarIds: string[]; emergency: { templeId: string; until: string; reason: string } | null };
+  access: { isSuperAdmin: boolean; isStaff: boolean; banjarIds: string[]; emergency: { templeId: string; until: string; reason: string } | null; help: { unread: number; inbox: number } };
   session: Session;
   data: DataState;
 }
@@ -133,7 +134,7 @@ export async function loadState(ctx: Ctx): Promise<ServerState> {
   return {
     me,
     role,
-    access: { isSuperAdmin: ctx.user.isSuperAdmin, isStaff: ctx.user.isSuperAdmin || access.size > 0, banjarIds, emergency },
+    access: { isSuperAdmin: ctx.user.isSuperAdmin, isStaff: ctx.user.isSuperAdmin || access.size > 0, banjarIds, emergency, help: await helpCounts(ctx.user) },
     session: { userId: ctx.user.id, activeTempleId: templeId ?? undefined, startedAt: ctx.session.createdAt.toISOString() },
     data: {
       version: 0,

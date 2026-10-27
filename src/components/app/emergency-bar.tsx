@@ -52,7 +52,7 @@ export function EmergencyBar() {
       {em ? (
         <div role="status" className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl bg-red-700 p-4 text-white">
           <Siren className="h-6 w-6 shrink-0" />
-          <div className="min-w-0 flex-1">
+          <div className="min-w-[11rem] flex-1">
             <p className="font-bold">MODE DARURAT aktif di {temple.name} sampai {new Date(em.until).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}</p>
             <p className="text-sm text-white/90">Alasan: {em.reason}. Setiap tindakan tercatat sebagai &quot;dilakukan oleh Admin Utama (mode darurat)&quot; dan terlihat oleh pengurus pura.</p>
           </div>
@@ -61,7 +61,7 @@ export function EmergencyBar() {
       ) : (
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl bg-charcoal p-4 text-white">
           <Eye className="h-6 w-6 shrink-0 text-gold-light" />
-          <div className="min-w-0 flex-1">
+          <div className="min-w-[11rem] flex-1">
             <p className="font-bold">Mode lihat — Admin Utama</p>
             <p className="text-sm text-white/85">Anda bisa melihat semua data {temple.name}. Untuk mengesahkan, menolak, atau mengoreksi, aktifkan mode darurat.</p>
           </div>

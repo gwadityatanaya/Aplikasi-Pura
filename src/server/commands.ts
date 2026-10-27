@@ -491,4 +491,5 @@ export async function housekeeping() {
   await db.delete(T.rateLimits).where(sql`${T.rateLimits.at} < now() - interval '1 day'`);
   await db.delete(T.loginAttempts).where(sql`${T.loginAttempts.at} < now() - interval '30 days'`);
   await db.delete(T.passwordTokens).where(and(gt(sql`now()`, T.passwordTokens.expiresAt)));
+  await (await import("./commands-help")).cleanupHelpAttachments();
 }

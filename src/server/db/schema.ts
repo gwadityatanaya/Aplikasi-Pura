@@ -345,6 +345,36 @@ export const attachments = pgTable("attachments", {
   createdAt: ts("created_at").notNull().defaultNow(),
 });
 
+/** Pusat bantuan: a message from a signed-in person to Admin Utama, with the page context. */
+export const helpTickets = pgTable("help_tickets", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  /** cara_pakai | masalah | usul | penyalahgunaan | lainnya */
+  category: text("category").notNull(),
+  message: text("message").notNull(),
+  /** baru | diproses | selesai */
+  status: text("status").notNull().default("baru"),
+  /** Filled in by the server: page, role, temple, device, browser. Never financial data. */
+  context: jsonb("context").$type<{ page: string; role: string; temple?: string; device: string; browser: string; screen?: string }>().notNull(),
+  attachmentId: text("attachment_id"),
+  /** When the image was removed automatically (N days after the ticket was finished) */
+  attachmentRemovedAt: ts("attachment_removed_at"),
+  unreadByAdmin: boolean("unread_by_admin").notNull().default(true),
+  unreadByUser: boolean("unread_by_user").notNull().default(false),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  updatedAt: ts("updated_at").notNull().defaultNow(),
+  closedAt: ts("closed_at"),
+}, (t) => [index("help_tickets_user").on(t.userId), index("help_tickets_status").on(t.status, t.updatedAt)]);
+
+export const helpReplies = pgTable("help_replies", {
+  id: text("id").primaryKey(),
+  ticketId: text("ticket_id").notNull().references(() => helpTickets.id),
+  authorId: text("author_id").notNull().references(() => users.id),
+  fromAdmin: boolean("from_admin").notNull(),
+  message: text("message").notNull(),
+  createdAt: ts("created_at").notNull().defaultNow(),
+}, (t) => [index("help_replies_ticket").on(t.ticketId, t.createdAt)]);
+
 export const rateLimits = pgTable("rate_limits", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   bucket: text("bucket").notNull(),

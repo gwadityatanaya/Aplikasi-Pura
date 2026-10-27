@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { HELP_ATTACHMENT_DAYS } from "@/lib/help";
 
 export const metadata: Metadata = { title: "Kebijakan Privasi" };
 
@@ -31,12 +32,24 @@ const sections: { title: string; body: React.ReactNode }[] = [
     ),
   },
   {
+    title: "Pusat bantuan",
+    body: (
+      <ul className="list-disc space-y-1 pl-5">
+        <li>Pesan yang Anda kirim lewat tombol bantuan hanya dibaca oleh Anda dan Admin Utama.</li>
+        <li>Agar mudah dibantu, aplikasi otomatis menyertakan: alamat halaman (tanpa isi formulir atau kode di belakangnya), peran Anda, pura yang sedang dibuka, serta jenis perangkat dan browser. <b>Tidak</b> ada data keuangan dan tidak ada nama donatur anonim.</li>
+        <li>Gambar lampiran diperkecil di perangkat Anda dan <b>dihapus otomatis {HELP_ATTACHMENT_DAYS} hari</b> setelah pesan ditandai selesai. Isi pesan tetap disimpan sebagai riwayat.</li>
+        <li>Jangan pernah menulis kata sandi, PIN, kode OTP, atau kode rahasia apa pun di pesan bantuan.</li>
+        <li>Email pemberitahuan balasan hanya dikirim jika layanan email aplikasi sudah diaktifkan.</li>
+      </ul>
+    ),
+  },
+  {
     title: "Berapa lama disimpan",
     body: "Catatan punia yang sudah disahkan adalah bagian dari pembukuan pura dan disimpan selama pura memakai aplikasi ini. Data akun disimpan sampai Anda menghapus akun.",
   },
   {
     title: "Menghapus akun",
-    body: "Buka Punia Saya → Akun saya → Hapus akun. Nama, email, No. HP, dan foto profil Anda dihapus. Foto profil juga bisa dihapus kapan saja tanpa menghapus akun. Punia yang sudah disahkan tetap tersimpan sebagai arsip keuangan pura dengan nama \"Anonim\". Catatan keamanan (Log Aktivitas) yang hanya bisa dilihat Admin Utama tetap menyimpan nama akun yang pernah melakukan tindakan, karena catatan itu sengaja dibuat tidak bisa diubah.",
+    body: "Buka Punia Saya → Akun saya → Hapus akun. Nama, email, No. HP, foto profil, dan gambar lampiran pesan bantuan Anda dihapus. Foto profil juga bisa dihapus kapan saja tanpa menghapus akun. Punia yang sudah disahkan tetap tersimpan sebagai arsip keuangan pura dengan nama \"Anonim\". Catatan keamanan (Log Aktivitas) yang hanya bisa dilihat Admin Utama tetap menyimpan nama akun yang pernah melakukan tindakan, karena catatan itu sengaja dibuat tidak bisa diubah.",
   },
   {
     title: "Email dari aplikasi",

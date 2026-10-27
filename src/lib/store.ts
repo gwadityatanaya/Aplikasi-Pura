@@ -74,6 +74,8 @@ export interface Access {
   banjarIds: string[];
   /** Admin Utama emergency mode for the open temple (null = view only) */
   emergency: { templeId: string; until: string; reason: string } | null;
+  /** Pusat bantuan badges: unread replies for me; new messages in the inbox (Admin Utama) */
+  help: { unread: number; inbox: number };
 }
 
 interface ServerStatePayload {
@@ -135,7 +137,7 @@ const defaultPrefs: Preferences = {
   reduceMotion: false,
   notifications: { donationPending: true, campaignTarget: true, campaignEnding: true, reportReady: true, approvals: true, weeklySummary: false },
 };
-const noAccess: Access = { isSuperAdmin: false, isStaff: false, banjarIds: [], emergency: null };
+const noAccess: Access = { isSuperAdmin: false, isStaff: false, banjarIds: [], emergency: null, help: { unread: 0, inbox: 0 } };
 
 export function emptyData(): DataState {
   return {

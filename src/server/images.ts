@@ -68,12 +68,18 @@ export function imageSize(b: Buffer): { w: number; h: number } | null {
 export const AVATAR_MAX_BYTES = 80_000;
 export const AVATAR_MAX_SIDE = 512;
 
-export function checkAvatar(value: string) {
+/** Decodes a data URL and checks that it really is a JPG, PNG or WEBP (by its first bytes). */
+export function decodeImage(value: string, what = "Foto") {
   const m = /^data:(image\/[a-z+]+);base64,([A-Za-z0-9+/=]+)$/.exec(value);
-  if (!m) throw new ApiError(400, "Foto harus berupa gambar JPG, PNG atau WEBP.");
+  if (!m) throw new ApiError(400, `${what} harus berupa gambar JPG, PNG atau WEBP.`);
   const mime = m[1];
   const buf = Buffer.from(m[2], "base64");
-  if (!ALLOWED[mime] || !ALLOWED[mime](buf)) throw new ApiError(400, "Foto harus berupa gambar JPG, PNG atau WEBP.");
+  if (!ALLOWED[mime] || !ALLOWED[mime](buf)) throw new ApiError(400, `${what} harus berupa gambar JPG, PNG atau WEBP.`);
+  return { mime, buf };
+}
+
+export function checkAvatar(value: string) {
+  const { mime, buf } = decodeImage(value);
   if (buf.length > AVATAR_MAX_BYTES) throw new ApiError(413, "Ukuran foto terlalu besar. Pilih ulang fotonya agar diperkecil otomatis.");
   const size = imageSize(buf);
   if (!size || size.w > AVATAR_MAX_SIDE || size.h > AVATAR_MAX_SIDE || Math.abs(size.w - size.h) > 2)

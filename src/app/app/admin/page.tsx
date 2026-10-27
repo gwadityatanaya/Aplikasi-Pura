@@ -1,6 +1,7 @@
 "use client";
 import { WilayahPicker, emptyAddress, type AddressValue } from "@/components/app/wilayah-picker";
 import { ARCHIVE_COMMAND, ArchiveDialog, type ArchiveTarget } from "@/components/app/archive-dialog";
+import { HelpInbox } from "@/components/app/help-inbox";
 import { useRouter } from "next/navigation";
 import { templeLocation } from "@/lib/temple";
 import Link from "next/link";
@@ -42,11 +43,17 @@ const emptyBanjar = { id: "", name: "", ...emptyAddress, address: "" };
 export default function BackOfficePage() {
   // Back Office belongs to the Admin Utama ACCOUNT, not to a temple role: it must work even before
   // any temple exists (right after /setup), exactly like the server check (requireSuperAdmin).
-  const isAdmin = useAccess().isSuperAdmin;
+  const access = useAccess();
+  const isAdmin = access.isSuperAdmin;
   const me = useStore((s) => s.session?.userId);
   const run = useStore((s) => s.run);
   const refreshState = useStore((s) => s.refresh);
-  const [tab, setTab] = useState<"pura" | "banjar" | "akun" | "cadangan">("pura");
+  const [tab, setTab] = useState<"pura" | "banjar" | "akun" | "bantuan" | "cadangan">("pura");
+  // Links such as /app/admin?tab=bantuan (from the help email) open that part directly.
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("tab");
+    if (t === "bantuan" || t === "banjar" || t === "akun" || t === "cadangan") setTab(t);
+  }, []);
   const [data, setData] = useState<AdminData | null>(null);
   const [q, setQ] = useState("");
   const [templeForm, setTempleForm] = useState<typeof emptyTemple | null>(null);
@@ -119,7 +126,7 @@ export default function BackOfficePage() {
       )}
 
       <div className="no-scrollbar -mx-4 overflow-x-auto px-4">
-        <Segmented value={tab} onChange={setTab} ariaLabel="Bagian Back Office" options={[{ value: "pura", label: "Pura" }, { value: "banjar", label: "Banjar" }, { value: "akun", label: "Akun" }, { value: "cadangan", label: "Cadangan data" }]} />
+        <Segmented value={tab} onChange={setTab} ariaLabel="Bagian Back Office" options={[{ value: "pura", label: "Pura" }, { value: "banjar", label: "Banjar" }, { value: "akun", label: "Akun" }, { value: "bantuan", label: access.help.inbox ? `Bantuan (${access.help.inbox})` : "Bantuan" }, { value: "cadangan", label: "Cadangan data" }]} />
       </div>
       {!data && <div className="mt-4 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20" />)}</div>}
 
@@ -249,6 +256,8 @@ export default function BackOfficePage() {
           <p className="mt-3 text-sm text-muted">Peran pengurus diatur dari tab Pura (Pengurus) dan tab Banjar (Pengurus Banjar). &ldquo;Nonaktifkan&rdquo; langsung mengeluarkan orang itu dari semua perangkat.</p>
         </div>
       )}
+
+      {tab === "bantuan" && <HelpInbox />}
 
       {data && tab === "cadangan" && (
         <div className="mt-4 grid gap-4 md:grid-cols-2">

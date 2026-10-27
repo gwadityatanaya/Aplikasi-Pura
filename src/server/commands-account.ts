@@ -72,6 +72,12 @@ export const accountCommands: Record<string, Handler> = {
       }
       const [me] = await tx.select().from(T.users).where(eq(T.users.id, ctx.user.id)).for("update");
       const hadPhoto = await dropAvatar(tx, me);
+      // Images attached to their help messages go too (the messages stay, under "Akun dihapus").
+      const helpFiles = (await tx.select({ id: T.helpTickets.id, a: T.helpTickets.attachmentId }).from(T.helpTickets).where(eq(T.helpTickets.userId, ctx.user.id))).filter((t) => t.a);
+      if (helpFiles.length) {
+        await tx.update(T.helpTickets).set({ attachmentId: null, attachmentRemovedAt: new Date() }).where(inArray(T.helpTickets.id, helpFiles.map((t) => t.id)));
+        await tx.delete(T.attachments).where(inArray(T.attachments.id, helpFiles.map((t) => t.a!)));
+      }
       await log(ctx, tx, { action: "Menghapus akun sendiri", entity: "user", entityId: ctx.user.id, detail: `Akun umat dihapus; ${ids.length} catatan punia dianonimkan${hadPhoto ? "; foto profil dihapus" : ""}.`, templeId: null });
       await tx
         .update(T.users)

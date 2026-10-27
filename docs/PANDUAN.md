@@ -23,6 +23,7 @@ Waktu yang dibutuhkan: sekitar **60 menit** untuk pertama kali (termasuk mengatu
 13. [Admin Utama: mode lihat dan mode darurat](#admin-utama-mode-lihat-dan-mode-darurat)
     - [Mengarsipkan atau menghapus pura dan banjar](#mengarsipkan-atau-menghapus-pura-dan-banjar)
     - [Foto profil](#foto-profil)
+    - [Pusat bantuan](#pusat-bantuan)
 14. [Memasang aplikasi di HP](#memasang-aplikasi-di-hp)
 15. [Cadangan data mingguan](#cadangan-data-mingguan)
 16. [Memulihkan data](#memulihkan-data)
@@ -343,6 +344,17 @@ Aturan "pura yang sudah punya data tidak boleh dihapus" dan "banjar yang masih m
 - **Siapa yang bisa melihat:** pemiliknya, Pengurus Pura dan Pengurus Banjar yang bekerja bersama di pura/banjar yang sama, dan Admin Utama. **Tidak** terlihat oleh Pemeriksa, umat lain, atau pengunjung, dan **tidak pernah** tampil di halaman publik, laporan, atau di samping punia (termasuk punia ANONIM).
 - **Hapus foto** kapan saja dari tempat yang sama. Saat akun dihapus, fotonya ikut terhapus dari server.
 - Admin Utama dapat menghapus foto yang tidak pantas: **Back Office → Akun → Hapus foto** (alasan wajib, tercatat di Log Aktivitas).
+
+### Pusat bantuan
+
+- Setiap orang yang sudah masuk melihat **tombol bantuan bulat (ikon pelampung)** di pojok kanan bawah. Di HP tombol ini berada **di atas** menu bawah dan tombol **Berpunia**, jadi tidak menutupinya.
+- Pilih jenis pesan — **Tanya cara pakai**, **Laporkan masalah/bug**, **Usul fitur**, **Laporkan penyalahgunaan atau pura mencurigakan**, atau **Lainnya** — tulis pesannya, dan boleh melampirkan **satu gambar** (misalnya tangkapan layar; diperkecil otomatis di HP).
+- Yang ikut terkirim otomatis: alamat halaman, peran, pura terkait, jenis perangkat dan browser. **Tidak** ada data keuangan atau nama donatur anonim. Di formulir ada peringatan: **jangan menulis kata sandi, PIN, OTP, atau kode rahasia**.
+- Batas: **5 pesan per jam** per orang (untuk mencegah pesan berulang). Tambahan keterangan bisa ditulis sebagai balasan di pesan yang sama.
+- Riwayat pesan dan balasan: halaman **Bantuan** (tautan di formulir bantuan, atau buka `/bantuan`). Balasan baru ditandai lencana di tombol bantuan.
+- **Admin Utama:** **Back Office → Bantuan**. Lencana merah menunjukkan pesan yang belum dibaca (juga di menu Back Office / Lainnya). Buka pesan untuk membaca konteks dan gambar, **Kirim balasan**, lalu tandai **Diproses** atau **Selesai**. Membalas pesan berstatus Baru otomatis mengubahnya menjadi Diproses. Balasan, perubahan status, dan pesan baru tercatat di Log Aktivitas.
+- Jika email (SMTP) aktif, Admin Utama mendapat email saat ada pesan baru, dan pengirim mendapat email saat pesannya dibalas. Tanpa SMTP, semuanya tetap terlihat di aplikasi.
+- Gambar lampiran **dihapus otomatis 30 hari** setelah pesan ditandai Selesai (isi pesan tetap tersimpan). Angka 30 hari bisa diubah — lihat daftar keputusan.
 
 
 ---
