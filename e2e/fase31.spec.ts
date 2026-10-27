@@ -114,3 +114,29 @@ test("koreksi punia: catatan tidak diubah, entri koreksi dibuat, punia tidak lag
   expect(same.correctedAt).toBeTruthy();
   expect(after.transactions.some((t) => t.reversalOf === d.transactionId)).toBe(true);
 });
+
+test("ganti email pengurus: akun & peran tetap, sesi lama keluar, email baru masuk ke dashboard", async ({ page }) => {
+  const old = await as("putu@contoh.id");
+  const before = (await (await old.get("/api/state")).json()).state;
+  const userId = before.me.id as string;
+  expect(before.access.isStaff).toBe(true);
+
+  const admin = await as("admin@contoh.id");
+  expect((await command(admin, "adminChangeEmail", { userId, email: "Putu.Baru@Contoh.ID" })).ok).toBe(true);
+  expect((await (await old.get("/api/state")).json()).state).toBeNull(); // old session is gone
+  // Admin Utama's own email cannot be changed here.
+  const adminId = (await (await admin.get("/api/state")).json()).state.me.id;
+  expect((await command(admin, "adminChangeEmail", { userId: adminId, email: "lain@contoh.id" })).ok).toBe(false);
+
+  await signInUiAs(page, "putu.baru@contoh.id");
+  await expect(page).toHaveURL(/\/app/);
+  const after = (await (await page.request.get("/api/state")).json()).state;
+  expect(after.me.id).toBe(userId);
+  expect(after.me.email).toBe("putu.baru@contoh.id");
+  expect(after.data.temples.map((t: { name: string }) => t.name)).toEqual(before.data.temples.map((t: { name: string }) => t.name));
+
+  const log = await (await admin.get("/api/admin/log")).text();
+  expect(log).toContain("Mengganti email pengurus");
+  expect(log).toContain("putu@contoh.id");
+  expect(log).toContain("putu.baru@contoh.id");
+});

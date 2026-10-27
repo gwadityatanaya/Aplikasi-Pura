@@ -2,7 +2,7 @@
 import { templeLocation } from "@/lib/temple";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Building2, Crown, DatabaseBackup, Download, Landmark, MapPin, Pencil, Plus, Search, ShieldCheck, UserCheck, UserPlus, UserX, Users, X } from "lucide-react";
+import { AlertTriangle, Building2, Crown, DatabaseBackup, Download, Landmark, Mail, MapPin, Pencil, Plus, Search, ShieldCheck, UserCheck, UserPlus, UserX, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, NoAccess } from "@/components/app/page-header";
 import { Avatar } from "@/components/app/app-shell";
@@ -49,6 +49,8 @@ export default function BackOfficePage() {
   const [newStaff, setNewStaff] = useState({ email: "", name: "", role: "pengurus" as "pengurus" | "pemeriksa" });
   const [removeStaff, setRemoveStaff] = useState<{ kind: "temple" | "banjar"; id: string; label: string } | null>(null);
   const [statusFor, setStatusFor] = useState<User | null>(null);
+  const [emailFor, setEmailFor] = useState<User | null>(null);
+  const [newEmail, setNewEmail] = useState("");
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -206,9 +208,12 @@ export default function BackOfficePage() {
                     {u.isSuperAdmin ? (
                       <span className="flex items-center gap-1.5 text-sm text-muted"><ShieldCheck className="h-4 w-4" /> Dilindungi</span>
                     ) : (
+                      <div className="flex flex-wrap gap-1">
+                      {u.status !== "deleted" && <Button size="sm" variant="ghost" onClick={() => { setNewEmail(""); setEmailFor(u); }}><Mail className="h-4 w-4" /> Ganti email</Button>}
                       <Button size="sm" variant={u.status === "disabled" ? "secondary" : "ghost"} className={u.status === "disabled" ? "" : "text-expense"} onClick={() => setStatusFor(u)}>
                         {u.status === "disabled" ? <><UserCheck className="h-4 w-4" /> Aktifkan</> : <><UserX className="h-4 w-4" /> Nonaktifkan</>}
                       </Button>
+                      </div>
                     )}
                   </li>
                 );
@@ -382,6 +387,27 @@ export default function BackOfficePage() {
         )}
       </Dialog>
       <ConfirmDialog open={!!removeStaff} onClose={() => setRemoveStaff(null)} tone="danger" title="Cabut peran ini?" description={removeStaff?.label} confirmLabel="Cabut peran" onConfirm={async () => { if (!removeStaff) return; const r = removeStaff; setRemoveStaff(null); await done(run("adminRemoveStaff", { kind: r.kind, id: r.id }), "Peran dicabut"); }} />
+      <Dialog
+        open={!!emailFor}
+        onClose={() => setEmailFor(null)}
+        title={`Ganti email ${emailFor?.name ?? ""}`}
+        description={`Email sekarang: ${emailFor?.email ?? ""}`}
+        footer={
+          <Button size="lg" className="w-full" loading={busy} disabled={!newEmail.includes("@")} onClick={async () => {
+            if (!emailFor) return;
+            if (await done(run("adminChangeEmail", { userId: emailFor.id, email: newEmail }), "Email diganti. Sesi lama sudah dikeluarkan.")) setEmailFor(null);
+          }}>Ganti email</Button>
+        }
+      >
+        <div className="space-y-3 text-[15px]">
+          <Field label="Email baru" htmlFor="ce-email"><Input id="ce-email" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="nama@gmail.com" /></Field>
+          <ul className="list-disc space-y-1 pl-5 text-muted">
+            <li>Akunnya tetap sama: peran, pura yang dipegang, dan riwayatnya tidak berubah.</li>
+            <li>Orang itu langsung dikeluarkan dari semua perangkat, lalu masuk lagi memakai email baru.</li>
+            <li>Perubahan dicatat di Log Aktivitas (email lama, email baru, oleh siapa, kapan).</li>
+          </ul>
+        </div>
+      </Dialog>
       <ConfirmDialog
         open={!!statusFor}
         onClose={() => setStatusFor(null)}

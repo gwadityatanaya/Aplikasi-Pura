@@ -192,4 +192,32 @@ export const adminCommands: Record<string, Handler> = {
       return null;
     });
   },
+
+  /**
+   * Changes the sign-in email of a pengurus. It is the SAME account: roles, temples and history stay
+   * linked. The old Google link and every session are cleared, so the person must sign in again with
+   * the new address.
+   */
+  async adminChangeEmail(ctx, p) {
+    await requireSuperAdmin(ctx, "mengganti email pengurus");
+    const i = z.object({ userId: id, email: z.string().trim().toLowerCase().email("Format email belum benar").max(200) }).parse(p);
+    return db.transaction(async (tx) => {
+      const u = await one(tx.select().from(T.users).where(eq(T.users.id, i.userId)).for("update"), "Akun tidak ditemukan.");
+      if (u.isSuperAdmin) throw new ApiError(409, "Email Admin Utama tidak diganti dari sini. Ubah ADMIN_EMAIL di pengaturan server lalu ikuti panduan.");
+      if (u.status === "deleted") throw new ApiError(409, "Akun ini sudah dihapus pemiliknya.");
+      if (u.email.toLowerCase() === i.email) throw new ApiError(400, "Email baru sama dengan email lama.");
+      const [taken] = await tx.select({ id: T.users.id }).from(T.users).where(sql`lower(${T.users.email}) = ${i.email}`);
+      if (taken) throw new ApiError(409, "Email baru sudah dipakai akun lain. Jika itu akun umat milik orang yang sama, hubungi pengembang untuk menggabungkan.");
+      await tx.update(T.users).set({ email: i.email, googleSub: null }).where(eq(T.users.id, u.id));
+      await tx.delete(T.sessions).where(eq(T.sessions.userId, u.id));
+      await tx.delete(T.passwordTokens).where(eq(T.passwordTokens.userId, u.id));
+      await log(ctx, tx, {
+        action: "Mengganti email pengurus", entity: "user", entityId: u.id,
+        detail: `${u.name}: ${u.email} → ${i.email}. Semua sesi lama dikeluarkan.`,
+        changes: { email: { dari: u.email, menjadi: i.email } }, templeId: null,
+      });
+      return null;
+    });
+  },
+
 };
