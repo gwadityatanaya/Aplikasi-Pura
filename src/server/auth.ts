@@ -2,7 +2,7 @@ import "server-only";
 import { createHash, randomBytes, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
 import { and, eq, gt, sql } from "drizzle-orm";
-import { uid } from "@/lib/format";
+import { callNameOf, uid } from "@/lib/format";
 import { logActivity } from "./log";
 import { db, schema } from "./db";
 import { ApiError, clientIp, userAgent } from "./http";
@@ -152,10 +152,9 @@ export async function signInWithEmail(req: Request, input: { email: string; meth
       throw new ApiError(403, "Pendaftaran umat sedang ditutup. Hubungi pengurus pura.");
     }
     const name = (input.name?.trim() || email.split("@")[0]).slice(0, 120);
-    const parts = name.split(/\s+/);
     [user] = await db
       .insert(schema.users)
-      .values({ id: uid("u"), name, callName: parts[parts.length - 1], email, googleSub: input.googleSub ?? null, avatarColor: "#3F6FB5" })
+      .values({ id: uid("u"), name, callName: callNameOf(name), email, googleSub: input.googleSub ?? null, avatarColor: "#3F6FB5" })
       .returning();
     await logActivity({ actor: { id: user.id, name: user.name, email }, action: "Mendaftar sebagai umat", entity: "user", entityId: user.id, detail: `Pendaftaran mandiri lewat ${how}`, req });
   }

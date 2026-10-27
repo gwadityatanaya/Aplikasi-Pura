@@ -8,7 +8,7 @@ import { eq, sql } from "drizzle-orm";
 import { db, schema as T } from "@/server/db";
 import { roleFor, type Ctx } from "@/server/context";
 import { commands } from "@/server/registry";
-import { uid } from "@/lib/format";
+import { callNameOf, uid } from "@/lib/format";
 
 type UserRow = typeof T.users.$inferSelect;
 
@@ -77,49 +77,51 @@ async function main() {
     console.log(`• Admin Utama dibuat: ${email}`);
   }
 
-  const bjA = await run<{ id: string }>(admin, null, "saveBanjar", { name: "Banjar Adat Kertha Sari", village: "Desa Sukamerta", district: "Kec. Sukamerta", regency: "Kab. Contoh", province: "Bali" });
-  const bjB = await run<{ id: string }>(admin, null, "saveBanjar", { name: "Banjar Adat Tunjung Mekar", village: "Desa Sukamerta", district: "Kec. Sukamerta", regency: "Kab. Contoh", province: "Bali" });
+  const bjA = await run<{ id: string }>(admin, null, "saveBanjar", { name: "CONTOH Banjar Adat Kertha Sari", village: "Desa Sukamerta", district: "Kec. Sukamerta", regency: "Kab. Contoh (fiktif)", province: "Bali" });
+  const bjB = await run<{ id: string }>(admin, null, "saveBanjar", { name: "CONTOH Banjar Adat Tunjung Mekar", village: "Desa Sukamerta", district: "Kec. Sukamerta", regency: "Kab. Contoh (fiktif)", province: "Bali" });
 
-  const base = { province: "Bali", regency: "Kab. Contoh", district: "Kec. Sukamerta", village: "Desa Sukamerta", phone: "0812000000" };
+  const base = { province: "Bali", regency: "Kab. Contoh (fiktif)", district: "Kec. Sukamerta", village: "Desa Sukamerta", phone: "0800-0000-0000" };
+  // Every name and account number below is made up. Temple names start with "CONTOH", banks are
+  // "Bank CONTOH (fiktif)" and account numbers are runs of zeros, so nobody mistakes them for real ones.
+  const fakeBank = (n: number, holder: string) => ["Bank CONTOH (fiktif)", `000-000-000${n}`, `CONTOH — ${holder}`];
   const templeDefs = [
-    { key: "desa", name: "Pura Desa Sukamerta", banjarIds: [bjA.id], bank: ["BPD Bali", "0101020304", "Pengurus Pura Desa Sukamerta"] },
-    { key: "puseh", name: "Pura Puseh Sukamerta", banjarIds: [bjA.id], bank: ["BRI", "4455667788", "Pengurus Pura Puseh Sukamerta"] },
-    { key: "dalem", name: "Pura Dalem Kahyangan", banjarIds: [bjA.id], bank: ["BPD Bali", "0202030405", "Pengurus Pura Dalem Kahyangan"] },
-    { key: "melanting", name: "Pura Melanting Pasar", banjarIds: [bjA.id], bank: ["BNI", "1122334455", "Banjar Adat Kertha Sari"] },
-    { key: "segara", name: "Pura Segara Bersama", banjarIds: [bjA.id, bjB.id], bank: ["BPD Bali", "0303040506", "Pengurus Pura Segara"] },
-    { key: "taman", name: "Pura Taman Tunjung", banjarIds: [bjB.id], bank: ["BRI", "9988776655", "Pengurus Pura Taman Tunjung"] },
+    { key: "desa", name: "CONTOH Pura Desa Sukamerta", banjarIds: [bjA.id], bank: fakeBank(1, "Pengurus Pura Desa") },
+    { key: "puseh", name: "CONTOH Pura Puseh Sukamerta", banjarIds: [bjA.id], bank: fakeBank(2, "Pengurus Pura Puseh") },
+    { key: "dalem", name: "CONTOH Pura Dalem Kahyangan", banjarIds: [bjA.id], bank: fakeBank(3, "Pengurus Pura Dalem") },
+    { key: "melanting", name: "CONTOH Pura Melanting Pasar", banjarIds: [bjA.id], bank: fakeBank(4, "Banjar Adat Kertha Sari") },
+    { key: "segara", name: "CONTOH Pura Segara Bersama", banjarIds: [bjA.id, bjB.id], bank: fakeBank(5, "Pengurus Pura Segara") },
+    { key: "taman", name: "CONTOH Pura Taman Tunjung", banjarIds: [bjB.id], bank: fakeBank(6, "Pengurus Pura Taman") },
   ];
   const temples: Record<string, string> = {};
   for (const t of templeDefs) {
     // Pura Melanting is registered with the bare minimum (name + banjar): no address, phone or email.
     const r = await run<{ id: string }>(admin, null, "adminSaveTemple", t.key === "melanting"
       ? { name: t.name, banjarIds: t.banjarIds }
-      : { ...base, name: t.name, address: `Jalan Contoh No. ${templeDefs.indexOf(t) + 1}`, description: `${t.name} adalah pura fiktif untuk data contoh aplikasi PURA.`, banjarIds: t.banjarIds });
+      : { ...base, name: t.name, address: `Jalan Contoh No. ${templeDefs.indexOf(t) + 1} (fiktif)`, description: `DATA CONTOH — ${t.name.replace("CONTOH ", "")} adalah pura fiktif untuk mencoba aplikasi PURA. Jangan mentransfer ke rekening ini.`, banjarIds: t.banjarIds });
     temples[t.key] = r.id;
     await run(admin, null, "setTempleBank", { templeId: r.id, bankName: t.bank[0], bankAccountNumber: t.bank[1], bankAccountHolder: t.bank[2] });
   }
 
   const staff: [string, string, "pengurus" | "pemeriksa" | "banjar", string][] = [
-    ["ketut.banjar@contoh.id", "I Ketut Wirawan", "banjar", bjA.id],
-    ["gede.banjar@contoh.id", "I Gede Sutama", "banjar", bjB.id],
-    ["wayan@contoh.id", "I Wayan Sudarma", "pengurus", temples.desa], // Pura Desa: hanya 1 pengurus (muncul peringatan)
-    ["wayan@contoh.id", "I Wayan Sudarma", "pengurus", temples.puseh],
-    ["putu@contoh.id", "Ni Putu Ariani", "pengurus", temples.puseh],
-    ["made@contoh.id", "I Made Suarjana", "pengurus", temples.dalem],
-    ["komang@contoh.id", "I Komang Adi", "pengurus", temples.dalem],
-    ["made@contoh.id", "I Made Suarjana", "pengurus", temples.segara],
-    ["nengah@contoh.id", "I Nengah Raka", "pengurus", temples.segara],
-    ["kadek.taman@contoh.id", "Kadek Yuliani", "pengurus", temples.taman],
-    ["oka.pemeriksa@contoh.id", "I Gusti Oka", "pemeriksa", temples.dalem],
+    ["ketut.banjar@contoh.id", "I Ketut Wirawan (contoh)", "banjar", bjA.id],
+    ["gede.banjar@contoh.id", "I Gede Sutama (contoh)", "banjar", bjB.id],
+    ["wayan@contoh.id", "I Wayan Sudarma (contoh)", "pengurus", temples.desa], // Pura Desa: hanya 1 pengurus (muncul peringatan)
+    ["wayan@contoh.id", "I Wayan Sudarma (contoh)", "pengurus", temples.puseh],
+    ["putu@contoh.id", "Ni Putu Ariani (contoh)", "pengurus", temples.puseh],
+    ["made@contoh.id", "I Made Suarjana (contoh)", "pengurus", temples.dalem],
+    ["komang@contoh.id", "I Komang Adi (contoh)", "pengurus", temples.dalem],
+    ["made@contoh.id", "I Made Suarjana (contoh)", "pengurus", temples.segara],
+    ["nengah@contoh.id", "I Nengah Raka (contoh)", "pengurus", temples.segara],
+    ["kadek.taman@contoh.id", "Kadek Yuliani (contoh)", "pengurus", temples.taman],
+    ["oka.pemeriksa@contoh.id", "I Gusti Oka (contoh)", "pemeriksa", temples.dalem],
     // Pura Melanting Pasar sengaja tanpa pengurus: punianya diverifikasi Pengurus Banjar.
   ];
   for (const [email, name, kind, target] of staff)
     await run(admin, null, "adminAddStaff", kind === "banjar" ? { email, name, kind, banjarId: target } : { email, name, kind, templeId: target });
 
-  const umatNames: [string, string][] = [["ayu@contoh.id", "Ni Luh Ayu Lestari"], ["nyoman@contoh.id", "I Nyoman Darma"], ["kadek@contoh.id", "Kadek Surya"]];
+  const umatNames: [string, string][] = [["ayu@contoh.id", "Ni Luh Ayu Lestari (contoh)"], ["nyoman@contoh.id", "I Nyoman Darma (contoh)"], ["kadek@contoh.id", "Kadek Surya (contoh)"]];
   for (const [email, name] of umatNames) {
-    const parts = name.split(" ");
-    await db.insert(T.users).values({ id: uid("u"), name, callName: parts[parts.length - 1], email, avatarColor: "#0F766E" });
+    await db.insert(T.users).values({ id: uid("u"), name, callName: callNameOf(name), email, avatarColor: "#0F766E" });
   }
 
   // Opening balance for the cash book, as filled in by the pengurus.
@@ -146,7 +148,7 @@ async function main() {
   await submit(kadek, "desa", 200_000, 4, false, "odalan");
 
   // Punia handed over in cash, typed in by a pengurus (verified straight away).
-  await run(made, temples.dalem, "addManualPunia", { donorName: "Keluarga I Ketut Rai", amount: 300_000, transferDate: daysAgo(8), anonymous: false, purpose: "odalan", channel: "tunai" });
+  await run(made, temples.dalem, "addManualPunia", { donorName: "Keluarga I Ketut Rai (contoh)", amount: 300_000, transferDate: daysAgo(8), anonymous: false, purpose: "odalan", channel: "tunai" });
 
   // A couple of expenses.
   const cats = await db.select().from(T.categories).where(sql`${T.categories.templeId} = ${temples.dalem} and ${T.categories.type} = 'expense'`);

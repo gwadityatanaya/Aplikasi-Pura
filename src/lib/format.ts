@@ -147,3 +147,9 @@ export function percent(value: number, total: number) {
 export function formatPercent(p: number) {
   return `${new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 }).format(p)}%`;
 }
+
+/** "I Made Suarjana (contoh)" → "Suarjana": the last word, ignoring anything in brackets. */
+export function callNameOf(name: string) {
+  const parts = name.replace(/\([^)]*\)/g, " ").trim().split(/\s+/).filter(Boolean);
+  return (parts[parts.length - 1] ?? name).slice(0, 60);
+}

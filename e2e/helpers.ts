@@ -46,7 +46,7 @@ export async function publicData(request: APIRequestContext) {
 }
 
 export async function templeId(request: APIRequestContext, name: string) {
-  const t = (await publicData(request)).temples.find((x) => x.name === name);
+  const t = (await publicData(request)).temples.find((x) => x.name === name || x.name === `CONTOH ${name}`);
   expect(t, `pura ${name}`).toBeTruthy();
   return t!;
 }

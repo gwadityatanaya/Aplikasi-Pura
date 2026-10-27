@@ -73,7 +73,7 @@ test("pengurus lain memverifikasi, dan nama asli TIDAK terkirim ke tampilan publ
 test("pengurus tidak bisa memverifikasi punia dari emailnya sendiri", async () => {
   const made = await as("made@contoh.id");
   const pub = await publicData(made);
-  const dalem = pub.temples.find((t) => t.name === "Pura Dalem Kahyangan")!;
+  const dalem = pub.temples.find((t) => t.name.endsWith("Pura Dalem Kahyangan"))!;
   const sent = await command<{ id: string }>(made, "submitPunia", { templeId: dalem.id, amount: 50_000, transferDate: today(), evidence: receiptDataUrl(902), anonymous: false, purpose: "umum" });
   expect(sent.ok, sent.error).toBe(true);
   await command(made, "setActiveTemple", { templeId: dalem.id });
@@ -140,7 +140,7 @@ test("umat menghapus akun: punia tetap ada sebagai arsip, nama dianonimkan di ma
   const after = await (await page.request.get("/api/public")).text();
   expect(after).not.toContain("Ayu");
   const pub = await publicData(page.request);
-  const dalem = pub.temples.find((t) => t.name === "Pura Dalem Kahyangan")!;
+  const dalem = pub.temples.find((t) => t.name.endsWith("Pura Dalem Kahyangan"))!;
   expect(pub.donations.some((d) => d.templeId === dalem.id && d.amount === 250_000)).toBe(true);
 
   const made = await as("made@contoh.id");

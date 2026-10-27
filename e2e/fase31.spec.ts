@@ -65,7 +65,7 @@ test("input manual TAMPIL dan ANONIM: nama asli & nama pencatat tidak bocor ke p
 
   // Staff see "dicatat oleh"; a Pemeriksa sees "Anonim" instead of the real name.
   const st = (await (await made.get("/api/state")).json()).state.data.donations as { donorName: string; inputByName?: string; amount: number }[];
-  expect(st.find((d) => d.amount === 31_200)).toMatchObject({ donorName: "Bu Rahasia Manual", inputByName: "I Made Suarjana" });
+  expect(st.find((d) => d.amount === 31_200)).toMatchObject({ donorName: "Bu Rahasia Manual", inputByName: "I Made Suarjana (contoh)" });
   const oka = await as("oka.pemeriksa@contoh.id");
   const so = (await (await oka.get("/api/state")).json()).state.data.donations as { donorName: string; amount: number }[];
   expect(so.find((d) => d.amount === 31_200)?.donorName).toBe("Anonim");
@@ -218,4 +218,16 @@ test("tanpa SMTP aplikasi tetap normal: tombol disesuaikan, ringkasan harian non
   await page.waitForURL(/\/app/);
   const st = (await (await page.request.get("/api/state")).json()).state;
   expect(st.access.isSuperAdmin).toBe(true);
+});
+
+test("data contoh jelas fiktif: nama pura berawalan CONTOH dan rekening karangan", async ({ page }) => {
+  const pub = await publicData(page.request);
+  const seeded = pub.temples.filter((t) => !t.name.includes("Tanpa Data"));
+  expect(seeded.length).toBe(6);
+  for (const t of seeded as unknown as { name: string; bankName?: string; bankAccountNumber?: string; bankAccountHolder?: string }[]) {
+    expect(t.name.startsWith("CONTOH ")).toBe(true);
+    expect(t.bankName).toContain("CONTOH");
+    expect(t.bankAccountNumber).toMatch(/^000-000-000\d$/);
+    expect(t.bankAccountHolder).toContain("CONTOH");
+  }
 });

@@ -8,7 +8,7 @@ import { diff } from "./log";
 import { id, log, one, optId, optText, text, type Handler } from "./commands";
 import * as m from "./map";
 import { categoriesFor } from "@/lib/categories";
-import { slugify, uid } from "@/lib/format";
+import { callNameOf, slugify, uid } from "@/lib/format";
 
 const email = z.string().trim().toLowerCase().email("Email belum benar").max(200);
 
@@ -126,10 +126,9 @@ export const adminCommands: Record<string, Handler> = {
       if (u?.status === "deleted") throw new ApiError(409, "Akun dengan email ini sudah dihapus pemiliknya.");
       if (!u) {
         const name = i.name ?? i.email.split("@")[0];
-        const parts = name.trim().split(/\s+/);
         [u] = await tx
           .insert(T.users)
-          .values({ id: uid("u"), name, callName: parts[parts.length - 1], email: i.email, avatarColor: ["#087F6D", "#C9A86A", "#3F6FB5", "#8A5CB8", "#B5543F"][Math.floor(Math.random() * 5)] })
+          .values({ id: uid("u"), name, callName: callNameOf(name), email: i.email, avatarColor: ["#087F6D", "#C9A86A", "#3F6FB5", "#8A5CB8", "#B5543F"][Math.floor(Math.random() * 5)] })
           .returning();
         await log(ctx, tx, { action: "Membuat akun", entity: "user", entityId: u.id, detail: `${u.name} (${u.email}) didaftarkan Admin Utama`, templeId: null });
       }

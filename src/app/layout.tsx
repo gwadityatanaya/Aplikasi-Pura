@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { DemoBanner } from "@/components/shared/demo-banner";
 import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
 import { Providers } from "@/components/providers";
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="id">
       <body className="min-h-dvh font-sans">
+        <DemoBanner />
         <Providers>{children}</Providers>
       </body>
     </html>
