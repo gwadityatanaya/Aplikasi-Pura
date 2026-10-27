@@ -25,9 +25,10 @@ Waktu yang dibutuhkan: sekitar **60 menit** untuk pertama kali (termasuk mengatu
 15. [Cadangan data mingguan](#cadangan-data-mingguan)
 16. [Memulihkan data](#memulihkan-data)
 17. [Menjalankan di laptop](#menjalankan-di-laptop)
-18. [Memperbarui aplikasi](#memperbarui-aplikasi)
-19. [Keamanan: kebiasaan baik](#keamanan-kebiasaan-baik)
-20. [Masalah yang sering terjadi](#masalah-yang-sering-terjadi)
+18. [Memperbarui data wilayah](#memperbarui-data-wilayah)
+19. [Memperbarui aplikasi](#memperbarui-aplikasi)
+20. [Keamanan: kebiasaan baik](#keamanan-kebiasaan-baik)
+21. [Masalah yang sering terjadi](#masalah-yang-sering-terjadi)
 
 ---
 
@@ -103,6 +104,8 @@ Cara membuatnya:
 5. Google: di OAuth client yang sama, tambahkan **dua** redirect URI (lihat Langkah 5).
 
 Data contoh mudah dikenali: semua nama pura dan banjar berawalan **CONTOH**, nama orang bertanda **(contoh)**, bank bernama **Bank CONTOH (fiktif)**, dan nomor rekening berupa **000-000-000x**.
+
+Wilayah di data contoh adalah **wilayah nyata** (mis. Bali › Kabupaten Badung › Mengwi), tetapi banjar, pura, orang, dan rekeningnya tetap fiktif.
 
 **Situs demo hanya untuk orang tertentu.** Bagikan alamatnya secara pribadi, jangan di grup umum. Dengan `NEXT_PUBLIC_DEMO_MODE=true`, situs demo otomatis meminta mesin pencari (Google dan lainnya) **tidak mengindeks** halaman mana pun: lewat `robots.txt`, tanda `noindex` di setiap halaman, dan header `X-Robots-Tag`. Jadi situs demo tidak akan muncul di hasil pencarian.
 
@@ -236,13 +239,26 @@ Setelah itu **halaman `/setup` terkunci selamanya**. Berikutnya Anda masuk denga
 
 Semua dilakukan di **Back Office** (menu kiri, atau **Lainnya** di HP). Semua perubahan tercatat di **Log Aktivitas**.
 
-1. **Tambah banjar** — tab **Banjar → Tambah banjar**.
+1. **Tambah banjar** — tab **Banjar → Tambah banjar**. Isi nama banjar, lalu wilayahnya (opsional, lihat [Mengisi alamat](#mengisi-alamat-provinsi--kabupaten--kecamatan--desa) di bawah). Kode wilayah banjar dipakai nanti untuk ringkasan per desa/kecamatan/kabupaten.
 2. **Tambah pura** — tab **Pura → Tambah pura**. **Wajib** hanya **nama pura** dan **banjar pengempon** (boleh lebih dari satu). Alamat/lokasi, telepon/WA kontak, dan catatan **opsional** — bagian yang kosong tidak ditampilkan ke umat. **Pura tidak perlu email**: email hanya dipakai pengurus (orang) untuk masuk. Pura boleh didaftarkan tanpa pengurus sama sekali.
 3. **Isi rekening pura** — pada kartu pura tekan **Rekening**: nama bank, nomor rekening, dan **nama pemilik rekening** (ditampilkan ke umat agar mereka bisa mencocokkan di m-banking). Hanya Admin Utama yang bisa mengubahnya. **Umat baru bisa berpunia ke pura yang rekeningnya sudah diisi.**
 4. **Daftarkan pengurus pura** — pada kartu pura tekan **Pengurus** → ketik email orang tersebut → pilih **Pengurus Pura** atau **Pemeriksa**. Orang itu cukup membuka aplikasi dan masuk dengan Google/tautan email memakai alamat itu — tidak ada undangan atau kata sandi.
 5. **Daftarkan Pengurus Banjar** — tab **Banjar → Pengurus Banjar** → ketik email.
 6. **Mencabut/menonaktifkan** — tekan ikon hapus di daftar pengurus untuk mencabut peran, atau tab **Akun → Nonaktifkan** untuk menutup akunnya sama sekali. Aksesnya **langsung** hilang di semua perangkat.
 7. **Ganti email pengurus** (mis. pengurus ganti HP/akun Google) — tab **Akun** → cari orangnya → **Ganti email** → ketik email baru. Akunnya **tetap sama**: peran, pura yang dipegang, dan riwayatnya tidak berubah. Orang itu langsung dikeluarkan dari semua perangkat, lalu masuk lagi dengan email baru. Perubahan tercatat di Log Aktivitas (email lama, email baru, oleh siapa, kapan). Email Admin Utama sendiri tidak diganti dari sini.
+
+### Mengisi alamat (Provinsi → Kabupaten → Kecamatan → Desa)
+
+Untuk banjar dan pura, wilayah dipilih dari **daftar resmi** (kode Kemendagri), satu tingkat demi satu tingkat:
+
+1. Ketuk kolom **Provinsi** → ketik beberapa huruf (mis. `bal`) → ketuk **Bali**.
+2. Kolom **Kabupaten / Kota** sekarang hanya berisi kabupaten/kota di Bali. Ketik `bad` → ketuk **Kabupaten Badung**.
+3. Lanjutkan dengan **Kecamatan** lalu **Desa / Kelurahan** dengan cara yang sama. Daftar desa bisa panjang, jadi ketik saja beberapa huruf namanya.
+4. Jika Anda mengganti tingkat atas (mis. provinsi), tingkat di bawahnya **otomatis dikosongkan** supaya tidak salah pasangan.
+5. **Wilayahnya tidak ada di daftar?** (misalnya desa hasil pemekaran yang belum masuk data) Ketuk pilihan paling bawah **"Tidak ada di daftar — ketik manual"**, lalu ketik namanya. Tingkat di bawahnya juga diisi manual.
+6. **Alamat detail** (jalan, nomor, gang, dusun, patokan) diketik bebas di kolom tersendiri.
+
+Semua bagian alamat **opsional**. Pura tetap bisa disimpan hanya dengan nama dan banjar pengempon. Alamat lama yang dulu diketik bebas tetap tampil apa adanya; saat diubah, kolom itu muncul sebagai isian manual dan bisa diganti dengan pilihan dari daftar.
 
 Tanda yang perlu diperhatikan di Back Office:
 - **"Pengurus pura belum terdaftar"** — punia pura ini diverifikasi oleh Pengurus Banjar; umat juga melihat label ini.
@@ -367,6 +383,25 @@ Isinya (semuanya **fiktif**, berawalan "CONTOH"): 2 banjar, 6 pura (satu diempon
 ```
 E2E_DATABASE_URL="postgres://.../pura_e2e" npm run test:e2e
 ```
+
+---
+
+## Memperbarui data wilayah
+
+Daftar wilayah (provinsi sampai desa/kelurahan) disimpan **di dalam aplikasi** (`src/data/wilayah/wilayah.json`), sehingga aplikasi tidak bergantung pada layanan luar. Sumber saat ini: **cahyadsn/wilayah** (github.com/cahyadsn/wilayah), kode Kemendagri sesuai Kepmendagri tahun 2025, lisensi **MIT** (lihat `src/data/wilayah/SUMBER.md`).
+
+Jika ada pemekaran atau perubahan nama wilayah dan sumbernya sudah diperbarui:
+
+1. Di laptop ([Menjalankan di laptop](#menjalankan-di-laptop) langkah 1–3), unduh berkas terbaru `db/wilayah.sql` dari github.com/cahyadsn/wilayah (tombol **Download raw file**), simpan mis. di folder `unduhan/`.
+2. Periksa dulu lisensi dan dasar hukumnya di halaman repositori itu.
+3. Jalankan (sesuaikan isi tanda kutip):
+   ```
+   npm run wilayah:update -- unduhan/wilayah.sql --sumber "cahyadsn/wilayah, Kepmendagri No. … Tahun …" --lisensi "MIT"
+   ```
+   Perintah ini memeriksa isinya (setiap wilayah harus punya induk, jumlahnya masuk akal) lalu menulis ulang `src/data/wilayah/wilayah.json`. Berkas dalam bentuk CSV dua kolom `kode,nama` juga bisa dipakai.
+4. Perbarui tanggal/dasar hukum di `src/data/wilayah/SUMBER.md`, lalu commit dan push. Vercel memasang versi baru otomatis.
+
+Kode lain tidak perlu diubah. Data banjar dan pura yang sudah tersimpan tidak berubah: nama dan kodenya tetap seperti saat dipilih.
 
 ---
 

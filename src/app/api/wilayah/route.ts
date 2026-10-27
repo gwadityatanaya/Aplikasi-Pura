@@ -1,6 +1,8 @@
 import { wilayahChildren, wilayahMeta } from "@/server/wilayah";
 import { ApiError, json, route } from "@/server/http";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Public list of regions under one parent, for the address dropdowns:
  *   /api/wilayah            → provinsi

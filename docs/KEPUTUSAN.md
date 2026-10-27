@@ -15,6 +15,13 @@ Daftar ini berisi pilihan yang **tidak bisa saya putuskan sendiri** karena menya
 - ✅ Gabung akun: tidak dibuat. Pengurus yang punya dua email memakai email yang didaftarkan Admin Utama.
 - ⏳ Skrip ganti email Admin Utama: dikerjakan di **Phase 3.2**, bersama aturan pengesahan pengeluaran.
 
+## Alamat bertingkat (baru)
+
+1. **Nomor Kepmendagri sumber data.** Berkas data dari cahyadsn/wilayah menyebut *Kepmendagri No. 300.2.2-2138 Tahun 2025* di kepala berkasnya, sedangkan README repositorinya menyebut *No. 300.2.2-2430 Tahun 2025*. Isi datanya cocok dengan jumlah wilayah resmi 2025 (38 provinsi, 514 kab/kota, 7.285 kecamatan, 83.762 desa/kelurahan). *Saran: pakai seperti sekarang*, dan perbarui saat sumbernya merilis versi baru. Jika Anda ingin sumber lain (mis. langsung dari situs Kemendagri atau BPS), beri tahu saya.
+2. **Desa dinas vs desa adat.** Dropdown memakai wilayah **dinas** (Kemendagri). Banjar adat sering lebih cocok dikelompokkan per **desa adat** (MDA Bali), yang tidak selalu sama dengan desa dinas. Perlu ditambahkan kolom "Desa adat" (teks atau daftar MDA) untuk banjar? *Saran: ya, sebagai teks dulu, sebelum BDDN.*
+3. **Alamat lama tanpa kode.** Banjar/pura yang dulu diisi teks bebas tetap tampil apa adanya tetapi belum punya kode. Perlu saya buatkan bantuan "cocokkan otomatis" (mencari kode berdasarkan nama) yang hasilnya Anda periksa sebelum disimpan? *Saran: belum perlu*; untuk pilot, cukup pilih ulang dari dropdown saat mengedit.
+4. **Pengurus pura belum bisa mengubah lokasi pura** (hanya Admin Utama di Back Office), sama seperti sebelumnya. Tetap begitu?
+
 ## Bahan pilot (dijawab sebelum pilot, tidak perlu untuk demo)
 
 Bagian A–D di bawah: pengurus tiap pura, rekening, tanggal mulai dan saldo awal, serta pemegang cadangan.
@@ -78,7 +85,7 @@ Tujuan: BDDN bisa melihat **ringkasan** banyak banjar sekaligus, **hanya-baca**.
 
 **Yang perlu diputuskan dan dikerjakan nanti:**
 1. **Cakupan wilayah BDDN.** Apakah per desa adat, per kecamatan, atau per kabupaten? Saran: tabel baru `bddn_members (user_id, scope_type, scope_value)`, misalnya `("desa", "Desa Adat X")`. Admin Utama mendaftarkan email BDDN di Back Office, sama seperti Pengurus Banjar.
-2. **Kode wilayah baku.** Nama desa dan kecamatan sekarang diketik bebas, sehingga ejaannya bisa berbeda-beda. Sebelum BDDN, isi kode wilayah resmi (kode Kemendagri, atau daftar desa adat dari MDA) di tabel `banjars` agar ringkasan per wilayah tidak terpecah.
+2. ✅ **Kode wilayah baku — sudah ada.** Banjar dan pura menyimpan kode Kemendagri (provinsi, kabupaten/kota, kecamatan, desa/kelurahan) dari dropdown bertingkat, di kolom `province_code`, `regency_code`, `district_code`, `village_code` (tabel `banjars` diberi indeks per kabupaten). Ringkasan BDDN bisa dikelompokkan per kode tanpa takut ejaan berbeda. Yang belum ada: **desa adat** (MDA), yang batasnya tidak selalu sama dengan desa dinas — lihat keputusan di bawah.
 3. **Isi ringkasan.** Saran isi:
    - total punia dan pengeluaran per banjar/pura per bulan,
    - jumlah punia menunggu verifikasi,

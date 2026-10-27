@@ -77,10 +77,13 @@ async function main() {
     console.log(`• Admin Utama dibuat: ${email}`);
   }
 
-  const bjA = await run<{ id: string }>(admin, null, "saveBanjar", { name: "CONTOH Banjar Adat Kertha Sari", village: "Desa Sukamerta", district: "Kec. Sukamerta", regency: "Kab. Contoh (fiktif)", province: "Bali" });
-  const bjB = await run<{ id: string }>(admin, null, "saveBanjar", { name: "CONTOH Banjar Adat Tunjung Mekar", village: "Desa Sukamerta", district: "Kec. Sukamerta", regency: "Kab. Contoh (fiktif)", province: "Bali" });
+  // Real places (Kemendagri codes from the bundled region list); the banjar and temples are fictional.
+  const mengwi = { provinceCode: "51", regencyCode: "51.03", districtCode: "51.03.02", villageCode: "51.03.02.2009" }; // Bali › Badung › Mengwi › Mengwi
+  const ubud = { provinceCode: "51", regencyCode: "51.04", districtCode: "51.04.05", villageCode: "51.04.05.2002" }; // Bali › Gianyar › Ubud › Mas
+  const bjA = await run<{ id: string }>(admin, null, "saveBanjar", { name: "CONTOH Banjar Adat Kertha Sari", ...mengwi, address: "Jalan Contoh (fiktif)" });
+  const bjB = await run<{ id: string }>(admin, null, "saveBanjar", { name: "CONTOH Banjar Adat Tunjung Mekar", ...ubud });
 
-  const base = { province: "Bali", regency: "Kab. Contoh (fiktif)", district: "Kec. Sukamerta", village: "Desa Sukamerta", phone: "0800-0000-0000" };
+  const base = { ...mengwi, phone: "0800-0000-0000" };
   // Every name and account number below is made up. Temple names start with "CONTOH", banks are
   // "Bank CONTOH (fiktif)" and account numbers are runs of zeros, so nobody mistakes them for real ones.
   const fakeBank = (n: number, holder: string) => ["Bank CONTOH (fiktif)", `000-000-000${n}`, `CONTOH — ${holder}`];
@@ -97,7 +100,7 @@ async function main() {
     // Pura Melanting is registered with the bare minimum (name + banjar): no address, phone or email.
     const r = await run<{ id: string }>(admin, null, "adminSaveTemple", t.key === "melanting"
       ? { name: t.name, banjarIds: t.banjarIds }
-      : { ...base, name: t.name, address: `Jalan Contoh No. ${templeDefs.indexOf(t) + 1} (fiktif)`, description: `DATA CONTOH — ${t.name.replace("CONTOH ", "")} adalah pura fiktif untuk mencoba aplikasi PURA. Jangan mentransfer ke rekening ini.`, banjarIds: t.banjarIds });
+      : { ...base, ...(t.key === "taman" ? ubud : {}), name: t.name, address: `Jalan Contoh No. ${templeDefs.indexOf(t) + 1} (fiktif)`, description: `DATA CONTOH — ${t.name.replace("CONTOH ", "")} adalah pura fiktif untuk mencoba aplikasi PURA. Jangan mentransfer ke rekening ini.`, banjarIds: t.banjarIds });
     temples[t.key] = r.id;
     await run(admin, null, "setTempleBank", { templeId: r.id, bankName: t.bank[0], bankAccountNumber: t.bank[1], bankAccountHolder: t.bank[2] });
   }

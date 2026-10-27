@@ -38,6 +38,7 @@ Email (SMTP) and Google are both optional: `/api/auth/options` tells the login p
 | `npm run db:migrate` | Creates/updates tables (idempotent) |
 | `npm run db:seed-demo -- --ya` | Fictional data: 2 banjar, 6 temples (one shared, one without pengurus), staff, umat. Refuses a non-empty DB |
 | `npm run db:reset-demo -- --ya-hapus-data-demo` | Wipes and re-seeds the DEMO database. Refuses if any temple name does not start with "CONTOH " |
+| `npm run wilayah:update -- <wilayah.sql\|csv> --sumber "…" --lisensi "…"` | Rebuilds the bundled region list `src/data/wilayah/wilayah.json` (validated: every code has its parent) |
 | `npm run test:e2e` | Playwright end-to-end tests. Needs `E2E_DATABASE_URL` pointing to a throw-away DB whose name contains `test`/`e2e` |
 | `npm run backup` / `npm run restore -- <file>` | Full JSON backup incl. photos / restore into an empty DB |
 | `npm run admin:reset` | Emergency one-time sign-in link for Admin Utama (requires DB access) |
@@ -59,6 +60,7 @@ Deploy: import the repo in Vercel, set the variables from `.env.example`. `verce
 - **Public data:** built only in `src/server/public.ts`. Anonymous donors become "Anonim" on the server; real names, emails, messages and proofs never leave it. Per-temple toggles for balance, recent transactions and punia list.
 - **Attachments:** magic-byte validated images stored in Postgres, served with access checks (temple staff, related Pengurus Banjar, Admin Utama, or the uploader).
 - **Duplicates:** same file hash, or same amount + date + reference, is refused; same amount + date is flagged for pengurus.
+- **Regions (alamat bertingkat):** Kemendagri codes for provinsi › kab/kota › kecamatan › desa/kelurahan are bundled in `src/data/wilayah/wilayah.json` (source cahyadsn/wilayah, MIT — see `SUMBER.md`), served by `GET /api/wilayah?induk=`. Banjars and temples store both codes (`*_code`, null when typed by hand) and names; `resolveAddress()` validates the code chain and takes names from the data file. UI: `components/app/wilayah-picker.tsx` (searchable, cascading, "tidak ada di daftar").
 - **Digest:** `/api/cron/digest` (Vercel Cron, daily, `CRON_SECRET`) emails each pengurus at most once a day when punia are waiting.
 - **PWA:** `app/manifest.ts`, `public/sw.js` (never caches `/api/*`), offline page, `/pasang` install guide.
 
