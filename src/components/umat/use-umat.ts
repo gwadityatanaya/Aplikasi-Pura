@@ -39,6 +39,6 @@ export function useMyPunia(enabled: boolean) {
 
 export const STATUS_INFO: Record<Donation["status"], { label: string; tone: "amber" | "green" | "red"; desc: string }> = {
   pending: { label: "Menunggu verifikasi", tone: "amber", desc: "Pengurus pura akan mencocokkan bukti dengan rekening pura." },
-  verified: { label: "Terverifikasi", tone: "green", desc: "Sudah dicatat di kas pura. Suksma!" },
+  verified: { label: "Disahkan", tone: "green", desc: "Sudah disahkan pengurus dan dicatat di kas pura. Suksma!" },
   rejected: { label: "Ditolak", tone: "red", desc: "Lihat alasannya, perbaiki, lalu kirim ulang." },
 };

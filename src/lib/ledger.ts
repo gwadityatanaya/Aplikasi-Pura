@@ -129,7 +129,7 @@ export function activitySummary(activity: Activity, txs: Transaction[]) {
 /** Only verified donations count toward official campaign totals. */
 export function campaignStats(campaign: Campaign, donations: Donation[]) {
   const own = donations.filter((d) => d.campaignId === campaign.id);
-  const verified = own.filter((d) => d.status === "verified");
+  const verified = own.filter((d) => d.status === "verified" && !d.correctedAt);
   const collected = verified.reduce((s, d) => s + d.amount, 0);
   return {
     collected,

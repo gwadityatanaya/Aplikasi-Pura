@@ -237,6 +237,10 @@ export const donations = pgTable("donations", {
   /** Pengurus who typed in a manual (cash/WhatsApp) entry */
   inputBy: text("input_by"),
   evidenceHash: text("evidence_hash"),
+  /** A verified punia is never edited: a mistake is cancelled with a correction (reversal) entry. */
+  correctedAt: ts("corrected_at"),
+  correctedBy: text("corrected_by"),
+  correctionReason: text("correction_reason"),
   createdAt: ts("created_at").notNull().defaultNow(),
 }, (t) => [
   index("donations_campaign").on(t.campaignId),

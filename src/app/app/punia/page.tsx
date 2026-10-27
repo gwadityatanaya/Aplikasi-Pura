@@ -2,7 +2,7 @@
 import { Fragment, Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { AlertTriangle, Check, CheckCheck, FileSpreadsheet, Image as ImageIcon, Inbox, Plus, X } from "lucide-react";
+import { AlertTriangle, Check, CheckCheck, FileSpreadsheet, Image as ImageIcon, Inbox, Plus, Undo2, X } from "lucide-react";
 import { NoAccess, PageHeader } from "@/components/app/page-header";
 import { useCan, useWorkspace } from "@/components/app/hooks";
 import { ManualPuniaDialog } from "@/components/app/manual-punia";
@@ -23,7 +23,7 @@ import type { Donation } from "@/lib/types";
 type StatusFilter = "pending" | "verified" | "rejected" | "all";
 const STATUS: Record<Donation["status"], { label: string; tone: "amber" | "green" | "red" }> = {
   pending: { label: "Menunggu", tone: "amber" },
-  verified: { label: "Terverifikasi", tone: "green" },
+  verified: { label: "Disahkan", tone: "green" },
   rejected: { label: "Ditolak", tone: "red" },
 };
 const CHANNEL: Record<Donation["channel"], string> = { transfer: "Transfer (aplikasi)", tunai: "Tunai", whatsapp: "WhatsApp", simulasi: "Simulasi" };
@@ -42,6 +42,7 @@ function PuniaQueue() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState<Donation>();
   const [rejecting, setRejecting] = useState<Donation>();
+  const [correcting, setCorrecting] = useState<Donation>();
   const [busy, setBusy] = useState(false);
   const [manual, setManual] = useState(params.get("input") === "1");
   const [mutasi, setMutasi] = useState(false);
@@ -75,7 +76,7 @@ function PuniaQueue() {
     setBusy(false);
     if (!r.ok) return toast.error(r.error);
     const { verified, skipped } = r.value;
-    if (verified) toast.success(`${verified} punia disetujui dan dicatat di kas.`);
+    if (verified) toast.success(`${verified} punia disahkan dan dicatat di kas.`);
     if (skipped.length) toast.warning(`${skipped.length} dilewati: ${skipped[0].reason}`);
     setSelected(new Set());
     setOpen(undefined);
@@ -87,7 +88,7 @@ function PuniaQueue() {
     <div>
       <PageHeader
         title="Verifikasi Punia"
-        description={ws.temple ? `${ws.temple.name} — cocokkan bukti dengan mutasi rekening, lalu setujui.` : undefined}
+        description={ws.temple ? `${ws.temple.name} — cocokkan bukti dengan mutasi rekening, lalu sahkan. Aplikasi hanya mengesahkan catatan, tidak memindahkan uang.` : undefined}
         actions={
           canAct && (
             <>
@@ -114,7 +115,7 @@ function PuniaQueue() {
           size="sm"
           options={[
             { value: "pending", label: `Menunggu (${pending.length})` },
-            { value: "verified", label: "Disetujui" },
+            { value: "verified", label: "Disahkan" },
             { value: "rejected", label: "Ditolak" },
             { value: "all", label: "Semua" },
           ]}
@@ -133,7 +134,7 @@ function PuniaQueue() {
             Pilih semua ({selectable.length})
           </label>
           <Button className="ml-auto" disabled={!selected.size} loading={busy} onClick={() => approve(Array.from(selected))}>
-            <CheckCheck className="h-4 w-4" /> Setujui {selected.size || ""} terpilih
+            <CheckCheck className="h-4 w-4" /> Sahkan {selected.size || ""} terpilih
           </Button>
         </div>
       )}
@@ -156,8 +157,10 @@ function PuniaQueue() {
                     {d.privacy !== "public" && <Badge tone="gray">Anonim di publik</Badge>}
                     {d.possibleDuplicate && d.status === "pending" && <Badge tone="red">Kemungkinan dobel</Badge>}
                     {own && <Badge tone="violet">Punia Anda</Badge>}
+                    {d.correctedAt && <Badge tone="red">Dikoreksi — tidak dihitung</Badge>}
                   </div>
                   <p className="mt-1 font-semibold">{d.donorName}</p>
+                  {d.inputByName && <p className="text-xs text-muted">dicatat oleh {d.inputByName}</p>}
                   <p className="text-sm text-muted">
                     {formatDate(d.transferDate ?? d.date)} · {CHANNEL[d.channel]} · {PURPOSE_LABEL[d.purpose ?? "umum"]}
                     {d.campaignId && ` · ${ws.campaigns.find((c) => c.id === d.campaignId)?.title ?? "Kegiatan"}`}
@@ -180,13 +183,15 @@ function PuniaQueue() {
           footer={
             canAct && open.status === "pending" ? (
               isOwn(open) ? (
-                <p className="w-full rounded-xl bg-violet-50 p-3 text-center text-[15px] text-violet-900">Ini punia Anda sendiri — harus disetujui pengurus lain.</p>
+                <p className="w-full rounded-xl bg-violet-50 p-3 text-center text-[15px] text-violet-900">Ini punia Anda sendiri — harus disahkan pengurus lain.</p>
               ) : (
                 <div className="grid w-full grid-cols-2 gap-2">
                   <Button variant="outline" size="lg" onClick={() => { setRejecting(open); setOpen(undefined); }}><X className="h-5 w-5" /> Tolak</Button>
-                  <Button size="lg" loading={busy} onClick={() => approve([open.id])}><Check className="h-5 w-5" /> Setuju</Button>
+                  <Button size="lg" loading={busy} onClick={() => approve([open.id])}><Check className="h-5 w-5" /> Sahkan</Button>
                 </div>
               )
+            ) : open.status === "verified" && !open.correctedAt && can("tx.reverse") ? (
+              <Button variant="outline" size="lg" className="w-full" onClick={() => { setCorrecting(open); setOpen(undefined); }}><Undo2 className="h-5 w-5" /> Koreksi punia ini</Button>
             ) : undefined
           }
         >
@@ -194,6 +199,7 @@ function PuniaQueue() {
         </Dialog>
       )}
       {rejecting && <RejectDialog d={rejecting} onClose={() => setRejecting(undefined)} />}
+      {correcting && <CorrectDialog d={correcting} onClose={() => setCorrecting(undefined)} />}
       {mutasi && <MutasiImport open onClose={() => setMutasi(false)} pending={pending} isOwn={isOwn} />}
       <ManualPuniaDialog open={manual} onClose={() => { setManual(false); if (params.get("input")) router.replace("/app/punia"); }} />
     </div>
@@ -212,6 +218,8 @@ function DonationDetail({ d, campaign }: { d: Donation; campaign?: string }) {
     ...(d.submitterEmail ? [["Email", d.submitterEmail] as [string, React.ReactNode]] : []),
     ...(d.message ? [["Pesan", d.message] as [string, React.ReactNode]] : []),
     ...(d.rejectedReason ? [["Alasan ditolak", d.rejectedReason] as [string, React.ReactNode]] : []),
+    ...(d.inputByName ? [["Dicatat oleh", d.inputByName] as [string, React.ReactNode]] : []),
+    ...(d.correctedAt ? [["Dikoreksi", `${formatDateTime(d.correctedAt)}${d.correctedByName ? ` oleh ${d.correctedByName}` : ""} — ${d.correctionReason ?? ""}`] as [string, React.ReactNode]] : []),
   ];
   return (
     <div className="space-y-4">
@@ -257,6 +265,30 @@ function RejectDialog({ d, onClose }: { d: Donation; onClose: () => void }) {
           ))}
         </div>
         <Field label="Alasan (dilihat oleh umat)" htmlFor="rj-reason"><Textarea id="rj-reason" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} /></Field>
+      </div>
+    </Dialog>
+  );
+}
+
+/** Cancels a verified punia with a correction entry. The original record is kept, never edited. */
+function CorrectDialog({ d, onClose }: { d: Donation; onClose: () => void }) {
+  const run = useStore((s) => s.run);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function submit() {
+    if (reason.trim().length < 5) return toast.error("Tuliskan alasan koreksi.");
+    setBusy(true);
+    const r = await run<{ number?: string }>("correctPunia", { id: d.id, reason: reason.trim() });
+    setBusy(false);
+    if (!r.ok) return toast.error(r.error);
+    toast.success(`Punia dikoreksi${r.value.number ? ` (entri koreksi ${r.value.number})` : ""}. Catat ulang punia yang benar bila perlu.`);
+    onClose();
+  }
+  return (
+    <Dialog open onClose={onClose} title="Koreksi punia" description={`${rupiah(d.amount)} — ${d.donorName}`} footer={<Button variant="danger" size="lg" className="w-full" loading={busy} onClick={submit}>Batalkan dengan entri koreksi</Button>}>
+      <div className="space-y-3 text-[15px]">
+        <p className="rounded-xl bg-amber-50 p-3 text-amber-900">Catatan punia ini <b>tidak diubah</b>. Aplikasi membuat <b>entri koreksi</b> yang membatalkan pemasukannya, sehingga punia ini tidak lagi dihitung. Keduanya tetap terlihat di riwayat. Jika nominalnya yang salah, catat ulang punia yang benar setelah ini.</p>
+        <Field label="Alasan koreksi" htmlFor="kr-reason"><Textarea id="kr-reason" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Mis. nominal salah ketik, seharusnya Rp150.000" /></Field>
       </div>
     </Dialog>
   );

@@ -46,7 +46,7 @@ export function ManualPuniaDialog({ open, onClose, campaignId }: { open: boolean
     });
     if (!r.ok) return toast.error(r.error);
     const val = r.value as unknown as { verified: boolean; number?: string };
-    toast.success(val.verified ? `Punia tercatat & terverifikasi (${val.number})` : "Punia tercatat — menunggu disetujui pengurus lain");
+    toast.success(val.verified ? `Punia tercatat & disahkan (${val.number})` : "Punia tercatat — menunggu disahkan pengurus lain");
     reset();
     onClose();
   });
@@ -56,11 +56,11 @@ export function ManualPuniaDialog({ open, onClose, campaignId }: { open: boolean
         <Field label="Nominal" required error={formState.errors.amount?.message}>
           <Controller control={control} name="amount" render={({ field }) => <MoneyInput value={field.value} onChange={field.onChange} />} />
         </Field>
-        <Field label="Nama donatur" htmlFor="mp-name" required error={formState.errors.donorName?.message}><Input id="mp-name" {...register("donorName")} /></Field>
+        <Field label="Nama donatur" htmlFor="mp-name" required error={formState.errors.donorName?.message} hint="Tulis bebas, donatur tidak perlu punya akun. Jika memilih ANONIM, nama ini hanya terlihat oleh pengurus."><Input id="mp-name" {...register("donorName")} /></Field>
         <Field label="Email donatur (opsional)" htmlFor="mp-email" error={formState.errors.donorEmail?.message} hint="Jika diisi, punia ini muncul di riwayat punia akun donatur.">
           <Input id="mp-email" type="email" {...register("donorEmail")} />
         </Field>
-        {isSelf && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Ini punia Anda sendiri — akan menunggu persetujuan pengurus lain.</p>}
+        {isSelf && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Ini punia Anda sendiri — akan menunggu disahkan pengurus lain.</p>}
         <div className="grid grid-cols-2 gap-3">
           <Field label="Tanggal diterima" htmlFor="mp-date" error={formState.errors.transferDate?.message}><Input id="mp-date" type="date" max={todayISO()} {...register("transferDate")} /></Field>
           <Field label="Diterima lewat" htmlFor="mp-ch">
@@ -86,6 +86,7 @@ export function ManualPuniaDialog({ open, onClose, campaignId }: { open: boolean
           <Controller control={control} name="evidence" render={({ field }) => <ImageUpload value={field.value} onChange={(v) => field.onChange(v)} label="Bukti punia" compact />} />
         </Field>
         <Field label="Catatan (opsional)" htmlFor="mp-msg"><Textarea id="mp-msg" rows={2} {...register("message")} /></Field>
+        <p className="text-sm text-muted">Nama Anda tercatat sebagai pencatat (&quot;dicatat oleh {me?.name}&quot;) — hanya terlihat oleh pengurus, Pengurus Banjar, dan Admin Utama, tidak oleh umat.</p>
       </form>
     </Dialog>
   );

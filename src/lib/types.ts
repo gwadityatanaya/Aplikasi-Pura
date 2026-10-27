@@ -257,6 +257,13 @@ export interface Donation {
   verifiedAt?: string;
   verifiedBy?: ID;
   rejectedReason?: string;
+  /** Staff state only: who typed in a manual entry ("dicatat oleh …"). Never sent to umat or the public. */
+  inputByName?: string;
+  /** A verified punia that was cancelled with a correction entry (it no longer counts). */
+  correctedAt?: string;
+  correctedBy?: ID;
+  correctedByName?: string;
+  correctionReason?: string;
   createdAt: string;
 }
 

@@ -86,7 +86,8 @@ export const toDonation = (r: Row<typeof schema.donations>): Donation => ({
   inputBy: u(r.inputBy), donorName: r.donorName, amount: r.amount, date: r.date,
   privacy: r.privacy as Donation["privacy"], status: r.status as Donation["status"], message: u(r.message), evidence: u(r.evidence),
   channel: r.channel as Donation["channel"], transactionId: u(r.transactionId), verifiedAt: iso(r.verifiedAt), verifiedBy: u(r.verifiedBy),
-  rejectedReason: u(r.rejectedReason), createdAt: r.createdAt.toISOString(),
+  rejectedReason: u(r.rejectedReason), correctedAt: iso(r.correctedAt), correctedBy: u(r.correctedBy), correctionReason: u(r.correctionReason),
+  createdAt: r.createdAt.toISOString(),
 });
 
 export const toReport = (r: Row<typeof schema.reports>): PublishedReport => ({

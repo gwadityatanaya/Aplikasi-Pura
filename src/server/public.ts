@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, inArray, ne } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne } from "drizzle-orm";
 import { db, schema } from "./db";
 import * as m from "./map";
 import { summarize } from "@/lib/ledger";
@@ -50,7 +50,7 @@ export async function loadPublic(): Promise<PublicData> {
     db.select({ templeId: schema.memberships.templeId }).from(schema.memberships).where(and(inArray(schema.memberships.templeId, ids), eq(schema.memberships.role, "pengurus"), eq(schema.memberships.status, "active"))),
     db.select().from(schema.campaigns).where(and(inArray(schema.campaigns.templeId, ids), ne(schema.campaigns.status, "draft"))),
     db.select().from(schema.reports).where(inArray(schema.reports.templeId, ids)),
-    db.select().from(schema.donations).where(and(inArray(schema.donations.templeId, ids), eq(schema.donations.status, "verified"))),
+    db.select().from(schema.donations).where(and(inArray(schema.donations.templeId, ids), eq(schema.donations.status, "verified"), isNull(schema.donations.correctedAt))),
     db.select().from(schema.transactions).where(and(inArray(schema.transactions.templeId, ids), eq(schema.transactions.status, "confirmed"))),
     db.select().from(schema.accounts).where(inArray(schema.accounts.templeId, ids)),
     db.select({ id: schema.categories.id, name: schema.categories.name }).from(schema.categories).where(inArray(schema.categories.templeId, ids)),

@@ -13,7 +13,7 @@ export default defineConfig({
   workers: 1,
   timeout: 60_000,
   reporter: [["list"]],
-  use: { baseURL: `http://localhost:${PORT}`, ...devices["Pixel 7"], locale: "id-ID" },
+  use: { baseURL: `http://localhost:${PORT}`, ...devices["Pixel 7"], locale: "id-ID", timezoneId: "Asia/Makassar" },
   webServer: {
     command: `npx next dev -p ${PORT}`,
     url: `http://localhost:${PORT}/api/health`,

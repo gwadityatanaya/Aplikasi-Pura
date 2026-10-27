@@ -18,7 +18,7 @@ import { OrnamentDivider } from "@/components/brand/ornament";
 import { buildReport, filterTx, REPORT_TYPES, whatsappSummary, type ReportFilters } from "@/lib/reports";
 import { exportCsv, exportPdf, exportXlsx, sharePdfFile } from "@/lib/export";
 import { byCategory, monthlyCashflow } from "@/lib/ledger";
-import { useStore } from "@/lib/store";
+import { useRole, useStore } from "@/lib/store";
 import { cn, formatDateShort, rupiah, todayISO } from "@/lib/format";
 
 function presetRange(p: string): [string, string] {
@@ -46,6 +46,7 @@ function Reports() {
   const params = useSearchParams();
   const ws = useWorkspace();
   const can = useCan();
+  const role = useRole();
   const publish = useStore((s) => s.publishReport);
   const unpublish = useStore((s) => s.unpublishReport);
   const initialPreset = params.get("preset") ?? "tahun-ini";
@@ -97,7 +98,7 @@ function Reports() {
         <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
           <Field label="Jenis laporan" htmlFor="r-type">
             <Select id="r-type" value={f.type} onChange={(e) => set("type", e.target.value as ReportFilters["type"])}>
-              {REPORT_TYPES.map((r) => <option key={r.value} value={r.value}>{r.label} — {r.desc}</option>)}
+              {REPORT_TYPES.filter((r) => r.value !== "punia_lengkap" || role !== "pemeriksa").map((r) => <option key={r.value} value={r.value}>{r.label} — {r.desc}</option>)}
             </Select>
           </Field>
           <div className="grid grid-cols-2 gap-3">
@@ -160,7 +161,7 @@ function Reports() {
               </div>
             ))}
           </div>
-          {doc.note && <p className="mt-4 rounded-xl bg-ivory p-3 text-sm text-muted">{doc.note}</p>}
+          {doc.note && <p className={cn("mt-4 rounded-xl p-3 text-sm", f.type === "punia_lengkap" ? "bg-red-50 font-semibold text-red-800" : "bg-ivory text-muted")}>{doc.note}</p>}
           {(f.type === "summary" || f.type === "cashflow") && monthly.length > 1 && (
             <div className="mt-6">
               <div className="flex items-center justify-between"><h3 className="font-bold">Pemasukan & pengeluaran per bulan</h3><ChartLegend /></div>

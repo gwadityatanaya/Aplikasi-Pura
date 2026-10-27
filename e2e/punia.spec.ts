@@ -166,6 +166,6 @@ test("impor mutasi CSV menandai punia yang cocok lalu menyetujuinya", async ({ p
   await page.getByRole("button", { name: /Cocokkan mutasi/ }).click();
   await page.locator('input[type="file"][accept*="csv"]').setInputFiles({ name: "mutasi.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
   await expect(page.getByText("Cocok", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: /Setujui 1 punia yang cocok/ }).click();
-  await expect(page.getByText(/1 punia disetujui/)).toBeVisible();
+  await page.getByRole("button", { name: /Sahkan 1 punia yang cocok/ }).click();
+  await expect(page.getByText(/1 punia disahkan/)).toBeVisible();
 });

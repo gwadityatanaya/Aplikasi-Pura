@@ -18,7 +18,7 @@ export const GET = route(async () => {
     punia: rows.map((r) => {
       const d = m.toDonation(r);
       // Never echo internal fields back, even to the owner.
-      return { ...d, inputBy: undefined, verifiedBy: undefined, temple: temples.find((t) => t.id === r.templeId) };
+      return { ...d, inputBy: undefined, verifiedBy: undefined, correctedBy: undefined, temple: temples.find((t) => t.id === r.templeId) };
     }),
   });
 });

@@ -25,6 +25,16 @@ export function markDuplicates(list: Donation[]) {
 }
 
 /**
+ * Adds "dicatat oleh" / "dikoreksi oleh" names for staff. Real names of ANONIM donors are for the
+ * temple's pengurus, the related Pengurus Banjar and Admin Utama only — a Pemeriksa sees "Anonim".
+ */
+function staffDonation(d: Donation, people: Map<string, User>, role: Role | undefined): Donation {
+  const out: Donation = { ...d, inputByName: d.inputBy ? people.get(d.inputBy)?.name : undefined, correctedByName: d.correctedBy ? people.get(d.correctedBy)?.name : undefined };
+  if (role === "pemeriksa" && d.privacy !== "public") return { ...out, donorName: "Anonim", submitterEmail: undefined, message: undefined };
+  return out;
+}
+
+/**
  * Everything the signed-in user may see. Staff get the full workspace of their active temple;
  * Umat get only their own account (their punia history comes from /api/umat). Never includes
  * password hashes, Google ids or tokens.
@@ -82,7 +92,7 @@ export async function loadState(ctx: Ctx): Promise<ServerState> {
     members.forEach((x) => people.set(x.u.id, m.toUser(x.u)));
     banjarMembers.forEach((x) => people.set(x.u.id, m.toUser(x.u)));
     // Names of people who recorded entries but are no longer staff.
-    const extraIds = Array.from(new Set([...txs.map((t) => t.createdBy), ...donations.map((d) => d.verifiedBy).filter(Boolean)] as string[])).filter((id) => !people.has(id));
+    const extraIds = Array.from(new Set([...txs.map((t) => t.createdBy), ...donations.flatMap((d) => [d.verifiedBy, d.inputBy, d.correctedBy]).filter(Boolean)] as string[])).filter((id) => !people.has(id));
     if (extraIds.length) (await db.select().from(schema.users).where(inArray(schema.users.id, extraIds))).forEach((u) => people.set(u.id, m.toUser(u)));
     scoped = {
       users: Array.from(people.values()),
@@ -93,7 +103,7 @@ export async function loadState(ctx: Ctx): Promise<ServerState> {
       activities: activities.map(m.toActivity),
       transactions: txs.map(m.toTx),
       campaigns: campaigns.map(m.toCampaign),
-      donations: markDuplicates(donations.map(m.toDonation)),
+      donations: markDuplicates(donations.map((r) => staffDonation(m.toDonation(r), people, access.get(templeId)))),
       reports: reports.map(m.toReport),
       notifications: notifications.map(m.toNotification),
       audit: audit.map(m.toAudit),

@@ -5,7 +5,7 @@ import { formatDate, formatDateShort, slugify } from "./format";
 import { PURPOSE_LABEL } from "./permissions";
 import { templeLocation } from "./temple";
 
-export type ReportType = "summary" | "income" | "expense" | "cashflow" | "activity" | "campaign" | "punia" | "detail";
+export type ReportType = "summary" | "income" | "expense" | "cashflow" | "activity" | "campaign" | "punia" | "punia_lengkap" | "detail";
 
 export const REPORT_TYPES: { value: ReportType; label: string; desc: string }[] = [
   { value: "summary", label: "Ringkasan keuangan", desc: "Saldo awal, pemasukan, pengeluaran, saldo akhir" },
@@ -14,7 +14,8 @@ export const REPORT_TYPES: { value: ReportType; label: string; desc: string }[] 
   { value: "cashflow", label: "Arus kas bulanan", desc: "Saldo awal & akhir setiap bulan" },
   { value: "activity", label: "Laporan per kegiatan", desc: "Pemasukan & pengeluaran tiap kegiatan" },
   { value: "campaign", label: "Pertanggungjawaban campaign", desc: "Dana terkumpul dan penggunaannya" },
-  { value: "punia", label: "Laporan punia", desc: "Punia terverifikasi per tujuan & kegiatan (anonim tetap Anonim)" },
+  { value: "punia", label: "Laporan punia — versi umum / paruman", desc: "Punia disahkan per tujuan & kegiatan; donatur anonim tertulis \"Anonim\"" },
+  { value: "punia_lengkap", label: "Laporan punia — versi lengkap (internal)", desc: "Dengan nama asli & pencatat. Hanya untuk pengurus, jangan dibagikan" },
   { value: "detail", label: "Rincian transaksi", desc: "Daftar lengkap seluruh transaksi" },
 ];
 
@@ -178,9 +179,13 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
       const used = body.reduce((x, r) => x + (r[4] as number), 0);
       return { ...base, period: `Sampai ${formatDate(f.to)}`, summary: [{ label: "Total terkumpul", value: tot }, { label: "Telah digunakan", value: used }, { label: "Sisa dana campaign", value: tot - used }], tables, note: "Hanya donasi terverifikasi yang dihitung. Data pribadi donatur tidak dicantumkan." };
     }
-    case "punia": {
+    case "punia":
+    case "punia_lengkap": {
+      // Versi umum is safe to share at paruman: ANONIM donors are "Anonim" and the pengurus who typed
+      // an entry is not named. Versi lengkap is for pengurus / Pengurus Banjar / Admin Utama only.
+      const full = f.type === "punia_lengkap";
       const list = data.donations
-        .filter((d) => d.templeId === ws.templeId && d.status === "verified")
+        .filter((d) => d.templeId === ws.templeId && d.status === "verified" && !d.correctedAt)
         .filter((d) => { const day = d.transferDate ?? d.date; return day >= f.from && day <= f.to; })
         .filter((d) => !f.campaignId || d.campaignId === f.campaignId)
         .sort((a, b) => (a.transferDate ?? a.date).localeCompare(b.transferDate ?? b.date));
@@ -200,18 +205,30 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
           money: [2],
         });
       }
-      tables.push({
-        title: `Rincian punia (${list.length})`,
-        head: ["Tgl transfer", "Nama", "Tujuan", "Kegiatan", "Lewat", "Nominal"],
-        body: list.map((d) => [formatDateShort(d.transferDate ?? d.date), d.privacy === "public" ? d.donorName : "Anonim", PURPOSE_LABEL[d.purpose ?? "umum"], campName(d.campaignId), channel[d.channel], d.amount]),
-        foot: ["", "", "", "", "Total", total],
-        money: [5],
-      });
+      tables.push(
+        full
+          ? {
+              title: `Rincian punia (${list.length}) — INTERNAL`,
+              head: ["Tgl transfer", "Nama donatur", "Tampil di publik", "Tujuan", "Lewat", "Dicatat oleh", "Nominal"],
+              body: list.map((d) => [formatDateShort(d.transferDate ?? d.date), d.donorName, d.privacy === "public" ? "Tampil" : "Anonim", PURPOSE_LABEL[d.purpose ?? "umum"], channel[d.channel], d.inputByName ?? "Umat (aplikasi)", d.amount]),
+              foot: ["", "", "", "", "", "Total", total],
+              money: [6],
+            }
+          : {
+              title: `Rincian punia (${list.length})`,
+              head: ["Tgl transfer", "Nama", "Tujuan", "Kegiatan", "Lewat", "Nominal"],
+              body: list.map((d) => [formatDateShort(d.transferDate ?? d.date), d.privacy === "public" ? d.donorName : "Anonim", PURPOSE_LABEL[d.purpose ?? "umum"], campName(d.campaignId), channel[d.channel], d.amount]),
+              foot: ["", "", "", "", "Total", total],
+              money: [5],
+            }
+      );
       return {
         ...base,
-        summary: [{ label: "Total punia terverifikasi", value: total }, { label: "Jumlah punia", value: list.length }].slice(0, 1),
+        summary: [{ label: "Total punia disahkan", value: total }, { label: "Jumlah punia", value: list.length }].slice(0, 1),
         tables,
-        note: "Hanya punia yang sudah diverifikasi pengurus. Umat yang memilih ANONIM dicantumkan sebagai \"Anonim\".",
+        note: full
+          ? "VERSI LENGKAP — RAHASIA. Berisi nama asli donatur yang memilih ANONIM. Hanya untuk pengurus pura, Pengurus Banjar, dan Admin Utama. Jangan dibagikan di grup atau paruman."
+          : "Hanya punia yang sudah disahkan pengurus. Umat yang memilih ANONIM dicantumkan sebagai \"Anonim\".",
       };
     }
     case "detail":

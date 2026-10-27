@@ -113,7 +113,7 @@ export function MutasiImport({ open, onClose, pending, isOwn }: { open: boolean;
     const r = await verify(approvable.map((m) => m.d.id));
     setBusy(false);
     if (!r.ok) return toast.error(r.error);
-    toast.success(`${r.value.verified} punia disetujui.`);
+    toast.success(`${r.value.verified} punia disahkan.`);
     onClose();
   }
 
@@ -123,7 +123,7 @@ export function MutasiImport({ open, onClose, pending, isOwn }: { open: boolean;
       onClose={onClose}
       title="Cocokkan dengan mutasi rekening"
       description="Unggah file CSV mutasi dari internet banking. File hanya dibaca di perangkat ini dan tidak disimpan."
-      footer={approvable.length > 0 && <Button size="lg" className="w-full" loading={busy} onClick={approve}><CheckCheck className="h-5 w-5" /> Setujui {approvable.length} punia yang cocok</Button>}
+      footer={approvable.length > 0 && <Button size="lg" className="w-full" loading={busy} onClick={approve}><CheckCheck className="h-5 w-5" /> Sahkan {approvable.length} punia yang cocok</Button>}
     >
       <div className="space-y-4">
         <label className="press flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line p-5 font-semibold text-emerald-800 hover:border-emerald-400">

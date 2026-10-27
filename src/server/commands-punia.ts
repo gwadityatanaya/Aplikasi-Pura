@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { and, eq, gt, inArray, ne, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, ne, sql } from "drizzle-orm";
 import { db, schema as T, type Tx } from "./db";
 import { ApiError, todayInAppTz } from "./http";
 import { requirePerm, requireTemple, type Ctx } from "./context";
@@ -32,14 +32,14 @@ function checkDate(date: string) {
 async function assertNotDuplicate(tx: Tx, o: { hash: string | null; templeId: string; amount: number; transferDate: string; referenceNo: string | null; exceptId?: string }) {
   const notSelf = o.exceptId ? ne(T.donations.id, o.exceptId) : undefined;
   if (o.hash) {
-    const [dup] = await tx.select({ id: T.donations.id }).from(T.donations).where(and(eq(T.donations.evidenceHash, o.hash), ne(T.donations.status, "rejected"), notSelf)).limit(1);
+    const [dup] = await tx.select({ id: T.donations.id }).from(T.donations).where(and(eq(T.donations.evidenceHash, o.hash), ne(T.donations.status, "rejected"), isNull(T.donations.correctedAt), notSelf)).limit(1);
     if (dup) throw new ApiError(409, "Bukti transfer ini sudah pernah diunggah. Jika Anda berpunia lagi, unggah bukti transfer yang baru.");
   }
   if (o.referenceNo) {
     const [dup] = await tx
       .select({ id: T.donations.id })
       .from(T.donations)
-      .where(and(eq(T.donations.templeId, o.templeId), eq(T.donations.amount, o.amount), eq(T.donations.transferDate, o.transferDate), eq(T.donations.referenceNo, o.referenceNo), ne(T.donations.status, "rejected"), notSelf))
+      .where(and(eq(T.donations.templeId, o.templeId), eq(T.donations.amount, o.amount), eq(T.donations.transferDate, o.transferDate), eq(T.donations.referenceNo, o.referenceNo), ne(T.donations.status, "rejected"), isNull(T.donations.correctedAt), notSelf))
       .limit(1);
     if (dup) throw new ApiError(409, "Punia dengan nominal, tanggal, dan nomor referensi yang sama sudah tercatat.");
   }
@@ -50,6 +50,13 @@ async function checkGrouping(tx: Tx, templeId: string, activityId: string | null
   if (activityId) await one(tx.select().from(T.activities).where(and(eq(T.activities.id, activityId), eq(T.activities.templeId, templeId))), "Kegiatan tidak ditemukan.");
   if (campaignId) await one(tx.select().from(T.campaigns).where(and(eq(T.campaigns.id, campaignId), eq(T.campaigns.templeId, templeId))), "Kegiatan/campaign tidak ditemukan.");
 }
+
+/**
+ * How a punia is described in the permanent Log Aktivitas and notifications: never the donor's
+ * name (the log cannot be edited, so a name written there could never be removed when the donor
+ * deletes their account). The punia itself is linked by its id.
+ */
+const donorLabel = (d: { privacy: string }) => (d.privacy === "public" ? "Donatur tampil" : "Donatur anonim");
 
 const isSelf = (ctx: Ctx, d: { submittedBy: string | null; submitterEmail: string | null }) =>
   d.submittedBy === ctx.user.id || (!!d.submitterEmail && d.submitterEmail.toLowerCase() === ctx.user.email.toLowerCase());
@@ -87,7 +94,7 @@ async function verifyOne(ctx: Ctx, tx: Tx, donationId: string, templeId: string)
   // The database trigger also refuses self-verification, as a second line of defence.
   await tx.update(T.donations).set({ status: "verified", transactionId: row.id, verifiedAt: new Date(), verifiedBy: ctx.user.id, rejectedReason: null }).where(eq(T.donations.id, d.id));
   await tx.update(T.notifications).set({ read: true }).where(and(eq(T.notifications.templeId, templeId), eq(T.notifications.kind, "donation_pending"), sql`${T.notifications.href} like ${"%" + d.id + "%"}`));
-  await log(ctx, tx, { action: "Memverifikasi punia", entity: "donation", entityId: d.id, detail: `${d.donorName}${d.privacy !== "public" ? " (anonim)" : ""} — ${rupiah(d.amount)}. Tercatat sebagai ${row.number}.`, templeId });
+  await log(ctx, tx, { action: "Memverifikasi punia", entity: "donation", entityId: d.id, detail: `${donorLabel(d)} — ${rupiah(d.amount)}. Tercatat sebagai ${row.number}.`, templeId });
   return { ok: true, number: row.number };
 }
 
@@ -121,7 +128,7 @@ export const puniaCommands: Record<string, Handler> = {
           message: i.message, evidence, evidenceHash: hash, channel: "transfer", submittedBy: ctx.user.id, submitterEmail: ctx.user.email.toLowerCase(),
         })
         .returning();
-      await notify(tx, { templeId: t.id, kind: "donation_pending", title: "Punia baru menunggu verifikasi", body: `${rupiah(i.amount)} (${PURPOSE_LABEL[i.purpose]})${i.anonymous ? " — anonim" : ` dari ${ctx.user.name}`}.`, href: `/app/punia?id=${donationId}` });
+      await notify(tx, { templeId: t.id, kind: "donation_pending", title: "Punia baru menunggu verifikasi", body: `${rupiah(i.amount)} (${PURPOSE_LABEL[i.purpose]})${i.anonymous ? " — anonim" : ""}.`, href: `/app/punia?id=${donationId}` });
       await log(ctx, tx, { action: "Mengirim punia", entity: "donation", entityId: donationId, detail: `${rupiah(i.amount)} ke ${t.name}${i.anonymous ? " (anonim)" : ""}`, templeId: t.id });
       return m.toDonation(row);
     });
@@ -141,7 +148,7 @@ export const puniaCommands: Record<string, Handler> = {
         .update(T.donations)
         .set({ status: "pending", amount: i.amount, transferDate: i.transferDate, referenceNo: i.referenceNo, evidence, evidenceHash: newHash, rejectedReason: null })
         .where(eq(T.donations.id, d.id));
-      await notify(tx, { templeId: d.templeId, kind: "donation_pending", title: "Punia dikirim ulang", body: `${rupiah(i.amount)} dari ${d.privacy === "public" ? d.donorName : "umat (anonim)"} menunggu verifikasi.`, href: `/app/punia?id=${d.id}` });
+      await notify(tx, { templeId: d.templeId, kind: "donation_pending", title: "Punia dikirim ulang", body: `${rupiah(i.amount)}${d.privacy === "public" ? "" : " (anonim)"} menunggu verifikasi.`, href: `/app/punia?id=${d.id}` });
       await log(ctx, tx, { action: "Mengirim ulang punia", entity: "donation", entityId: d.id, detail: `${rupiah(i.amount)} (sebelumnya ditolak: ${d.rejectedReason ?? "-"})`, templeId: d.templeId });
       return null;
     });
@@ -174,7 +181,7 @@ export const puniaCommands: Record<string, Handler> = {
         date: todayInAppTz(), transferDate: i.transferDate, referenceNo: i.referenceNo, privacy: i.anonymous ? "anonymous" : "public", status: "pending",
         message: i.message, evidence, evidenceHash: hash, channel: i.channel, inputBy: ctx.user.id, submittedBy: donor?.id ?? null, submitterEmail: i.donorEmail,
       });
-      await log(ctx, tx, { action: "Mencatat punia manual", entity: "donation", entityId: donationId, detail: `${i.donorName}${i.anonymous ? " (anonim)" : ""} — ${rupiah(i.amount)} via ${i.channel}`, templeId });
+      await log(ctx, tx, { action: "Mencatat punia manual", entity: "donation", entityId: donationId, detail: `${i.anonymous ? "Donatur anonim" : "Donatur tampil"} — ${rupiah(i.amount)} via ${i.channel}. Dicatat oleh ${ctx.user.name}.`, templeId });
       const self = !!i.donorEmail && i.donorEmail === ctx.user.email.toLowerCase();
       if (self) {
         await notify(tx, { templeId, kind: "donation_pending", title: "Punia pengurus menunggu verifikasi", body: `${ctx.user.name} mencatat punianya sendiri ${rupiah(i.amount)} — perlu disetujui pengurus lain.`, href: `/app/punia?id=${donationId}` });
@@ -215,10 +222,49 @@ export const puniaCommands: Record<string, Handler> = {
       if (d.status !== "pending") throw new ApiError(409, "Hanya punia yang menunggu yang dapat ditolak.");
       if (isSelf(ctx, d)) throw new ApiError(409, "Punia yang Anda kirim sendiri harus ditinjau pengurus lain.");
       await tx.update(T.donations).set({ status: "rejected", rejectedReason: reason }).where(eq(T.donations.id, did));
-      await log(ctx, tx, { action: "Menolak punia", entity: "donation", entityId: did, detail: `${d.donorName} — ${rupiah(d.amount)}: ${reason}`, templeId });
+      await log(ctx, tx, { action: "Menolak punia", entity: "donation", entityId: did, detail: `${donorLabel(d)} — ${rupiah(d.amount)}: ${reason}`, templeId });
       return null;
     });
   },
+
+  /**
+   * A verified punia that turned out wrong (wrong amount, double entry, transfer never arrived) is
+   * never edited: its income entry is cancelled with a correction entry and the punia is marked
+   * "dikoreksi". It then no longer counts anywhere. A new, correct punia can be entered afterwards.
+   */
+  async correctPunia(ctx, p) {
+    const templeId = requireTemple(ctx);
+    await requirePerm(ctx, "tx.reverse", "mengoreksi punia");
+    const i = z.object({ id, reason: text(300).min(5, "Tuliskan alasan koreksi") }).parse(p);
+    return db.transaction(async (tx) => {
+      const d = await one(tx.select().from(T.donations).where(and(eq(T.donations.id, i.id), eq(T.donations.templeId, templeId))).for("update"), "Punia tidak ditemukan.");
+      if (d.status !== "verified") throw new ApiError(409, "Hanya punia yang sudah disahkan yang dikoreksi. Punia yang belum disahkan cukup ditolak.");
+      if (d.correctedAt) throw new ApiError(409, "Punia ini sudah pernah dikoreksi.");
+      const cur = d.transactionId ? (await tx.select().from(T.transactions).where(eq(T.transactions.id, d.transactionId)).for("update"))[0] : undefined;
+      let number: string | undefined;
+      if (cur && !cur.reversedBy) {
+        const today = todayInAppTz();
+        const revId = uid("tx");
+        const [rev] = await tx
+          .insert(T.transactions)
+          .values({
+            ...cur, id: revId, number: await nextNumber(tx, templeId, today), date: today, description: `Koreksi: ${cur.description}`.slice(0, 200),
+            notes: i.reason, reversalOf: cur.id, reversedBy: null, receipt: null, receiptName: null, status: "confirmed", donationId: null,
+            createdBy: ctx.user.id, createdAt: new Date(), updatedAt: new Date(), idempotencyKey: `reverse:${cur.id}`,
+          })
+          .returning();
+        await tx.update(T.transactions).set({ reversedBy: revId, updatedAt: new Date() }).where(eq(T.transactions.id, cur.id));
+        number = rev.number;
+      }
+      await tx.update(T.donations).set({ correctedAt: new Date(), correctedBy: ctx.user.id, correctionReason: i.reason }).where(eq(T.donations.id, d.id));
+      await log(ctx, tx, {
+        action: "Mengoreksi punia", entity: "donation", entityId: d.id,
+        detail: `${donorLabel(d)} — ${rupiah(d.amount)} dibatalkan${number ? ` dengan entri koreksi ${number}` : ""}. Alasan: ${i.reason}`, templeId,
+      });
+      return { number };
+    });
+  },
+
 };
 
 /** Counts pending punia per temple (for badges and email digests). */

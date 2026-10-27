@@ -43,7 +43,7 @@ export default function MyPuniaPage() {
                   <p className="text-xl font-extrabold">{rupiah(d.amount)}</p>
                   <p className="text-[15px] font-semibold">{d.temple?.name ?? "Pura"}</p>
                 </div>
-                <Badge tone={s.tone} className="text-sm">{s.label}</Badge>
+                <Badge tone={d.correctedAt ? "red" : s.tone} className="text-sm">{d.correctedAt ? "Dikoreksi" : s.label}</Badge>
               </div>
               <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                 <dt className="text-muted">Tanggal transfer</dt><dd>{formatDate(d.transferDate ?? d.date)}</dd>
@@ -52,7 +52,8 @@ export default function MyPuniaPage() {
                 {d.referenceNo && (<><dt className="text-muted">No. referensi</dt><dd className="break-all">{d.referenceNo}</dd></>)}
                 {d.channel !== "transfer" && (<><dt className="text-muted">Dicatat</dt><dd>oleh pengurus ({d.channel})</dd></>)}
               </dl>
-              <p className="mt-2 text-sm text-muted">{s.desc}</p>
+              <p className="mt-2 text-sm text-muted">{d.correctedAt ? "Pengurus membatalkan catatan ini dengan entri koreksi, sehingga tidak dihitung." : s.desc}</p>
+              {d.correctedAt && d.correctionReason && <p className="mt-1 rounded-xl bg-amber-50 p-3 text-[15px] text-amber-900"><b>Alasan koreksi:</b> {d.correctionReason}</p>}
               {d.status === "rejected" && (
                 <div className="mt-3 rounded-xl bg-red-50 p-3 text-[15px] text-red-900">
                   <p><b>Alasan ditolak:</b> {d.rejectedReason || "-"}</p>
