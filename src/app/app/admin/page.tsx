@@ -1,10 +1,11 @@
 "use client";
 import { WilayahPicker, emptyAddress, type AddressValue } from "@/components/app/wilayah-picker";
+import { ARCHIVE_COMMAND, ArchiveDialog, type ArchiveTarget } from "@/components/app/archive-dialog";
 import { useRouter } from "next/navigation";
 import { templeLocation } from "@/lib/temple";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Building2, Crown, DatabaseBackup, Download, Eye, Landmark, Mail, MapPin, Pencil, Plus, Search, ShieldCheck, UserCheck, UserPlus, UserX, Users, X } from "lucide-react";
+import { AlertTriangle, Archive, ArchiveRestore, Building2, Crown, DatabaseBackup, Download, Eye, Landmark, Mail, MapPin, Pencil, Plus, Search, ShieldCheck, Trash2, UserCheck, UserPlus, UserX, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, NoAccess } from "@/components/app/page-header";
 import { Avatar } from "@/components/app/app-shell";
@@ -36,7 +37,7 @@ const pickAddress = (x: AddressValue): AddressValue => ({
   provinceCode: x.provinceCode ?? null, regencyCode: x.regencyCode ?? null, districtCode: x.districtCode ?? null, villageCode: x.villageCode ?? null,
 });
 const emptyTemple = { id: "", name: "", ...emptyAddress, address: "", description: "", phone: "", status: "active" as "active" | "pending", banjarIds: [] as string[] };
-const emptyBanjar = { id: "", name: "", ...emptyAddress, address: "", status: "active" as "active" | "inactive" };
+const emptyBanjar = { id: "", name: "", ...emptyAddress, address: "" };
 
 export default function BackOfficePage() {
   // Back Office belongs to the Admin Utama ACCOUNT, not to a temple role: it must work even before
@@ -61,6 +62,7 @@ export default function BackOfficePage() {
   const [emailFor, setEmailFor] = useState<User | null>(null);
   const [newEmail, setNewEmail] = useState("");
   const [busy, setBusy] = useState(false);
+  const [archiveFor, setArchiveFor] = useState<ArchiveTarget | null>(null);
 
   const load = useCallback(async () => {
     const { json } = await api<AdminData>("/api/admin/users");
@@ -74,7 +76,7 @@ export default function BackOfficePage() {
   const banjarName = useCallback((id: string) => data?.banjars.find((b) => b.id === id)?.name ?? "—", [data]);
   const userById = useCallback((id: string) => data?.users.find((u) => u.id === id), [data]);
   const warnings = useMemo(() => {
-    const t = data?.temples ?? [];
+    const t = (data?.temples ?? []).filter((x) => x.status !== "archived");
     return { noPengurus: t.filter((x) => x.pengurusCount === 0), single: t.filter((x) => x.pengurusCount === 1), noBank: t.filter((x) => !x.bankAccountNumber) };
   }, [data]);
   const users = useMemo(() => (data?.users ?? []).filter((u) => !q || `${u.name} ${u.email}`.toLowerCase().includes(q.toLowerCase())), [data, q]);
@@ -126,7 +128,7 @@ export default function BackOfficePage() {
           </div>
           <Card>
             <ul className="divide-y divide-line">
-              {data.temples.map((t) => (
+              {[...data.temples].sort((a, b) => Number(a.status === "archived") - Number(b.status === "archived")).map((t) => (
                 <li key={t.id} className="p-4">
                   <div className="flex flex-wrap items-start gap-3">
                     <Building2 className="mt-1 h-6 w-6 text-emerald-700" />
@@ -135,11 +137,13 @@ export default function BackOfficePage() {
                       <p className="text-sm text-muted">Banjar Pengempon: {t.banjarIds.map(banjarName).join(", ") || "—"}</p>
                       {templeLocation(t) && <p className="flex items-center gap-1 text-sm text-muted"><MapPin className="h-3.5 w-3.5" /> {templeLocation(t)}</p>}
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        {t.status !== "active" && <Badge tone="gray">Nonaktif</Badge>}
+                        {t.status === "archived" && <Badge tone="dark"><Archive className="h-3 w-3" /> Diarsipkan</Badge>}
+                        {(t.status === "pending" || t.status === "rejected") && <Badge tone="gray">Nonaktif</Badge>}
                         {t.pengurusCount === 0 ? <Badge tone="amber">Pengurus pura belum terdaftar</Badge> : t.pengurusCount === 1 ? <Badge tone="amber">Hanya 1 pengurus</Badge> : <Badge tone="green">{t.pengurusCount} pengurus</Badge>}
                         {t.bankAccountNumber ? <Badge tone="emerald"><Landmark className="h-3 w-3" /> {t.bankName} · a.n. {t.bankAccountHolder}</Badge> : <Badge tone="red">Rekening belum diisi</Badge>}
                         {t.pendingCount > 0 && <Badge tone="gold">{t.pendingCount} punia menunggu</Badge>}
                       </div>
+                      {t.status === "archived" && <p className="mt-1.5 text-sm text-muted">Diarsipkan{t.archiveReason ? `: ${t.archiveReason}` : ""}. Hanya bisa dilihat; tidak tampil di publik.</p>}
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 pl-9">
@@ -147,6 +151,10 @@ export default function BackOfficePage() {
                     <Button size="sm" variant="outline" onClick={() => setTempleForm({ id: t.id, name: t.name, ...pickAddress(t), address: t.address, description: t.description, phone: t.phone, status: t.status === "active" ? "active" : "pending", banjarIds: t.banjarIds })}><Pencil className="h-4 w-4" /> Ubah data</Button>
                     <Button size="sm" variant="outline" onClick={() => setBankFor({ t, bankName: t.bankName ?? "", bankAccountNumber: t.bankAccountNumber ?? "", bankAccountHolder: t.bankAccountHolder ?? "" })}><Landmark className="h-4 w-4" /> Rekening</Button>
                     <Button size="sm" variant="outline" onClick={() => { setNewStaff({ email: "", name: "", role: "pengurus" }); setStaffFor({ kind: "temple", t }); }}><Users className="h-4 w-4" /> Pengurus</Button>
+                    {t.status === "archived"
+                      ? <Button size="sm" variant="outline" onClick={() => setArchiveFor({ kind: "temple", action: "unarchive", id: t.id, name: t.name })}><ArchiveRestore className="h-4 w-4" /> Aktifkan kembali</Button>
+                      : <Button size="sm" variant="outline" onClick={() => setArchiveFor({ kind: "temple", action: "archive", id: t.id, name: t.name })}><Archive className="h-4 w-4" /> Arsipkan</Button>}
+                    <Button size="sm" variant="ghost" className="text-expense" onClick={() => setArchiveFor({ kind: "temple", action: "delete", id: t.id, name: t.name })}><Trash2 className="h-4 w-4" /> Hapus permanen</Button>
                   </div>
                 </li>
               ))}
@@ -172,15 +180,20 @@ export default function BackOfficePage() {
                       <h2 className="text-lg font-bold">{b.name}</h2>
                       <p className="text-sm text-muted">{[b.village, b.district, b.regency].filter(Boolean).join(", ")}</p>
                     </div>
-                    {b.status !== "active" && <Badge tone="gray">Nonaktif</Badge>}
+                    {b.status !== "active" && <Badge tone="dark"><Archive className="h-3 w-3" /> Diarsipkan</Badge>}
                   </div>
                   <p className="mt-3 text-sm font-semibold">Pura yang diempon ({temples.length})</p>
                   <p className="text-sm text-muted">{temples.map((t) => t.name).join(", ") || "Belum ada"}</p>
                   <p className="mt-3 text-sm font-semibold">Pengurus Banjar ({members.length})</p>
                   <p className="text-sm text-muted">{members.map((m) => userById(m.userId)?.name).join(", ") || "Belum ada"}</p>
+                  {b.status !== "active" && <p className="mt-2 text-sm text-muted">Diarsipkan{b.archiveReason ? `: ${b.archiveReason}` : ""}. Pengurus Banjar-nya tidak punya akses sampai diaktifkan kembali.</p>}
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setBanjarForm({ id: b.id, name: b.name, ...pickAddress(b), address: b.address ?? "", status: b.status })}><Pencil className="h-4 w-4" /> Ubah</Button>
+                    <Button size="sm" variant="outline" onClick={() => setBanjarForm({ id: b.id, name: b.name, ...pickAddress(b), address: b.address ?? "" })}><Pencil className="h-4 w-4" /> Ubah</Button>
                     <Button size="sm" variant="outline" onClick={() => { setNewStaff({ email: "", name: "", role: "pengurus" }); setStaffFor({ kind: "banjar", b }); }}><Users className="h-4 w-4" /> Pengurus Banjar</Button>
+                    {b.status !== "active"
+                      ? <Button size="sm" variant="outline" onClick={() => setArchiveFor({ kind: "banjar", action: "unarchive", id: b.id, name: b.name })}><ArchiveRestore className="h-4 w-4" /> Aktifkan kembali</Button>
+                      : <Button size="sm" variant="outline" onClick={() => setArchiveFor({ kind: "banjar", action: "archive", id: b.id, name: b.name })}><Archive className="h-4 w-4" /> Arsipkan</Button>}
+                    <Button size="sm" variant="ghost" className="text-expense" onClick={() => setArchiveFor({ kind: "banjar", action: "delete", id: b.id, name: b.name })}><Trash2 className="h-4 w-4" /> Hapus permanen</Button>
                   </div>
                 </Card>
               );
@@ -309,15 +322,19 @@ export default function BackOfficePage() {
             <Field label="Alamat detail (opsional)" hint="Jalan, nomor, gang, dusun, patokan." htmlFor="bj-addr">
               <Input id="bj-addr" value={banjarForm.address} onChange={(e) => setBanjarForm({ ...banjarForm, address: e.target.value })} />
             </Field>
-            <Field label="Status" htmlFor="bj-status">
-              <Select id="bj-status" value={banjarForm.status} onChange={(e) => setBanjarForm({ ...banjarForm, status: e.target.value as "active" | "inactive" })}>
-                <option value="active">Aktif</option>
-                <option value="inactive">Nonaktif (Pengurus Banjar kehilangan akses)</option>
-              </Select>
-            </Field>
           </div>
         )}
       </Dialog>
+
+      <ArchiveDialog
+        target={archiveFor}
+        busy={busy}
+        onClose={() => setArchiveFor(null)}
+        onConfirm={async (t, input) => {
+          const msg = t.action === "delete" ? "Dihapus permanen" : t.action === "archive" ? "Diarsipkan" : "Diaktifkan kembali";
+          if (await done(run(ARCHIVE_COMMAND[t.kind][t.action], { id: t.id, ...input }), msg)) setArchiveFor(null);
+        }}
+      />
 
       {/* Bank */}
       <Dialog open={!!bankFor} onClose={() => setBankFor(null)} title="Info rekening pura" description={bankFor?.t.name} footer={<Button size="lg" className="w-full" onClick={() => setBankConfirm(true)}>Simpan rekening</Button>}>

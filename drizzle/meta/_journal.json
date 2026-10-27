@@ -78,6 +78,13 @@
       "when": 1793137441542,
       "tag": "0010_jabatan",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793139182255,
+      "tag": "0011_archive_delete",
+      "breakpoints": true
     }
   ]
 }

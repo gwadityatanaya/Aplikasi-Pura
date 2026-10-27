@@ -34,6 +34,7 @@ export const toTemple = (r: Row<typeof schema.temples>): Temple => ({
   address: r.address, description: r.description, phone: r.phone,
   provinceCode: u(r.provinceCode), regencyCode: u(r.regencyCode), districtCode: u(r.districtCode), villageCode: u(r.villageCode), cover: r.cover as Temple["cover"], photo: u(r.photo),
   established: u(r.established), status: r.status as Temple["status"], createdAt: r.createdAt.toISOString(),
+  archivedAt: r.archivedAt?.toISOString(), archiveReason: u(r.archiveReason),
   transparency: { ...DEFAULT_TRANSPARENCY, ...r.transparency }, branding: r.branding,
   bankName: u(r.bankName), bankAccountNumber: u(r.bankAccountNumber), bankAccountHolder: u(r.bankAccountHolder),
 });
@@ -42,6 +43,7 @@ export const toBanjar = (r: Row<typeof schema.banjars>): Banjar => ({
   id: r.id, slug: r.slug, name: r.name, village: r.village, district: r.district, regency: r.regency, province: r.province,
   address: r.address, provinceCode: u(r.provinceCode), regencyCode: u(r.regencyCode), districtCode: u(r.districtCode), villageCode: u(r.villageCode),
   status: r.status as Banjar["status"], createdAt: r.createdAt.toISOString(),
+  archivedAt: r.archivedAt?.toISOString(), archiveReason: u(r.archiveReason),
 });
 
 export const toBanjarMember = (r: Row<typeof schema.banjarMembers>): BanjarMember => ({

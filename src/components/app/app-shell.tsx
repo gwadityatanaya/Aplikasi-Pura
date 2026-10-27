@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowDownLeft, ArrowUpRight, Bell, Check, ChevronsUpDown, ExternalLink, FileBarChart2, HandCoins, HandHeart, Home, LogOut, Menu, Plus, ReceiptText, UserCog } from "lucide-react";
+import { Archive, ArrowDownLeft, ArrowUpRight, Bell, Check, ChevronsUpDown, ExternalLink, FileBarChart2, HandCoins, HandHeart, Home, LogOut, Menu, Plus, ReceiptText, UserCog } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { PatternBg } from "@/components/brand/ornament";
 import { Dialog } from "@/components/ui/dialog";
@@ -240,7 +240,21 @@ function TopBar() {
   );
 }
 
+/** An archived temple: everything stays readable (reports too), nothing can be changed. */
+function ArchivedBar({ reason }: { reason?: string }) {
+  return (
+    <div role="status" className="mb-4 flex items-start gap-3 rounded-2xl bg-charcoal p-4 text-white">
+      <Archive className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
+      <div className="text-[15px]">
+        <p className="font-bold">Pura ini diarsipkan — hanya bisa dilihat</p>
+        <p className="text-white/80">Tidak tampil di publik dan tidak menerima punia atau transaksi baru. Data dan laporan tetap bisa dibuka.{reason ? ` Alasan: ${reason}` : ""}</p>
+      </div>
+    </div>
+  );
+}
+
 export function QuickActions({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const archived = useActiveTemple()?.status === "archived";
   const role = useRole();
   const router = useRouter();
   const actions = [
@@ -249,7 +263,7 @@ export function QuickActions({ open, onClose }: { open: boolean; onClose: () => 
     { label: "Catat Pengeluaran", desc: "Banten, listrik, perbaikan…", icon: ArrowUpRight, href: "/app/transaksi/baru?type=expense", tone: "bg-orange-50 text-orange-700", show: can(role, "tx.create") },
     { label: "Catat Pemasukan Lain", desc: "Sesari, sewa, bunga bank…", icon: ReceiptText, href: "/app/transaksi/baru?type=income", tone: "bg-sky-50 text-sky-700", show: can(role, "tx.create") },
     { label: "Buat Laporan", desc: "PDF / Excel untuk paruman", icon: FileBarChart2, href: "/app/laporan", tone: "bg-violet-50 text-violet-700", show: can(role, "report.view") },
-  ].filter((a) => a.show);
+  ].filter((a) => a.show && (!archived || a.href === "/app/laporan"));
   return (
     <Dialog open={open} onClose={onClose} title="Mau melakukan apa?" size="sm">
       <div className="grid grid-cols-1 gap-2 pb-2">
@@ -370,7 +384,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="lg:pl-[272px]">
         <TopBar />
         <motion.main key={pathname} id="konten" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22, ease: "easeOut" }} className="mx-auto w-full max-w-6xl pb-[calc(8rem+env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-5 md:px-6 lg:px-8 lg:pb-12 lg:pt-8">
-          {ready ? <>{temple && <EmergencyBar />}{children}</> : <ShellSkeleton />}
+          {ready ? <>{temple?.status === "archived" ? <ArchivedBar reason={temple.archiveReason} /> : temple && <EmergencyBar />}{children}</> : <ShellSkeleton />}
         </motion.main>
       </div>
       <BottomNav />

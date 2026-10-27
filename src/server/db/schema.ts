@@ -85,7 +85,10 @@ export const temples = pgTable("temples", {
   cover: text("cover").notNull().default("emerald"),
   photo: text("photo"),
   established: text("established"),
+  /** pending | active | rejected | archived (hidden from the public, read-only, can be reactivated) */
   status: text("status").notNull().default("pending"),
+  archivedAt: ts("archived_at"),
+  archiveReason: text("archive_reason"),
   transparency: jsonb("transparency").$type<TransparencySettings>().notNull(),
   branding: jsonb("branding").$type<ReportBranding>().notNull(),
   txCounter: integer("tx_counter").notNull().default(0),
@@ -114,7 +117,10 @@ export const banjars = pgTable("banjars", {
   regencyCode: text("regency_code"),
   districtCode: text("district_code"),
   villageCode: text("village_code"),
+  /** active | inactive (= diarsipkan: hidden from the public, its Pengurus Banjar lose access) */
   status: text("status").notNull().default("active"),
+  archivedAt: ts("archived_at"),
+  archiveReason: text("archive_reason"),
   createdAt: ts("created_at").notNull().defaultNow(),
 }, (t) => [index("banjars_regency_code").on(t.regencyCode)]);
 
@@ -188,6 +194,8 @@ export const activities = pgTable("activities", {
   fundType: text("fund_type").notNull().default("general"),
   status: text("status").notNull().default("planned"),
   color: text("color").notNull().default("#087F6D"),
+  /** The "Operasional Pura" activity created with every new temple; does not count as data. */
+  auto: boolean("auto").notNull().default(false),
 });
 
 export const transactions = pgTable("transactions", {

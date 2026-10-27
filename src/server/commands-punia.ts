@@ -144,6 +144,8 @@ export const puniaCommands: Record<string, Handler> = {
     return db.transaction(async (tx) => {
       const d = await one(tx.select().from(T.donations).where(and(eq(T.donations.id, i.id), eq(T.donations.submittedBy, ctx.user.id))).for("update"), "Punia tidak ditemukan.");
       if (d.status !== "rejected") throw new ApiError(409, "Hanya punia yang ditolak yang dapat dikirim ulang.");
+      const [t] = await tx.select({ status: T.temples.status }).from(T.temples).where(eq(T.temples.id, d.templeId));
+      if (t?.status !== "active") throw new ApiError(409, "Pura ini sedang tidak menerima punia.");
       const newHash = i.evidence?.startsWith("data:") ? imageHash(i.evidence) : d.evidenceHash;
       await assertNotDuplicate(tx, { hash: newHash, templeId: d.templeId, amount: i.amount, transferDate: i.transferDate, referenceNo: i.referenceNo, exceptId: d.id });
       const evidence = i.evidence?.startsWith("data:") ? await persistImage(i.evidence, { templeId: d.templeId, isPublic: false, userId: ctx.user.id }, tx) : d.evidence;

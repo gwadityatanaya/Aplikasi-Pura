@@ -45,7 +45,10 @@ export async function loadPublic(): Promise<PublicData> {
   if (!ids.length) return { temples: [], banjars: [], campaigns: [], donations: [], reports: [], accounts: [] };
 
   const [tb, banjarRows, pengurus, campRows, reportRows, donRows, txRows, accRows, catRows] = await Promise.all([
-    db.select().from(schema.templeBanjars).where(inArray(schema.templeBanjars.templeId, ids)),
+    // Only links to active banjar: an archived banjar is not shown as pengempon in public.
+    db.select({ templeId: schema.templeBanjars.templeId, banjarId: schema.templeBanjars.banjarId }).from(schema.templeBanjars)
+      .innerJoin(schema.banjars, eq(schema.banjars.id, schema.templeBanjars.banjarId))
+      .where(and(inArray(schema.templeBanjars.templeId, ids), eq(schema.banjars.status, "active"))),
     db.select().from(schema.banjars).where(eq(schema.banjars.status, "active")),
     db.select({ templeId: schema.memberships.templeId }).from(schema.memberships).where(and(inArray(schema.memberships.templeId, ids), eq(schema.memberships.role, "pengurus"), eq(schema.memberships.status, "active"))),
     db.select().from(schema.campaigns).where(and(inArray(schema.campaigns.templeId, ids), ne(schema.campaigns.status, "draft"))),

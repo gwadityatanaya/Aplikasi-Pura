@@ -26,7 +26,7 @@ export const GET = route(async (req: Request) => {
     .select()
     .from(schema.users)
     .where(and(eq(schema.users.status, "active"), eq(schema.users.emailDigest, true), or(isNull(schema.users.lastDigestAt), lt(schema.users.lastDigestAt, cutoff))));
-  const temples = await db.select().from(schema.temples);
+  const temples = (await db.select().from(schema.temples)).filter((t) => t.status !== "archived");
   const pengurusRows = await db.select().from(schema.memberships).where(and(eq(schema.memberships.role, "pengurus"), eq(schema.memberships.status, "active")));
   const counts = await pendingCounts(temples.map((t) => t.id));
   let sent = 0;

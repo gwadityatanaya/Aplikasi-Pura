@@ -35,8 +35,8 @@ export const adminCommands: Record<string, Handler> = {
     await requireSuperAdmin(ctx, "mengelola banjar");
     const i = z
       .object({
+        // Status is not edited here: archiving goes through archiveBanjar (with a reason, logged).
         id: optId, name: text(120).min(3), ...addressFields,
-        status: z.enum(["active", "inactive"]).default("active"),
       })
       .parse(p);
     const { rest, address } = splitAddress(i);
@@ -79,6 +79,8 @@ export const adminCommands: Record<string, Handler> = {
       if (templeId) {
         const cur = await one(tx.select().from(T.temples).where(eq(T.temples.id, templeId)), "Pura tidak ditemukan.");
         const before = (await tx.select().from(T.templeBanjars).where(eq(T.templeBanjars.templeId, templeId))).map((r) => r.banjarId).sort();
+        // An archived temple stays archived; it is reactivated only through unarchiveTemple.
+        if (cur.status === "archived" || cur.status === "rejected") values.status = cur.status as typeof values.status;
         await tx.update(T.temples).set(values).where(eq(T.temples.id, templeId));
         await tx.delete(T.templeBanjars).where(eq(T.templeBanjars.templeId, templeId));
         const changes = diff(cur, values, Object.keys(values)) ?? {};
@@ -100,7 +102,7 @@ export const adminCommands: Record<string, Handler> = {
         ]);
         await tx.insert(T.categories).values(categoriesFor(templeId).map((c) => ({ ...c, archived: false })));
         const year = today.slice(0, 4);
-        await tx.insert(T.activities).values({ id: uid("a"), templeId, name: "Operasional Pura", description: "Kebutuhan rutin pura.", startDate: `${year}-01-01`, endDate: `${year}-12-31`, budget: 0, fundType: "general", status: "ongoing", color: "#8A5CB8" });
+        await tx.insert(T.activities).values({ id: uid("a"), templeId, name: "Operasional Pura", description: "Kebutuhan rutin pura.", startDate: `${year}-01-01`, endDate: `${year}-12-31`, budget: 0, fundType: "general", status: "ongoing", color: "#8A5CB8", auto: true });
         await log(ctx, tx, { action: "Menambah pura", entity: "settings", entityId: templeId, detail: `${values.name} (banjar: ${banjars.map((b) => b.name).join(", ")})`, templeId });
       }
       await tx.insert(T.templeBanjars).values(banjarIds.map((banjarId) => ({ templeId: templeId!, banjarId })));
@@ -320,4 +322,159 @@ export const adminCommands: Record<string, Handler> = {
     });
   },
 
+  // ---- Arsip & hapus permanen (Admin Utama) --------------------------------
+  // Archiving keeps every record (reports, Riwayat Audit Pura, Log Aktivitas) and can be undone.
+  // Deleting is only possible for an empty temple / a banjar without temples, and the database
+  // checks the same rules again (migration 0011), also for cascading deletes.
+
+  /** Hides a temple from the public and makes it read-only. */
+  async archiveTemple(ctx, p) {
+    await requireSuperAdmin(ctx, "mengarsipkan pura");
+    const i = confirmInput.parse(p);
+    return db.transaction(async (tx) => {
+      const t = await one(tx.select().from(T.temples).where(eq(T.temples.id, i.id)).for("update"), "Pura tidak ditemukan.");
+      checkTypedName(t.name, i.confirmName);
+      if (t.status === "archived") throw new ApiError(409, "Pura ini sudah diarsipkan.");
+      await tx.update(T.temples).set({ status: "archived", archivedAt: new Date(), archiveReason: i.reason }).where(eq(T.temples.id, t.id));
+      await tx.update(T.sessions).set({ emergencyTempleId: null, emergencyUntil: null, emergencyReason: null }).where(eq(T.sessions.emergencyTempleId, t.id));
+      await log(ctx, tx, { action: "Mengarsipkan pura", entity: "settings", entityId: t.id, detail: `${t.name} — alasan: ${i.reason}`, changes: { status: { dari: t.status, menjadi: "archived" } }, templeId: t.id });
+      return null;
+    });
+  },
+
+  async unarchiveTemple(ctx, p) {
+    await requireSuperAdmin(ctx, "mengaktifkan kembali pura");
+    const i = confirmInput.parse(p);
+    return db.transaction(async (tx) => {
+      const t = await one(tx.select().from(T.temples).where(eq(T.temples.id, i.id)).for("update"), "Pura tidak ditemukan.");
+      checkTypedName(t.name, i.confirmName);
+      if (t.status !== "archived") throw new ApiError(409, "Pura ini tidak sedang diarsipkan.");
+      await tx.update(T.temples).set({ status: "active", archivedAt: null, archiveReason: null }).where(eq(T.temples.id, t.id));
+      await log(ctx, tx, { action: "Mengaktifkan kembali pura", entity: "settings", entityId: t.id, detail: `${t.name} — alasan: ${i.reason}`, changes: { status: { dari: "archived", menjadi: "active" } }, templeId: t.id });
+      return null;
+    });
+  },
+
+  /** Permanent delete — only for a temple without any data. Pengurus roles there are revoked. */
+  async deleteTemple(ctx, p) {
+    await requireSuperAdmin(ctx, "menghapus pura");
+    const i = confirmInput.parse(p);
+    return db.transaction(async (tx) => {
+      const t = await one(tx.select().from(T.temples).where(eq(T.temples.id, i.id)).for("update"), "Pura tidak ditemukan.");
+      checkTypedName(t.name, i.confirmName);
+      const found = await templeData(tx, t);
+      if (found.length) throw new ApiError(409, `Pura ini sudah memiliki data (${found.join(", ")}), jadi tidak bisa dihapus permanen. Arsipkan saja.`);
+      const staff = await tx
+        .select({ name: T.users.name, role: T.memberships.role })
+        .from(T.memberships)
+        .innerJoin(T.users, eq(T.users.id, T.memberships.userId))
+        .where(and(eq(T.memberships.templeId, t.id), eq(T.memberships.status, "active")));
+      await tx.update(T.sessions).set({ activeTempleId: null }).where(eq(T.sessions.activeTempleId, t.id));
+      await tx.update(T.sessions).set({ emergencyTempleId: null, emergencyUntil: null, emergencyReason: null }).where(eq(T.sessions.emergencyTempleId, t.id));
+      await tx.delete(T.notifications).where(eq(T.notifications.templeId, t.id));
+      await tx.delete(T.memberships).where(eq(T.memberships.templeId, t.id));
+      await tx.delete(T.templeBanjars).where(eq(T.templeBanjars.templeId, t.id));
+      await tx.delete(T.activities).where(and(eq(T.activities.templeId, t.id), eq(T.activities.auto, true)));
+      await tx.delete(T.categories).where(eq(T.categories.templeId, t.id));
+      await tx.delete(T.accounts).where(eq(T.accounts.templeId, t.id));
+      await tx.delete(T.temples).where(eq(T.temples.id, t.id));
+      await log(ctx, tx, {
+        action: "Menghapus pura permanen", entity: "settings", entityId: t.id,
+        detail: `${t.name} — alasan: ${i.reason}${staff.length ? `. Peran dicabut: ${staff.map((s) => `${s.name} (${s.role})`).join(", ")}` : ""}`,
+        templeId: null,
+      });
+      return null;
+    });
+  },
+
+  /** Hides a banjar from the public; its Pengurus Banjar lose access. Its temples stay as they are. */
+  async archiveBanjar(ctx, p) {
+    await requireSuperAdmin(ctx, "mengarsipkan banjar");
+    const i = confirmInput.parse(p);
+    return db.transaction(async (tx) => {
+      const b = await one(tx.select().from(T.banjars).where(eq(T.banjars.id, i.id)).for("update"), "Banjar tidak ditemukan.");
+      checkTypedName(b.name, i.confirmName);
+      if (b.status !== "active") throw new ApiError(409, "Banjar ini sudah diarsipkan.");
+      await tx.update(T.banjars).set({ status: "inactive", archivedAt: new Date(), archiveReason: i.reason }).where(eq(T.banjars.id, b.id));
+      await log(ctx, tx, { action: "Mengarsipkan banjar", entity: "settings", entityId: b.id, detail: `${b.name} — alasan: ${i.reason}`, templeId: null });
+      return null;
+    });
+  },
+
+  async unarchiveBanjar(ctx, p) {
+    await requireSuperAdmin(ctx, "mengaktifkan kembali banjar");
+    const i = confirmInput.parse(p);
+    return db.transaction(async (tx) => {
+      const b = await one(tx.select().from(T.banjars).where(eq(T.banjars.id, i.id)).for("update"), "Banjar tidak ditemukan.");
+      checkTypedName(b.name, i.confirmName);
+      if (b.status === "active") throw new ApiError(409, "Banjar ini tidak sedang diarsipkan.");
+      await tx.update(T.banjars).set({ status: "active", archivedAt: null, archiveReason: null }).where(eq(T.banjars.id, b.id));
+      await log(ctx, tx, { action: "Mengaktifkan kembali banjar", entity: "settings", entityId: b.id, detail: `${b.name} — alasan: ${i.reason}`, templeId: null });
+      return null;
+    });
+  },
+
+  /** Permanent delete — only for a banjar that supports no temple. Pengurus Banjar roles are revoked. */
+  async deleteBanjar(ctx, p) {
+    await requireSuperAdmin(ctx, "menghapus banjar");
+    const i = confirmInput.parse(p);
+    return db.transaction(async (tx) => {
+      const b = await one(tx.select().from(T.banjars).where(eq(T.banjars.id, i.id)).for("update"), "Banjar tidak ditemukan.");
+      checkTypedName(b.name, i.confirmName);
+      const temples = await tx
+        .select({ name: T.temples.name })
+        .from(T.templeBanjars)
+        .innerJoin(T.temples, eq(T.temples.id, T.templeBanjars.templeId))
+        .where(eq(T.templeBanjars.banjarId, b.id));
+      if (temples.length)
+        throw new ApiError(409, `Banjar ini masih mengempon ${temples.length} pura (${temples.map((t) => t.name).join(", ")}), jadi tidak bisa dihapus. Arsipkan saja, atau pindahkan puranya ke banjar lain terlebih dahulu.`);
+      const staff = await tx
+        .select({ name: T.users.name })
+        .from(T.banjarMembers)
+        .innerJoin(T.users, eq(T.users.id, T.banjarMembers.userId))
+        .where(and(eq(T.banjarMembers.banjarId, b.id), eq(T.banjarMembers.status, "active")));
+      await tx.delete(T.banjarMembers).where(eq(T.banjarMembers.banjarId, b.id));
+      await tx.delete(T.banjars).where(eq(T.banjars.id, b.id));
+      await log(ctx, tx, {
+        action: "Menghapus banjar permanen", entity: "settings", entityId: b.id,
+        detail: `${b.name} — alasan: ${i.reason}${staff.length ? `. Peran Pengurus Banjar dicabut: ${staff.map((s) => s.name).join(", ")}` : ""}`,
+        templeId: null,
+      });
+      return null;
+    });
+  },
 };
+
+/** Archive / delete: the name typed again as confirmation, and a reason (both required). */
+const confirmInput = z.object({
+  id,
+  confirmName: z.string().trim().max(200),
+  reason: z.string().trim().min(5, "Tuliskan alasannya (minimal 5 huruf).").max(300),
+});
+
+function checkTypedName(name: string, typed: string) {
+  const norm = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
+  if (norm(name) !== norm(typed)) throw new ApiError(400, "Nama yang diketik tidak sama dengan nama yang akan diproses.");
+}
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/** What makes a temple "not empty" (the same list the database trigger checks). */
+async function templeData(tx: Tx, t: typeof T.temples.$inferSelect) {
+  const count = async (table: typeof T.transactions | typeof T.donations | typeof T.campaigns | typeof T.reports | typeof T.attachments, extra?: ReturnType<typeof eq>) => {
+    const [r] = await tx.select({ n: sql<number>`count(*)::int` }).from(table).where(extra ? and(eq(table.templeId, t.id), extra) : eq(table.templeId, t.id));
+    return r.n;
+  };
+  const [txs, dons, camps, reps, files] = await Promise.all([count(T.transactions), count(T.donations), count(T.campaigns), count(T.reports), count(T.attachments)]);
+  const [acts] = await tx.select({ n: sql<number>`count(*)::int` }).from(T.activities).where(and(eq(T.activities.templeId, t.id), eq(T.activities.auto, false)));
+  const [bal] = await tx.select({ n: sql<number>`count(*)::int` }).from(T.accounts).where(and(eq(T.accounts.templeId, t.id), sql`${T.accounts.openingBalance} <> 0`));
+  const found: string[] = [];
+  if (txs) found.push(`${txs} transaksi`);
+  if (dons) found.push(`${dons} punia`);
+  if (acts.n) found.push(`${acts.n} kegiatan`);
+  if (camps) found.push(`${camps} campaign`);
+  if (reps) found.push(`${reps} laporan terbit`);
+  if (files || t.photo) found.push("foto/nota");
+  if (bal.n) found.push("saldo awal kas");
+  return found;
+}

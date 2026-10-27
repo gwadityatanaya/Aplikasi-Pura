@@ -21,6 +21,7 @@ Waktu yang dibutuhkan: sekitar **60 menit** untuk pertama kali (termasuk mengatu
 11. [Langkah 7 — Banjar, pura, rekening, dan pengurus](#langkah-7--banjar-pura-rekening-dan-pengurus)
 12. [Alur punia sehari-hari](#alur-punia-sehari-hari)
 13. [Admin Utama: mode lihat dan mode darurat](#admin-utama-mode-lihat-dan-mode-darurat)
+    - [Mengarsipkan atau menghapus pura dan banjar](#mengarsipkan-atau-menghapus-pura-dan-banjar)
 14. [Memasang aplikasi di HP](#memasang-aplikasi-di-hp)
 15. [Cadangan data mingguan](#cadangan-data-mingguan)
 16. [Memulihkan data](#memulihkan-data)
@@ -320,6 +321,19 @@ Jelaskan di paruman atau saat pelatihan: **"ANONIM" berarti anonim di tampilan p
   - Setiap tindakan tercatat dengan label **"dilakukan oleh Admin Utama (mode darurat)"** di Log Aktivitas **dan** di Riwayat Audit Pura, sehingga pengurus pura bisa melihatnya beserta alasannya.
   - Aturan tetap berlaku: Admin Utama tidak bisa mengesahkan punia yang dikirimnya sendiri.
 - Urusan Back Office (banjar, data pura, rekening, pengurus, ganti email) **tidak** memerlukan mode darurat.
+
+### Mengarsipkan atau menghapus pura dan banjar
+
+Hanya Admin Utama, dari **Back Office → Pura** atau **Back Office → Banjar**. Setiap tindakan meminta **alasan** dan **mengetik ulang nama** pura/banjar sebagai konfirmasi, lalu tercatat di Log Aktivitas (catatan itu tidak bisa dihapus).
+
+| Tindakan | Kapan dipakai | Yang terjadi |
+| --- | --- | --- |
+| **Arsipkan pura** | Pura sudah punya data tetapi tidak dikelola lewat aplikasi lagi | Hilang dari daftar dan pencarian publik; halaman publiknya hanya menulis **"Pura tidak tersedia"** (tanpa data apa pun). Tidak bisa menerima punia atau transaksi baru — pengurus hanya bisa **melihat** dan **mengunduh laporan**. Semua data tetap ada di laporan, Riwayat Audit Pura, dan Log Aktivitas. Bisa **Aktifkan kembali** kapan saja. |
+| **Hapus pura permanen** | Pura salah input / dobel dan **benar-benar kosong** | Hanya bisa jika belum ada transaksi, punia, kegiatan, campaign, laporan terbit, foto/nota, atau saldo awal kas. Peran Pengurus Pura dan Pemeriksa di pura itu dicabut (akun orangnya tetap ada). Tidak bisa dibatalkan. |
+| **Arsipkan banjar** | Banjar tidak aktif lagi | Hilang dari halaman publik; Pengurus Banjar-nya kehilangan akses sampai diaktifkan kembali. Pura yang diempon **tetap berjalan** — pura yang juga diempon banjar lain tetap bisa dibuka Pengurus Banjar lainnya dan pengurus puranya. |
+| **Hapus banjar permanen** | Banjar salah input / dobel | Hanya bisa jika banjar **tidak mengempon pura satu pun** (pindahkan dulu puranya di **Ubah data** pura, atau arsipkan saja). Peran Pengurus Banjar dicabut. |
+
+Aturan "pura yang sudah punya data tidak boleh dihapus" dan "banjar yang masih mengempon pura tidak boleh dihapus" dijaga **dua kali**: oleh aplikasi dan oleh database. Database juga menolak punia atau transaksi baru untuk pura yang diarsipkan.
 
 ---
 

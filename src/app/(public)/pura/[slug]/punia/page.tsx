@@ -42,7 +42,7 @@ function PuniaForm() {
 
   if (!ready || !hydrated) return <div className="container max-w-xl space-y-4 py-8"><Skeleton className="h-40 rounded-3xl" /><Skeleton className="h-64 rounded-3xl" /></div>;
   if (!temple)
-    return <div className="container py-16"><EmptyState icon={MapPin} title="Pura tidak ditemukan" action={<Link href="/pura" className="font-semibold text-emerald-700">Kembali ke daftar pura</Link>} /></div>;
+    return <div className="container py-16"><EmptyState icon={MapPin} title="Pura tidak tersedia" description="Pura ini belum aktif, sudah diarsipkan, atau tautannya salah." action={<Link href="/pura" className="font-semibold text-emerald-700">Kembali ke daftar pura</Link>} /></div>;
   if (!temple.acceptsPunia)
     return (
       <div className="container max-w-xl py-16">

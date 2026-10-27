@@ -14,7 +14,15 @@ export interface Ctx extends CurrentSession {
   actor: { id: string; name: string; email: string };
   /** Admin Utama has emergency mode switched on for ctx.templeId */
   emergency?: boolean;
+  /** ctx.templeId is archived: everything can be read, nothing can be changed */
+  templeArchived?: boolean;
 }
+
+/** Permissions that change a temple's data — refused while the temple is archived. */
+const WRITE_PERMS = new Set<Permission>([
+  "tx.create", "tx.draft", "tx.confirm", "tx.reverse", "donation.manage", "donation.correct",
+  "campaign.manage", "activity.manage", "report.publish", "settings.manage",
+]);
 
 /** Admin Utama may change a temple's data only while emergency mode is on for that temple. */
 export function emergencyActive(session: { emergencyTempleId: string | null; emergencyUntil: Date | null }, templeId: string | null) {
@@ -88,10 +96,13 @@ export async function getCtx(req: Request): Promise<Ctx> {
   let role = templeId ? access.get(templeId) : undefined;
   const emergency = cur.user.isSuperAdmin && emergencyActive(cur.session, templeId);
   if (cur.user.isSuperAdmin && templeId) role = emergency ? "superadmin" : "admin_view";
-  return { ...cur, req, templeId, role, emergency, actor: { id: cur.user.id, name: cur.user.name, email: cur.user.email } };
+  const templeArchived = !!templeId && (await db.select({ status: schema.temples.status }).from(schema.temples).where(eq(schema.temples.id, templeId)))[0]?.status === "archived";
+  return { ...cur, req, templeId, role, emergency, templeArchived, actor: { id: cur.user.id, name: cur.user.name, email: cur.user.email } };
 }
 
 export async function requirePerm(ctx: Ctx, perm: Permission, what = "melakukan tindakan ini") {
+  if (ctx.templeArchived && WRITE_PERMS.has(perm))
+    throw new ApiError(409, `Pura ini diarsipkan, jadi datanya hanya bisa dilihat dan tidak bisa ${what}. Admin Utama dapat mengaktifkannya kembali di Back Office.`);
   if (!can(ctx.role, perm)) {
     await logActivity({ actor: ctx.actor, action: "Akses ditolak", entity: "session", detail: `Mencoba ${what} tanpa izin (${perm})`, templeId: ctx.templeId, req: ctx.req });
     if (ctx.role === "admin_view")

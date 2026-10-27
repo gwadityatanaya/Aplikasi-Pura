@@ -70,7 +70,10 @@ export interface Temple {
   /** Optional uploaded photo (data URL, compressed) */
   photo?: string;
   established?: string;
-  status: "active" | "pending" | "rejected";
+  /** "archived": hidden from the public, read-only, can be reactivated by Admin Utama */
+  status: "active" | "pending" | "rejected" | "archived";
+  archivedAt?: string;
+  archiveReason?: string;
   createdAt: string;
   bankName?: string;
   bankAccountNumber?: string;
@@ -113,7 +116,10 @@ export interface Banjar {
   regencyCode?: string;
   districtCode?: string;
   villageCode?: string;
+  /** "inactive" = diarsipkan */
   status: "active" | "inactive";
+  archivedAt?: string;
+  archiveReason?: string;
   createdAt: string;
 }
 

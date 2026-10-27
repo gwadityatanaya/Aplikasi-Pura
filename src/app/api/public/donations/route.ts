@@ -24,7 +24,8 @@ export const POST = route(async (req: Request) => {
   await rateLimit(`donation:${clientIp(req) ?? "unknown"}`, 5, 30);
   const i = schemaIn.parse(await readJson(req));
   const [c] = await db.select().from(schema.campaigns).where(and(eq(schema.campaigns.id, i.campaignId), eq(schema.campaigns.status, "active")));
-  if (!c) throw new ApiError(404, "Penggalangan dana tidak ditemukan atau sudah ditutup.");
+  const [t] = c ? await db.select({ status: schema.temples.status }).from(schema.temples).where(eq(schema.temples.id, c.templeId)) : [];
+  if (!c || t?.status !== "active") throw new ApiError(404, "Penggalangan dana tidak ditemukan atau sudah ditutup.");
   await db.transaction(async (tx) => {
     const evidence = await persistImage(i.evidence, { templeId: c.templeId, isPublic: false, userId: null }, tx);
     const id = uid("dn");

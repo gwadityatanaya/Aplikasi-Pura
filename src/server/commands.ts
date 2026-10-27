@@ -267,7 +267,7 @@ export const coreCommands: Record<string, Handler> = {
       const { id: aid, ...values } = i;
       if (aid) {
         const cur = await one(tx.select().from(T.activities).where(and(eq(T.activities.id, aid), eq(T.activities.templeId, templeId))));
-        const [row] = await tx.update(T.activities).set(values).where(eq(T.activities.id, aid)).returning();
+        const [row] = await tx.update(T.activities).set({ ...values, auto: false }).where(eq(T.activities.id, aid)).returning();
         await log(ctx, tx, { action: "Mengubah kegiatan", entity: "activity", entityId: aid, detail: row.name, changes: diff(cur, values, Object.keys(values)) });
         return m.toActivity(row);
       }
@@ -472,6 +472,7 @@ export const coreCommands: Record<string, Handler> = {
     const { templeId, status } = z.object({ templeId: id, status: z.enum(["active", "pending", "rejected"]) }).parse(p);
     return db.transaction(async (tx) => {
       const t = await one(tx.select().from(T.temples).where(eq(T.temples.id, templeId)));
+      if (t.status === "archived") throw new ApiError(409, "Pura ini diarsipkan. Gunakan \"Aktifkan kembali\" (dengan alasan) di Back Office.");
       await tx.update(T.temples).set({ status }).where(eq(T.temples.id, templeId));
       await log(ctx, tx, { action: status === "active" ? "Menyetujui pura" : status === "rejected" ? "Menolak pura" : "Menangguhkan pura", entity: "settings", entityId: templeId, detail: t.name, templeId });
       return null;
@@ -481,7 +482,7 @@ export const coreCommands: Record<string, Handler> = {
 };
 
 async function canWriteTx(ctx: Ctx) {
-  return can(ctx.role, "tx.create");
+  return !ctx.templeArchived && can(ctx.role, "tx.create");
 }
 
 /** Removes expired sessions and old rate-limit rows. Cheap; called occasionally. */

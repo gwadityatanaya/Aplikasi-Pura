@@ -37,7 +37,7 @@ export default function TemplePage() {
   if (!temple)
     return (
       <div className="container py-16">
-        <EmptyState icon={MapPin} title="Pura tidak ditemukan" description="Pura ini mungkin belum aktif atau tautannya salah." action={<Link href="/pura" className="font-semibold text-emerald-700">Kembali ke daftar pura</Link>} />
+        <EmptyState icon={MapPin} title="Pura tidak tersedia" description="Pura ini belum aktif, sudah diarsipkan, atau tautannya salah." action={<Link href="/pura" className="font-semibold text-emerald-700">Kembali ke daftar pura</Link>} />
       </div>
     );
 
