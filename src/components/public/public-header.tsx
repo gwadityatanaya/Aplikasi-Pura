@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { HandHeart, LayoutDashboard, LogIn, Menu, Smartphone, X } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
@@ -43,7 +44,7 @@ export function PublicHeader({ transparent }: { transparent?: boolean }) {
     );
 
   return (
-    <header className={cn("sticky top-0 z-40 border-b backdrop-blur-xl", transparent ? "border-transparent bg-ivory/70" : "border-line/70 bg-ivory/85")}>
+    <header className={cn("safe-top safe-x sticky top-0 z-40 border-b backdrop-blur-xl", transparent ? "border-transparent bg-ivory/70" : "border-line/70 bg-ivory/85")}>
       <div className="container flex h-16 items-center justify-between gap-4">
         <Link href="/" aria-label="Beranda PURA">
           <Logo />
@@ -60,40 +61,75 @@ export function PublicHeader({ transparent }: { transparent?: boolean }) {
           <Menu className="h-6 w-6" />
         </button>
       </div>
-      <AnimatePresence>
-        {open && (
-          <motion.div className="fixed inset-0 z-50 lg:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="absolute inset-0 bg-charcoal/40" onClick={() => setOpen(false)} />
-            <motion.div
-              className="absolute right-0 top-0 flex h-full w-[86%] max-w-sm flex-col bg-ivory p-5 shadow-lift"
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              role="dialog"
-              aria-label="Menu"
-            >
-              <div className="flex items-center justify-between">
-                <Logo />
-                <button className="press grid h-11 w-11 place-items-center rounded-xl hover:bg-black/5" onClick={() => setOpen(false)} aria-label="Tutup menu">
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-              <nav className="mt-6 flex flex-col gap-1" aria-label="Navigasi utama">
-                {links.map((l) => (
-                  <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-xl px-4 py-3.5 text-lg font-semibold hover:bg-black/5">
-                    {l.href === "/pasang" && <Smartphone className="h-5 w-5 text-emerald-700" />}
-                    {l.label}
-                  </Link>
-                ))}
-              </nav>
-              <div className="mt-auto space-y-2.5" onClick={() => setOpen(false)}>
-                {accountButtons(true)}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <MobileMenu open={open} onClose={() => setOpen(false)} pathname={pathname}>
+        {accountButtons(true)}
+      </MobileMenu>
     </header>
+  );
+}
+
+/**
+ * Full-screen phone menu. Rendered into <body> through a portal: the header has a blur effect
+ * (backdrop-filter), and that makes any position:fixed child measure itself against the 64px
+ * header instead of the screen — the panel ended up 64px tall with its links spilling, without a
+ * background, over the page. Solid panel, a backdrop that blocks clicks, page scroll locked.
+ */
+function MobileMenu({ open, onClose, pathname, children }: { open: boolean; onClose: () => void; pathname: string; children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onCloseRef.current();
+    document.addEventListener("keydown", onKey);
+    const t = setTimeout(() => closeRef.current?.focus(), 50);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("keydown", onKey);
+      clearTimeout(t);
+    };
+  }, [open]);
+  if (!mounted) return null;
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <motion.div className="fixed inset-0 z-[90] lg:hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <div aria-hidden className="absolute inset-0 bg-charcoal/55" onClick={onClose} />
+          <motion.div
+            className="absolute inset-y-0 right-0 flex h-dvh w-[86%] max-w-sm flex-col overflow-y-auto bg-ivory px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))] shadow-lift"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu"
+          >
+            <div className="flex items-center justify-between">
+              <Logo />
+              <button ref={closeRef} className="press flex h-11 items-center gap-1.5 rounded-xl bg-white px-3 font-semibold shadow-soft ring-1 ring-line hover:bg-stone-50" onClick={onClose} aria-label="Tutup menu">
+                <X className="h-5 w-5" /> Tutup
+              </button>
+            </div>
+            <nav className="mt-6 flex flex-col gap-1" aria-label="Navigasi utama">
+              {links.map((l) => (
+                <Link key={l.href} href={l.href} onClick={onClose} className={cn("flex items-center gap-2 rounded-xl px-4 py-3.5 text-lg font-semibold hover:bg-black/5", pathname === l.href && "bg-mint text-emerald-800")}>
+                  {l.href === "/pasang" && <Smartphone className="h-5 w-5 text-emerald-700" />}
+                  {l.label}
+                </Link>
+              ))}
+            </nav>
+            <div className="mt-auto space-y-2.5 pt-6" onClick={onClose}>
+              {children}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 }

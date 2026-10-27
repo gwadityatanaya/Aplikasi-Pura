@@ -48,7 +48,7 @@ export default function CampaignPage() {
   const shareMsg = `🙏 ${campaign.title}\n${temple.name}\nTerkumpul ${rupiah(s.collected)} dari ${rupiah(campaign.target)} (${formatPercent(s.progress)}). Mari berpunia bersama:`;
 
   return (
-    <div className="pb-28 lg:pb-12">
+    <div className="pb-[calc(7rem+env(safe-area-inset-bottom))] lg:pb-12">
       <div className="container pt-4 md:pt-6">
         <TempleCover variant={campaign.cover} image={campaign.coverImage} alt={`Sampul ${campaign.title}`} className="h-56 rounded-[2rem] md:h-[340px]">
           <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />

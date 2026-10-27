@@ -132,6 +132,8 @@ export function greeting(date = new Date()) {
 
 export function initials(name: string) {
   return name
+    .replace(/\([^)]*\)/g, " ") // "I Made Suarjana (contoh)" → "MS", not "S("
+    .trim()
     .split(/\s+/)
     .filter((w) => w.length > 1 || /[A-Z]/.test(w))
     .slice(-2)

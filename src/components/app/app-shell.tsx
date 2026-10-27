@@ -210,7 +210,7 @@ function TopBar() {
   const unread = useUnread();
   const [profile, setProfile] = useState(false);
   return (
-    <header className="no-print sticky top-0 z-30 border-b border-line/70 bg-ivory/85 backdrop-blur-xl">
+    <header className="no-print safe-top safe-x sticky top-0 z-30 border-b border-line/70 bg-ivory/85 backdrop-blur-xl">
       <div className="flex h-16 items-center gap-3 px-4 md:px-6 lg:px-8">
         <Link href="/app" className="lg:hidden" aria-label="Beranda"><Logo compact /></Link>
         <div className="min-w-0 flex-1 lg:hidden">
@@ -316,7 +316,7 @@ function BottomNav() {
   };
   return (
     <>
-      <nav className="no-print fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 backdrop-blur-xl lg:hidden" aria-label="Navigasi bawah">
+      <nav className="no-print safe-x fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 backdrop-blur-xl lg:hidden" aria-label="Navigasi bawah">
         <div className="safe-bottom mx-auto flex max-w-lg items-end px-2">
           {item("/app", "Beranda", Home)}
           {item("/app/punia", "Punia", HandCoins, pending)}
@@ -369,7 +369,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className="lg:pl-[272px]">
         <TopBar />
-        <motion.main key={pathname} id="konten" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22, ease: "easeOut" }} className="mx-auto w-full max-w-6xl px-4 pb-32 pt-5 md:px-6 lg:px-8 lg:pb-12 lg:pt-8">
+        <motion.main key={pathname} id="konten" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22, ease: "easeOut" }} className="mx-auto w-full max-w-6xl pb-[calc(8rem+env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-5 md:px-6 lg:px-8 lg:pb-12 lg:pt-8">
           {ready ? <>{temple && <EmergencyBar />}{children}</> : <ShellSkeleton />}
         </motion.main>
       </div>

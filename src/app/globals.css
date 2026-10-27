@@ -17,6 +17,13 @@
     @apply bg-ivory text-charcoal antialiased;
     font-feature-settings: "ss01", "cv11";
   }
+  /* Root cause of pages wider than the phone screen: a `grid` without explicit columns gets one
+     implicit "auto" column that grows to the widest content inside it (e.g. a long transaction
+     description that is truncated with "…" still counts at full width). Give that default column
+     a floor of 0 so it always fits the screen; grid-cols-* utilities still override this. */
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
   ::selection {
     background: #ddf5ec;
   }
@@ -44,6 +51,14 @@
   }
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+  /* Notch / rounded corners / Android gesture bar (viewport-fit=cover): keep content out of them. */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-x {
+    padding-left: max(var(--safe-x-min, 0px), env(safe-area-inset-left));
+    padding-right: max(var(--safe-x-min, 0px), env(safe-area-inset-right));
   }
   .text-balance {
     text-wrap: balance;

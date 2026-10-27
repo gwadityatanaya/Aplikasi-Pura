@@ -60,7 +60,7 @@ export default function TemplePage() {
   }
 
   return (
-    <div className="pb-28 lg:pb-10">
+    <div className="pb-[calc(7rem+env(safe-area-inset-bottom))] lg:pb-10">
       <div className="container pt-4 md:pt-6">
         <TempleCover variant={temple.cover} image={temple.photo} alt={`Sampul ${temple.name}`} className="h-48 rounded-[2rem] md:h-72">
           <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
