@@ -65,6 +65,8 @@ export interface Temple {
   banjarIds?: ID[];
   /** Number of active Pengurus Pura (0 = "Pengurus pura belum terdaftar") */
   pengurusCount?: number;
+  /** Punia waiting for verification (staff state only) */
+  pendingCount?: number;
   transparency: TransparencySettings;
   branding: ReportBranding;
 }

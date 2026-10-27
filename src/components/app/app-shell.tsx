@@ -28,7 +28,8 @@ function useUnread() {
 
 /** Pending punia of the active temple — shown as a badge. */
 export function usePendingPunia() {
-  return useStore((s) => s.data.donations.reduce((n, d) => n + (d.status === "pending" ? 1 : 0), 0));
+  // Across every temple this person looks after, not only the one currently open.
+  return useStore((s) => s.data.temples.reduce((n, t) => n + (t.pendingCount ?? 0), 0));
 }
 
 /** Notification preferences decide what is shown (the server keeps every notification). */

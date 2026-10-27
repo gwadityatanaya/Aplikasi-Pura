@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { db, schema } from "./db";
 import { banjarIdsOf, templeAccess, type Ctx } from "./context";
 import * as m from "./map";
@@ -35,13 +35,18 @@ export async function loadState(ctx: Ctx): Promise<ServerState> {
   const templeIds = Array.from(access.keys());
   const templeId = ctx.templeId && access.has(ctx.templeId) ? ctx.templeId : null;
 
-  const [templeRows, tbRows, pengurusRows] = templeIds.length
+  const [templeRows, tbRows, pengurusRows, pendingRows] = templeIds.length
     ? await Promise.all([
         db.select().from(schema.temples).where(inArray(schema.temples.id, templeIds)),
         db.select().from(schema.templeBanjars).where(inArray(schema.templeBanjars.templeId, templeIds)),
         db.select().from(schema.memberships).where(and(inArray(schema.memberships.templeId, templeIds), eq(schema.memberships.role, "pengurus"), eq(schema.memberships.status, "active"))),
+        db
+          .select({ templeId: schema.donations.templeId, n: sql<number>`count(*)::int` })
+          .from(schema.donations)
+          .where(and(inArray(schema.donations.templeId, templeIds), eq(schema.donations.status, "pending")))
+          .groupBy(schema.donations.templeId),
       ])
-    : [[], [], []];
+    : [[], [], [], []];
   const relevantBanjarIds = Array.from(new Set([...tbRows.map((r) => r.banjarId), ...banjarIds]));
   const banjarRows = relevantBanjarIds.length ? await db.select().from(schema.banjars).where(inArray(schema.banjars.id, relevantBanjarIds)) : [];
   const temples = templeRows
@@ -49,6 +54,7 @@ export async function loadState(ctx: Ctx): Promise<ServerState> {
       ...m.toTemple(t),
       banjarIds: tbRows.filter((r) => r.templeId === t.id).map((r) => r.banjarId),
       pengurusCount: pengurusRows.filter((p) => p.templeId === t.id).length,
+      pendingCount: pendingRows.find((p) => p.templeId === t.id)?.n ?? 0,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 

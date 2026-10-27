@@ -15,6 +15,7 @@ import {
   Megaphone,
   ReceiptText,
   Wallet,
+  HandCoins,
 } from "lucide-react";
 import { PatternBg } from "@/components/brand/ornament";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
@@ -62,9 +63,9 @@ export default function DashboardPage() {
   const actName = (id?: string) => ws.activities.find((a) => a.id === id)?.name;
 
   const quick = [
-    { href: "/app/transaksi/baru?type=income", label: "Catat Pemasukan", icon: ArrowDownLeft, tone: "bg-mint text-emerald-700", show: can("tx.create") || can("tx.draft") },
+    { href: "/app/transaksi/baru?type=income", label: "Catat Pemasukan Lain", icon: ArrowDownLeft, tone: "bg-mint text-emerald-700", show: can("tx.create") || can("tx.draft") },
     { href: "/app/transaksi/baru?type=expense", label: "Catat Pengeluaran", icon: ArrowUpRight, tone: "bg-orange-50 text-orange-700", show: can("tx.create") || can("tx.draft") },
-    { href: "/app/campaign/baru", label: "Buat Campaign", icon: Megaphone, tone: "bg-gold-light text-gold-dark", show: can("campaign.manage") },
+    { href: "/app/punia?input=1", label: "Input Punia Manual", icon: HandCoins, tone: "bg-gold-light text-gold-dark", show: can("donation.manage") },
     { href: "/app/laporan", label: "Buat Laporan", icon: FileBarChart2, tone: "bg-violet-50 text-violet-700", show: can("report.view") },
   ].filter((q) => q.show);
 
@@ -137,10 +138,10 @@ export default function DashboardPage() {
           {(pendingDonations.length > 0 || drafts.length > 0) && (
             <Card className="divide-y divide-line">
               {pendingDonations.length > 0 && (
-                <Link href={`/app/campaign/${pendingDonations[0].campaignId}?tab=verifikasi`} className="flex items-center gap-3 p-4 hover:bg-ivory">
+                <Link href="/app/punia" className="flex items-center gap-3 p-4 hover:bg-ivory">
                   <span className="grid h-10 w-10 place-items-center rounded-xl bg-amber-50 text-amber-700"><AlertCircle className="h-5 w-5" /></span>
                   <span className="min-w-0 flex-1">
-                    <span className="block font-semibold">{pendingDonations.length} donasi menunggu verifikasi</span>
+                    <span className="block font-semibold">{pendingDonations.length} punia menunggu verifikasi</span>
                     <span className="block text-sm text-muted">Total {rupiah(pendingDonations.reduce((s, d) => s + d.amount, 0))}</span>
                   </span>
                   <ChevronRight className="h-5 w-5 text-muted" />

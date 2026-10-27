@@ -15,7 +15,7 @@ export function useRequireLogin() {
   const router = useRouter();
   const pathname = usePathname();
   useEffect(() => {
-    if (hydrated && !me) router.replace(`/masuk?next=${encodeURIComponent(pathname)}`);
+    if (hydrated && !me) router.replace(`/masuk?next=${encodeURIComponent(pathname + window.location.search)}`);
   }, [hydrated, me, router, pathname]);
   return { ready: hydrated && !!me, me };
 }

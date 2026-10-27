@@ -23,7 +23,7 @@ export function PublicFooter() {
             </ul>
           </div>
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-wider text-charcoal">Pengurus</h3>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-charcoal">Akun</h3>
             <ul className="mt-3 space-y-2 text-[15px] text-muted">
               <li><Link className="hover:text-emerald-700" href="/masuk">Masuk</Link></li>
               <li><Link className="hover:text-emerald-700" href="/umat">Punia Saya</Link></li>
