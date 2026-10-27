@@ -133,7 +133,7 @@ export function campaignStats(campaign: Campaign, donations: Donation[]) {
   const collected = verified.reduce((s, d) => s + d.amount, 0);
   return {
     collected,
-    contributors: verified.length,
+    contributors: verified.reduce((n, d) => n + (d.count ?? 1), 0),
     pending: own.filter((d) => d.status === "pending"),
     pendingAmount: own.filter((d) => d.status === "pending").reduce((s, d) => s + d.amount, 0),
     progress: campaign.target ? Math.min(100, (collected / campaign.target) * 100) : 0,

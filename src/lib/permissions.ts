@@ -15,14 +15,15 @@ export type Permission =
   | "users.manage"
   | "settings.manage"
   | "audit.view"
-  | "platform.manage";
+  | "admin.manage"
+  | "log.view";
 
 export const ROLE_LABEL: Record<Role, string> = {
   ketua: "Ketua Pengempon",
   bendahara: "Bendahara",
   sekretaris: "Sekretaris",
   auditor: "Pemeriksa / Auditor",
-  platform: "Admin Platform",
+  superadmin: "Admin Utama",
 };
 
 export const ROLE_DESC: Record<Role, string> = {
@@ -30,7 +31,7 @@ export const ROLE_DESC: Record<Role, string> = {
   bendahara: "Mencatat pemasukan & pengeluaran, mengelola nota, donasi dan menyiapkan laporan.",
   sekretaris: "Melihat informasi yang diizinkan dan menyiapkan draf laporan.",
   auditor: "Memeriksa riwayat transaksi, bukti nota dan catatan audit (hanya baca).",
-  platform: "Mengelola pengaturan platform dan meninjau pendaftaran pura.",
+  superadmin: "Melihat semua data & laporan, mengelola semua pengguna dan peran, serta melihat Log Aktivitas. Tidak dapat dihapus atau diturunkan.",
 };
 
 export const ROLE_TONE: Record<Role, string> = {
@@ -38,7 +39,7 @@ export const ROLE_TONE: Record<Role, string> = {
   bendahara: "bg-gold-light text-gold-dark",
   sekretaris: "bg-sky-100 text-sky-900",
   auditor: "bg-violet-100 text-violet-900",
-  platform: "bg-charcoal text-white",
+  superadmin: "bg-charcoal text-gold-light",
 };
 
 const MATRIX: Record<Role, Permission[]> = {
@@ -52,11 +53,12 @@ const MATRIX: Record<Role, Permission[]> = {
   ],
   sekretaris: ["tx.view", "tx.draft", "report.view", "report.export"],
   auditor: ["tx.view", "report.view", "report.export", "audit.view"],
-  platform: ["tx.view", "report.view", "audit.view", "platform.manage", "settings.manage", "users.manage"],
+  superadmin: [],
 };
 
 export function can(role: Role | undefined, perm: Permission) {
   if (!role) return false;
+  if (role === "superadmin") return true; // Admin Utama can do everything
   return MATRIX[role].includes(perm);
 }
 
@@ -74,9 +76,11 @@ export const PERMISSION_LABEL: Record<Permission, string> = {
   "report.export": "Mengunduh laporan",
   "users.manage": "Mengelola pengguna",
   "settings.manage": "Mengubah pengaturan",
-  "audit.view": "Melihat catatan audit",
-  "platform.manage": "Mengelola platform",
+  "audit.view": "Melihat riwayat audit pura",
+  "admin.manage": "Mengelola semua pengguna & pura",
+  "log.view": "Melihat Log Aktivitas (login & perubahan)",
 };
 
 export const ALL_PERMISSIONS = Object.keys(PERMISSION_LABEL) as Permission[];
-export const ALL_ROLES: Role[] = ["ketua", "bendahara", "sekretaris", "auditor", "platform"];
+export const ALL_ROLES: Role[] = ["ketua", "bendahara", "sekretaris", "auditor", "superadmin"];
+export const MEMBER_ROLES = ["ketua", "bendahara", "sekretaris", "auditor"] as const;

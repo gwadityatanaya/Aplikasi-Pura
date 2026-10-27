@@ -3,7 +3,9 @@
 
 export type ID = string;
 
-export type Role = "ketua" | "bendahara" | "sekretaris" | "auditor" | "platform";
+export type Role = "ketua" | "bendahara" | "sekretaris" | "auditor" | "superadmin";
+/** Roles that can be assigned per temple. "superadmin" (Admin Utama) is an account-level flag. */
+export type MemberRole = Exclude<Role, "superadmin">;
 
 export interface User {
   id: ID;
@@ -13,7 +15,11 @@ export interface User {
   email: string;
   phone?: string;
   avatarColor: string;
-  isPlatformAdmin?: boolean;
+  /** Admin Utama — set only through the secure setup step */
+  isSuperAdmin?: boolean;
+  status?: "active" | "disabled";
+  resetRequestedAt?: string;
+  lastLoginAt?: string;
   createdAt: string;
 }
 
@@ -21,7 +27,7 @@ export interface Membership {
   id: ID;
   userId: ID;
   templeId: ID;
-  role: Role;
+  role: MemberRole;
   status: "active" | "invited";
 }
 
@@ -189,6 +195,8 @@ export interface Donation {
   evidence?: string;
   channel: "transfer" | "tunai" | "simulasi";
   simulated?: boolean;
+  /** Public API only: number of private donations aggregated into this row */
+  count?: number;
   transactionId?: ID;
   verifiedAt?: string;
   verifiedBy?: ID;
@@ -241,10 +249,14 @@ export interface AuditEntry {
   actorId: ID;
   actorName: string;
   action: string;
-  entity: "transaction" | "campaign" | "donation" | "activity" | "report" | "settings" | "user" | "session";
+  entity: "transaction" | "campaign" | "donation" | "activity" | "report" | "settings" | "user" | "session" | "backup";
   entityId?: ID;
   detail: string;
   at: string;
+  actorEmail?: string;
+  ip?: string;
+  userAgent?: string;
+  changes?: unknown;
 }
 
 export interface NotificationPrefs {

@@ -43,7 +43,7 @@ const users: User[] = [
   { id: "u_ayu", name: "Ni Ketut Ayu Rahayu", callName: "Bu Ayu", email: "ayu@pura.demo", phone: "0819-0712-3344", avatarColor: "#C9A86A", createdAt: "2025-12-02T08:00:00" },
   { id: "u_wayan", name: "I Wayan Sudiarta", callName: "Pak Wayan", email: "wayan@pura.demo", avatarColor: "#3F6FB5", createdAt: "2025-12-03T08:00:00" },
   { id: "u_nyoman", name: "I Nyoman Gede Artha", callName: "Pak Nyoman", email: "nyoman@pura.demo", avatarColor: "#8A5CB8", createdAt: "2025-12-05T08:00:00" },
-  { id: "u_platform", name: "Tim Platform PURA", callName: "Tim PURA", email: "admin@pura.demo", avatarColor: "#17212B", isPlatformAdmin: true, createdAt: "2025-11-01T08:00:00" },
+  { id: "u_platform", name: "Admin Utama (Demo)", callName: "Admin", email: "admin@pura.demo", avatarColor: "#17212B", isSuperAdmin: true, createdAt: "2025-11-01T08:00:00" },
   { id: "u_putu", name: "I Putu Darma Yasa", callName: "Pak Putu", email: "putu@pura.demo", avatarColor: "#B5543F", createdAt: "2026-02-10T08:00:00" },
 ];
 
@@ -164,7 +164,6 @@ const memberships: Membership[] = [
   { id: "m4", userId: "u_nyoman", templeId: "t_durgandhini", role: "auditor", status: "active" },
   { id: "m5", userId: "u_made", templeId: "t_girikencana", role: "bendahara", status: "active" },
   { id: "m6", userId: "u_putu", templeId: "t_girikencana", role: "ketua", status: "active" },
-  { id: "m7", userId: "u_platform", templeId: "t_durgandhini", role: "platform", status: "active" },
 ];
 
 function cats(templeId: string): Category[] {
