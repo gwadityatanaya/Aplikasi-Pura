@@ -2,57 +2,53 @@
 
 > *"Semudah menulis di buku, sekuat sistem keuangan modern."*
 
-PURA is an interactive, mobile-first **prototype** of a treasury and donation-transparency platform for Hindu temples (Pura) in Indonesia. It has two experiences:
+📘 **Panduan lengkap berbahasa Indonesia (setup, deploy, backup): [docs/PANDUAN.md](docs/PANDUAN.md)**
+
+PURA is a mobile-first treasury and donation-transparency app for Hindu temples (Pura) in Indonesia. It has two experiences:
 
 - **Public portal** (no login): homepage, temple directory, temple profiles, fundraising campaign pages, published financial reports.
-- **Temple administration** (simulated login): dashboard, transactions, activities, campaigns and donation verification, reports and exports, presentation mode, users and roles, settings, notifications, audit log.
+- **Temple administration** (secure login): dashboard, transactions, activities, campaigns and donation verification, reports and exports, presentation mode, users and roles, settings, notifications, temple audit trail — plus an **Admin Utama** panel and an immutable **Log Aktivitas**.
 
-> ⚠️ **Prototype only.** All names, temples (except the example name *Pura Dalem Durgandhini*), bank accounts and amounts are fictional. Authentication is simulated in the browser. **No payments are processed.** See [Prototype boundaries](#prototype-boundaries).
+## Quick start (local)
 
----
-
-## Quick start
-
-Requirements: **Node.js 18.18+** (tested on Node 22) and npm.
+Requirements: **Node.js 18.18+** (20 LTS recommended) and a PostgreSQL database (free [Neon](https://neon.tech) project, or a local Postgres).
 
 ```bash
 npm install
-npm run dev          # http://localhost:3000
+cp .env.example .env       # fill DATABASE_URL, ADMIN_EMAIL, SETUP_TOKEN
+npm run db:migrate         # create tables + integrity guards
+npm run dev                # http://localhost:3000 → open /setup once
 ```
 
-Production build:
-
-```bash
-npm run build
-npm start            # http://localhost:3000
-```
-
-Other scripts: `npm run lint`, `npm run typecheck`.
-
-No environment variables, API keys or external services are needed. Fonts are bundled via `@fontsource`, so the app also runs offline.
-
-### Try it
-
-1. Open `/` and press **Jalankan Demo** for an 11-step guided walkthrough. It runs on a separate copy of the seed data. Exiting restores your own data.
-2. Or go to **Masuk** (`/masuk`) and tap a demo account. Any password of 6+ characters works, and passwords are never stored.
-
-| Account | Role |
+| Script | What it does |
 |---|---|
-| `made@pura.demo` — I Made Wirata ("Pak Made") | Ketua Pengempon (chairperson); also Bendahara of a second temple |
-| `ayu@pura.demo` — Ni Ketut Ayu Rahayu | Bendahara (treasurer) |
-| `wayan@pura.demo` — I Wayan Sudiarta | Sekretaris (can only create drafts) |
-| `nyoman@pura.demo` — I Nyoman Gede Artha | Auditor (read-only + audit log) |
-| `admin@pura.demo` — Tim Platform PURA | Platform admin (temple registrations) |
+| `npm run db:migrate` | Creates/updates tables (safe to run repeatedly) |
+| `npm run backup` | Full JSON backup incl. photos → `cadangan/` |
+| `npm run restore -- <file>` | Restores a backup into an **empty** database |
+| `npm run admin:reset` | Emergency one-time reset link for Admin Utama (requires DB access) |
+| `npm run typecheck` / `npm run lint` | Checks |
 
-From the profile menu you can also preview any role (**Lihat aplikasi sebagai peran**) or **reset the demo data**.
+Deploy: import the repo in Vercel and set the environment variables from `.env.example`. `vercel.json` runs migrations before every build. See the guide for click-by-click steps.
+
+## Architecture (production)
+
+- **Database:** PostgreSQL via Drizzle ORM (`src/server/db/schema.ts`, migrations in `drizzle/`). Works with Neon (pooled URL), Supabase or any Postgres.
+- **API:** Next.js route handlers in `src/app/api`. Every change goes through `POST /api/commands`; each command validates input (Zod), checks the role server-side, runs in a DB transaction, and appends to the activity log in the same transaction.
+- **Auth:** bcrypt (cost 12) password hashes; random session tokens stored only as SHA-256 in `sessions`, sent as `HttpOnly; SameSite=Lax; Secure` cookies; same-origin check on all POSTs; login throttling (5 failures/email or 20/IP per 15 min); one-time activation/reset links (stored hashed). No email service is required — admins share links via WhatsApp.
+- **Admin Utama:** created only through `/setup`, which needs `SETUP_TOKEN` + `ADMIN_EMAIL` from the server environment and locks forever afterwards. Database triggers forbid deleting, demoting or disabling it, and a unique index allows only one.
+- **Immutability (database triggers):** `activity_log` rejects UPDATE/DELETE/TRUNCATE; confirmed transactions cannot be edited or deleted (corrections are reversal entries).
+- **Public data:** `/api/public` returns only what each temple has published; private donors are aggregated per campaign (no names or individual amounts); evidence images and messages never leave the server.
+- **Attachments:** images are validated by magic bytes (JPEG/PNG/WEBP, no SVG), stored in Postgres, and served with access checks.
+- **PWA:** `app/manifest.ts`, `public/sw.js` (never caches `/api/*`), offline page, install prompt.
+- **Demo mode:** the original in-browser engine (`src/lib/demo-engine.ts`) runs on fictional seed data for presentations and never talks to the server.
 
 ---
 
 ## Tech stack
 
-Next.js 14 (App Router) · TypeScript · Tailwind CSS · shadcn-style hand-written UI primitives (`src/components/ui`) · Lucide icons · Framer Motion · Recharts · React Hook Form + Zod · Zustand (persisted to LocalStorage) · jsPDF + autotable (PDF) · SheetJS (Excel) · qrcode.react · Sonner (toasts).
+Next.js 14 (App Router) · TypeScript · Tailwind CSS · shadcn-style hand-written UI primitives (`src/components/ui`) · Lucide icons · Framer Motion · Recharts · React Hook Form + Zod · PostgreSQL + Drizzle ORM · bcryptjs · Zustand (client state; only preferences and demo data are kept in LocalStorage) · jsPDF + autotable (PDF) · SheetJS (Excel) · qrcode.react · Sonner (toasts).
 
-> shadcn/ui is a copy-in component pattern, not a runtime dependency. The prototype uses its own small set of shadcn-style components (Button, Dialog/BottomSheet, Field, Switch, Segmented, Progress, Skeleton…) so it doesn't need the shadcn CLI or Radix.
+> shadcn/ui is a copy-in component pattern, not a runtime dependency. The app uses its own small set of shadcn-style components (Button, Dialog/BottomSheet, Field, Switch, Segmented, Progress, Skeleton…) so it doesn't need the shadcn CLI or Radix.
 
 ## Project structure
 
@@ -70,20 +66,22 @@ src/
     public/              Public header/footer, donor list, donation feed, donation confirmation
     shared/              Campaign card, charts, share (WhatsApp, copy link, QR)
     demo/                Guided demo tour
+  server/                Server only: db schema/client, auth, commands, public data, backup
   lib/
     types.ts             Domain model
     seed.ts              Fictional seed data (consistent ledger)
     ledger.ts            Pure accounting functions (balances, summaries, series)
-    store.ts             Zustand store + all actions (single source of truth)
+    store.ts             Client state; sends every change to the server (or demo engine)
     permissions.ts       Role → permission matrix
     reports.ts           Seven report types → one document model
+    demo-engine.ts       In-browser engine used only by demo mode
     export.ts            PDF / XLSX / CSV / Web Share
     format.ts            Rupiah and Indonesian date formatting, helpers
 ```
 
 ## Accounting rules (as implemented)
 
-- **Balances are derived, never stored.** `balance = opening balance + Σ effect(confirmed entries)` (`lib/ledger.ts`). The dashboard's Rp17.250.000 comes from 1 January 2026 opening balances plus about 120 seed transactions for that temple.
+- **Balances are derived, never stored.** `balance = opening balance + Σ effect(confirmed entries)` (`lib/ledger.ts`). 
 - **Drafts never affect totals.** Only `confirmed` entries count. Drafts can be edited, confirmed or deleted.
 - **Confirmed entries are never edited or deleted.** Mistakes are fixed with a **reversal entry** (`reversalOf`), which cancels the original's effect. Both entries remain visible for audit.
 - **Internal transfers** (cash → bank) change account balances but are excluded from income and expense.
@@ -121,19 +119,6 @@ src/
 - **Cultural elements:** an original candi-bentar / meru silhouette illustration, a patra-inspired lattice texture and gold ornament dividers, used sparingly.
 - **Accessibility:** semantic landmarks, labelled controls, focus rings, focus-trapped dialogs, large touch targets, `prefers-reduced-motion` plus an in-app "Kurangi animasi" switch, and a large-text option.
 
-## Prototype boundaries
+## Demo mode
 
-What this prototype **does not** do, and what production would need:
-
-| Prototype | Production requirement |
-|---|---|
-| Mock sessions in LocalStorage; any password accepted; no passwords stored | Server-side auth (hashed passwords / OTP via WhatsApp), secure HTTP-only sessions, 2FA |
-| Role checks run in the browser | Authorization enforced on the server for every request |
-| Data lives in this browser's LocalStorage (one device) | Server database with backups, multi-device sync, server-side append-only audit log |
-| Donations are entered manually or **simulated** (clearly tagged "Simulasi") | Optional payment-gateway / bank-mutation integration with reconciliation |
-| Password-reset email is simulated (link shown on screen) | Real email/WhatsApp delivery |
-| WhatsApp share sends **text only** via `wa.me`. PDF sharing uses the Web Share API where supported, otherwise the PDF is downloaded for manual attachment | Same, or a hosted report link |
-| Receipt uploads accept images only (compressed in-browser); seed receipts are illustrative SVGs | Object storage, PDF support, virus scanning |
-| Weekly WhatsApp summary and 2FA are shown as "not yet available" | Implement |
-
-Reset all prototype data at any time from **Profil → Atur ulang data demo** or **Pengaturan → Tampilan**.
+On the login page, **Coba mode demo** (or **Jalankan Demo** for the guided 11-step tour) loads fictional seed data in the browser only — handy for presentations. Exiting demo mode returns to the real data, which is never touched.
