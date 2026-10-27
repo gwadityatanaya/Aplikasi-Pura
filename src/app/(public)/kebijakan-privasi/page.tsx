@@ -22,7 +22,7 @@ const sections: { title: string; body: React.ReactNode }[] = [
     title: "Siapa yang dapat melihat data Anda",
     body: (
       <ul className="list-disc space-y-1 pl-5">
-        <li><b>Umum:</b> jika Anda memilih TAMPIL, nama dan nominal punia yang sudah terverifikasi dapat terlihat di halaman pura. Jika memilih ANONIM, yang tampil hanya &quot;Anonim&quot; — nama asli tidak dikirim ke halaman publik sama sekali.</li>
+        <li><b>Umum:</b> jika Anda memilih TAMPIL, nama dan nominal punia yang sudah disahkan dapat terlihat di halaman pura. Jika memilih ANONIM, yang tampil hanya &quot;Anonim&quot; — nama asli tidak dikirim ke halaman publik sama sekali.</li>
         <li><b>Pengurus pura tujuan, Pengurus Banjar pengempon pura tersebut, dan Admin Utama:</b> dapat melihat nama asli dan foto bukti untuk keperluan verifikasi.</li>
         <li>Pengurus pura lain dan umat lain <b>tidak</b> dapat melihat data Anda.</li>
       </ul>
@@ -30,11 +30,11 @@ const sections: { title: string; body: React.ReactNode }[] = [
   },
   {
     title: "Berapa lama disimpan",
-    body: "Catatan punia yang sudah terverifikasi adalah bagian dari pembukuan pura dan disimpan selama pura memakai aplikasi ini. Data akun disimpan sampai Anda menghapus akun.",
+    body: "Catatan punia yang sudah disahkan adalah bagian dari pembukuan pura dan disimpan selama pura memakai aplikasi ini. Data akun disimpan sampai Anda menghapus akun.",
   },
   {
     title: "Menghapus akun",
-    body: "Buka Punia Saya → Akun saya → Hapus akun. Nama, email, dan No. HP Anda dihapus. Punia yang sudah terverifikasi tetap tersimpan sebagai arsip keuangan pura dengan nama \"Anonim\".",
+    body: "Buka Punia Saya → Akun saya → Hapus akun. Nama, email, dan No. HP Anda dihapus. Punia yang sudah disahkan tetap tersimpan sebagai arsip keuangan pura dengan nama \"Anonim\".",
   },
   {
     title: "Email dari aplikasi",

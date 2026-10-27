@@ -1,8 +1,9 @@
 "use client";
+import { useRouter } from "next/navigation";
 import { templeLocation } from "@/lib/temple";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Building2, Crown, DatabaseBackup, Download, Landmark, Mail, MapPin, Pencil, Plus, Search, ShieldCheck, UserCheck, UserPlus, UserX, Users, X } from "lucide-react";
+import { AlertTriangle, Building2, Crown, DatabaseBackup, Download, Eye, Landmark, Mail, MapPin, Pencil, Plus, Search, ShieldCheck, UserCheck, UserPlus, UserX, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, NoAccess } from "@/components/app/page-header";
 import { Avatar } from "@/components/app/app-shell";
@@ -49,6 +50,8 @@ export default function BackOfficePage() {
   const [newStaff, setNewStaff] = useState({ email: "", name: "", role: "pengurus" as "pengurus" | "pemeriksa" });
   const [removeStaff, setRemoveStaff] = useState<{ kind: "temple" | "banjar"; id: string; label: string } | null>(null);
   const [statusFor, setStatusFor] = useState<User | null>(null);
+  const router = useRouter();
+  const setActive = useStore((s) => s.setActiveTemple);
   const [emailFor, setEmailFor] = useState<User | null>(null);
   const [newEmail, setNewEmail] = useState("");
   const [busy, setBusy] = useState(false);
@@ -134,6 +137,7 @@ export default function BackOfficePage() {
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 pl-9">
+                    <Button size="sm" onClick={async () => { const r = await setActive(t.id); if (!r.ok) return toast.error(r.error); router.push("/app"); }}><Eye className="h-4 w-4" /> Buka dashboard</Button>
                     <Button size="sm" variant="outline" onClick={() => setTempleForm({ id: t.id, name: t.name, province: t.province, regency: t.regency, district: t.district, village: t.village, address: t.address, description: t.description, phone: t.phone, status: t.status === "active" ? "active" : "pending", banjarIds: t.banjarIds })}><Pencil className="h-4 w-4" /> Ubah data</Button>
                     <Button size="sm" variant="outline" onClick={() => setBankFor({ t, bankName: t.bankName ?? "", bankAccountNumber: t.bankAccountNumber ?? "", bankAccountHolder: t.bankAccountHolder ?? "" })}><Landmark className="h-4 w-4" /> Rekening</Button>
                     <Button size="sm" variant="outline" onClick={() => { setNewStaff({ email: "", name: "", role: "pengurus" }); setStaffFor({ kind: "temple", t }); }}><Users className="h-4 w-4" /> Pengurus</Button>

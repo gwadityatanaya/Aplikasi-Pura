@@ -3,7 +3,7 @@ import { z } from "zod";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db, schema as T } from "./db";
 import { ApiError, todayInAppTz } from "./http";
-import { requireSuperAdmin } from "./context";
+import { requireSuperAdmin, requireTemple } from "./context";
 import { diff } from "./log";
 import { id, log, one, optId, optText, text, type Handler } from "./commands";
 import * as m from "./map";
@@ -218,6 +218,40 @@ export const adminCommands: Record<string, Handler> = {
       });
       return null;
     });
+  },
+
+
+  /**
+   * Admin Utama normally only LOOKS at a temple. To sahkan/tolak/koreksi its records, emergency mode
+   * must be switched on for that one temple, with a reason. It lasts 60 minutes (or until switched
+   * off / another temple is opened). The start, the reason and every action are visible to the
+   * temple's pengurus in Riwayat Audit Pura.
+   */
+  async startEmergency(ctx, p) {
+    await requireSuperAdmin(ctx, "mengaktifkan mode darurat");
+    const templeId = requireTemple(ctx);
+    const { reason } = z.object({ reason: text(300).min(10, "Tuliskan alasan mode darurat (minimal 10 huruf).") }).parse(p);
+    const until = new Date(Date.now() + 60 * 60_000);
+    await db.transaction(async (tx) => {
+      const t = await one(tx.select().from(T.temples).where(eq(T.temples.id, templeId)), "Pura tidak ditemukan.");
+      await tx.update(T.sessions).set({ emergencyTempleId: templeId, emergencyUntil: until, emergencyReason: reason }).where(eq(T.sessions.id, ctx.session.id));
+      await log(ctx, tx, { action: "Admin Utama mengaktifkan mode darurat", entity: "emergency", entityId: templeId, detail: `${t.name} — alasan: ${reason}. Berlaku 60 menit.`, templeId });
+    });
+    ctx.emergency = true;
+    ctx.role = "superadmin";
+    return { until: until.toISOString() };
+  },
+
+  async endEmergency(ctx) {
+    await requireSuperAdmin(ctx, "mengakhiri mode darurat");
+    const templeId = requireTemple(ctx);
+    await db.transaction(async (tx) => {
+      await tx.update(T.sessions).set({ emergencyTempleId: null, emergencyUntil: null, emergencyReason: null }).where(eq(T.sessions.id, ctx.session.id));
+      await log(ctx, tx, { action: "Admin Utama mengakhiri mode darurat", entity: "emergency", entityId: templeId, detail: "Kembali ke mode lihat.", templeId });
+    });
+    ctx.emergency = false;
+    ctx.role = "admin_view";
+    return null;
   },
 
 };

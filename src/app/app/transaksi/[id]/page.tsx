@@ -70,7 +70,7 @@ export default function TransactionDetailPage() {
           <div className="mt-3 flex flex-wrap justify-center gap-1.5">
             {tx.status === "confirmed" && !tx.reversedBy && !tx.reversalOf && <Badge tone="green" dot>Terkonfirmasi</Badge>}
             <TxStatusBadges tx={tx} />
-            {donation && <Badge tone="emerald">Dari donasi terverifikasi</Badge>}
+            {donation && <Badge tone="emerald">Dari donasi disahkan</Badge>}
           </div>
         </div>
         <dl className="divide-y divide-line px-5">
@@ -89,7 +89,7 @@ export default function TransactionDetailPage() {
           </div>
         )}
         <div className="flex flex-wrap gap-2 border-t border-line bg-ivory/50 p-4">
-          {tx.status === "draft" && can("tx.confirm") && <Button size="lg" onClick={() => setDlg("confirm")}><CheckCircle2 className="h-5 w-5" /> Konfirmasi</Button>}
+          {tx.status === "draft" && can("tx.confirm") && <Button size="lg" onClick={() => setDlg("confirm")}><CheckCircle2 className="h-5 w-5" /> Sahkan</Button>}
           {tx.status === "draft" && (can("tx.create") || can("tx.draft")) && (
             <Link href={`/app/transaksi/baru?edit=${tx.id}`} className={buttonClass("outline", "lg")}><Pencil className="h-4 w-4" /> Ubah draf</Link>
           )}
@@ -142,9 +142,9 @@ export default function TransactionDetailPage() {
       <ConfirmDialog
         open={dlg === "confirm"}
         onClose={() => setDlg(null)}
-        title="Konfirmasi transaksi ini?"
-        description="Setelah dikonfirmasi, transaksi masuk ke saldo dan tidak bisa diubah lagi. Kesalahan diperbaiki dengan entri koreksi."
-        confirmLabel="Ya, konfirmasi"
+        title="Sahkan transaksi ini?"
+        description="Setelah disahkan, transaksi masuk ke saldo dan tidak bisa diubah lagi. Kesalahan diperbaiki dengan entri koreksi."
+        confirmLabel="Ya, sahkan"
         onConfirm={async () => {
           const r = await confirmDraft(tx.id);
           setDlg(null);

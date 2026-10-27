@@ -19,14 +19,16 @@ export type Permission =
   | "log.view";
 
 export const ROLE_LABEL: Record<Role, string> = {
-  superadmin: "Admin Utama",
+  superadmin: "Admin Utama (mode darurat)",
+  admin_view: "Admin Utama (mode lihat)",
   pengurus: "Pengurus Pura",
   banjar: "Pengurus Banjar",
   pemeriksa: "Pemeriksa (lihat saja)",
 };
 
 export const ROLE_DESC: Record<Role, string> = {
-  superadmin: "Melihat semua pura, data, laporan dan Log Aktivitas; mengelola banjar, pura, rekening dan semua akun. Tidak dapat dihapus atau diturunkan.",
+  superadmin: "Melihat semua pura, data, laporan dan Log Aktivitas; mengelola banjar, pura, rekening dan semua akun. Mengubah data keuangan pura hanya lewat Mode darurat (dengan alasan, tercatat). Tidak dapat dihapus atau diturunkan.",
+  admin_view: "Admin Utama yang sedang melihat dashboard pura. Untuk mengesahkan, menolak atau mengoreksi, aktifkan Mode darurat dengan alasan.",
   pengurus: "Memverifikasi punia, input manual, mencatat pengeluaran, membuat laporan, dan mengatur privasi pura miliknya.",
   banjar: "Membuka dashboard dan memverifikasi punia di semua pura yang diempon banjarnya. Tidak dapat mengubah rekening atau mengelola pengguna.",
   pemeriksa: "Hanya melihat transaksi, nota, laporan dan Riwayat Audit pura.",
@@ -34,16 +36,19 @@ export const ROLE_DESC: Record<Role, string> = {
 
 export const ROLE_TONE: Record<Role, string> = {
   superadmin: "bg-charcoal text-gold-light",
+  admin_view: "bg-charcoal text-gold-light",
   pengurus: "bg-emerald-100 text-emerald-900",
   banjar: "bg-gold-light text-gold-dark",
   pemeriksa: "bg-violet-100 text-violet-900",
 };
 
 /** Strength order — used when one person holds several roles for the same temple. */
-export const ROLE_RANK: Record<Role, number> = { superadmin: 4, pengurus: 3, banjar: 2, pemeriksa: 1 };
+export const ROLE_RANK: Record<Role, number> = { superadmin: 5, admin_view: 4, pengurus: 3, banjar: 2, pemeriksa: 1 };
 
 const MATRIX: Record<Role, Permission[]> = {
   superadmin: [],
+  // Admin Utama looking at a temple: everything visible, Back Office available, temple data read-only.
+  admin_view: ["tx.view", "report.view", "report.export", "audit.view", "bank.manage", "admin.manage", "log.view"],
   pengurus: [
     "tx.view", "tx.create", "tx.draft", "tx.confirm", "tx.reverse", "donation.manage", "campaign.manage",
     "activity.manage", "report.view", "report.publish", "report.export", "settings.manage", "audit.view",
@@ -54,7 +59,7 @@ const MATRIX: Record<Role, Permission[]> = {
 
 export function can(role: Role | undefined, perm: Permission) {
   if (!role) return false;
-  if (role === "superadmin") return true; // Admin Utama can do everything
+  if (role === "superadmin") return true; // Admin Utama in emergency mode for this temple
   return MATRIX[role].includes(perm);
 }
 

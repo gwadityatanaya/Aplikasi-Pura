@@ -99,7 +99,7 @@ export default function CampaignPage() {
         <aside className="space-y-5 lg:sticky lg:top-20 lg:self-start">
           <Card className="overflow-hidden" data-tour="public-progress">
             <div className="p-6">
-              <p className="text-sm font-medium text-muted">Terkumpul &amp; terverifikasi</p>
+              <p className="text-sm font-medium text-muted">Terkumpul &amp; disahkan</p>
               <AnimatedRupiah value={s.collected} className="tabular mt-1 block text-4xl font-extrabold tracking-tight text-forest" />
               <p className="mt-1 text-sm text-muted">dari target <span className="tabular font-semibold text-charcoal">{rupiah(campaign.target)}</span></p>
               <Progress value={s.progress} className="mt-4" height="h-3.5" label="Progres penggalangan" />

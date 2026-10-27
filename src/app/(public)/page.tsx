@@ -98,7 +98,7 @@ export default function HomePage() {
                 <div className="p-5 pb-8">
                   <div className="flex items-end justify-between">
                     <div>
-                      <p className="text-sm text-muted">Terkumpul (terverifikasi)</p>
+                      <p className="text-sm text-muted">Terkumpul (disahkan)</p>
                       <p className="tabular text-3xl font-extrabold text-forest">{rupiah(heroStats.collected)}</p>
                     </div>
                     <span className="tabular rounded-full bg-mint px-3 py-1 text-sm font-bold text-emerald-800">{formatPercent(heroStats.progress)}</span>
@@ -139,7 +139,7 @@ export default function HomePage() {
           {[
             { label: "Pura terdaftar", value: hydrated ? temples.length : "–" },
             { label: "Penggalangan aktif", value: hydrated ? active.length : "–" },
-            { label: "Dana punia terverifikasi", value: hydrated ? rupiah(campaigns.reduce((s, c) => s + campaignStats(c, donations).collected, 0)) : "–" },
+            { label: "Dana punia disahkan", value: hydrated ? rupiah(campaigns.reduce((s, c) => s + campaignStats(c, donations).collected, 0)) : "–" },
             { label: "Donatur", value: hydrated ? donations.filter((d) => d.status === "verified").length : "–" },
           ].map((s) => (
             <div key={s.label} className="px-1">
@@ -237,7 +237,7 @@ export default function HomePage() {
             <div className="mt-10 grid gap-8 md:grid-cols-3">
               {[
                 { icon: Smartphone, n: "01", title: "Transfer & unggah bukti", body: "Umat mentransfer punia lewat m-banking ke rekening resmi pura, lalu mengunggah foto bukti di aplikasi." },
-                { icon: HandCoins, n: "02", title: "Pengurus memverifikasi", body: "Pengurus mencocokkan dengan mutasi rekening. Hanya punia terverifikasi yang dihitung. Aplikasi tidak memegang uang." },
+                { icon: HandCoins, n: "02", title: "Pengurus memverifikasi", body: "Pengurus mencocokkan dengan mutasi rekening. Hanya punia disahkan yang dihitung. Aplikasi tidak memegang uang." },
                 { icon: Users, n: "03", title: "Semua bisa melihat", body: "Punia, posisi kas, dan laporan tampil di halaman pura — menggantikan broadcast di grup WhatsApp." },
               ].map((s) => (
                 <div key={s.n}>

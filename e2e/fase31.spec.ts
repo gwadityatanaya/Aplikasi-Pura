@@ -140,3 +140,55 @@ test("ganti email pengurus: akun & peran tetap, sesi lama keluar, email baru mas
   expect(log).toContain("putu@contoh.id");
   expect(log).toContain("putu.baru@contoh.id");
 });
+
+test("Admin Utama: lihat semua pura, mengesahkan hanya lewat mode darurat dengan alasan, tercatat jelas", async ({ page }) => {
+  const pub = await publicData(page.request);
+  const dalem = pub.temples.find((t) => t.name.includes("Dalem Kahyangan"))!;
+  const umat = await as("nyoman@contoh.id");
+  const sent = await command<{ id: string }>(umat, "submitPunia", { templeId: dalem.id, amount: 41_000, transferDate: today(), evidence: receiptDataUrl(3141), anonymous: true, purpose: "umum" });
+  expect(sent.ok, sent.error).toBe(true);
+
+  const admin = await as("admin@contoh.id");
+  const st = (await (await admin.get("/api/state")).json()).state;
+  expect(st.data.temples.length).toBeGreaterThanOrEqual(6); // sees every temple
+  expect((await command(admin, "setActiveTemple", { templeId: dalem.id })).ok).toBe(true);
+  const view = (await (await admin.get("/api/state")).json()).state;
+  expect(view.role).toBe("admin_view");
+  expect(view.data.donations.some((d: { id: string }) => d.id === sent.value.id)).toBe(true);
+
+  const blocked = await command(admin, "verifyPunia", { ids: [sent.value.id] });
+  expect(blocked.ok).toBe(false);
+  expect(blocked.error).toMatch(/Mode darurat/i);
+  expect((await command(admin, "startEmergency", { reason: "" })).ok).toBe(false);
+  const on = await command(admin, "startEmergency", { reason: "Pengurus sedang ke luar daerah, punia perlu disahkan" });
+  expect(on.ok, on.error).toBe(true);
+  const ok = await command<{ verified: number }>(admin, "verifyPunia", { ids: [sent.value.id] });
+  expect(ok.ok, ok.error).toBe(true);
+  expect(ok.value.verified).toBe(1);
+
+  // Own punia stays forbidden even in emergency mode.
+  const mine = await command<{ id: string }>(admin, "submitPunia", { templeId: dalem.id, amount: 41_100, transferDate: today(), evidence: receiptDataUrl(3142), anonymous: false, purpose: "umum" });
+  expect(mine.ok, mine.error).toBe(true);
+  const self = await command(admin, "verifyPunia", { ids: [mine.value.id] });
+  expect(self.ok).toBe(false);
+
+  // Visible to the temple's pengurus in Riwayat Audit Pura, and in the Log Aktivitas.
+  const komang = await as("komang@contoh.id");
+  const audit = JSON.stringify((await (await komang.get("/api/state")).json()).state.data.audit);
+  expect(audit).toContain("Admin Utama mengaktifkan mode darurat");
+  expect(audit).toContain("Pengurus sedang ke luar daerah");
+  expect(audit).toContain("Memverifikasi punia — dilakukan oleh Admin Utama (mode darurat)");
+  const log = await (await admin.get("/api/admin/log")).text();
+  expect(log).toContain("dilakukan oleh Admin Utama (mode darurat)");
+
+  // Opening another temple ends emergency mode.
+  const segara = pub.temples.find((t) => t.name.includes("Segara"))!;
+  await command(admin, "setActiveTemple", { templeId: segara.id });
+  await command(admin, "setActiveTemple", { templeId: dalem.id });
+  expect((await (await admin.get("/api/state")).json()).state.role).toBe("admin_view");
+
+  await signInUiAs(page, "admin@contoh.id");
+  await page.goto("/app");
+  await expect(page.getByText("Mode lihat — Admin Utama")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Mode darurat/ })).toBeVisible();
+});

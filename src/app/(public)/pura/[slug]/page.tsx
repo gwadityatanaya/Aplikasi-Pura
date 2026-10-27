@@ -120,7 +120,7 @@ export default function TemplePage() {
           {/* Verified punia */}
           {tp.showDonorList && (
             <Card>
-              <CardHeader title="Punia terverifikasi" description="Donatur yang memilih anonim tampil sebagai &quot;Anonim&quot;" />
+              <CardHeader title="Punia disahkan" description="Donatur yang memilih anonim tampil sebagai &quot;Anonim&quot;" />
               <CardBody><DonorList donations={own.length ? own : allOwn} /></CardBody>
             </Card>
           )}

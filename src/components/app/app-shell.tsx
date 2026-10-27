@@ -1,4 +1,5 @@
 "use client";
+import { EmergencyBar } from "@/components/app/emergency-bar";
 import { templeLocation } from "@/lib/temple";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -42,7 +43,9 @@ export function notificationVisible(kind: string, p: { donationPending: boolean;
 function useVisibleNav() {
   const role = useRole();
   const access = useAccess();
-  return (n: NavItem) => (!n.perm || can(role, n.perm)) && (!n.banjarOnly || access.isSuperAdmin || access.banjarIds.length > 0);
+  const adminOnly = (p?: string) => p === "admin.manage" || p === "log.view";
+  return (n: NavItem) =>
+    (!n.perm || can(role, n.perm) || (access.isSuperAdmin && adminOnly(n.perm))) && (!n.banjarOnly || access.isSuperAdmin || access.banjarIds.length > 0);
 }
 
 /** Lets staff switch between temples they may open. */
@@ -367,7 +370,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="lg:pl-[272px]">
         <TopBar />
         <motion.main key={pathname} id="konten" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22, ease: "easeOut" }} className="mx-auto w-full max-w-6xl px-4 pb-32 pt-5 md:px-6 lg:px-8 lg:pb-12 lg:pt-8">
-          {ready ? children : <ShellSkeleton />}
+          {ready ? <>{temple && <EmergencyBar />}{children}</> : <ShellSkeleton />}
         </motion.main>
       </div>
       <BottomNav />

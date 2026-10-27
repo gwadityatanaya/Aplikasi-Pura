@@ -12,6 +12,13 @@ export interface Ctx extends CurrentSession {
   templeId: string | null;
   role: Role | undefined;
   actor: { id: string; name: string; email: string };
+  /** Admin Utama has emergency mode switched on for ctx.templeId */
+  emergency?: boolean;
+}
+
+/** Admin Utama may change a temple's data only while emergency mode is on for that temple. */
+export function emergencyActive(session: { emergencyTempleId: string | null; emergencyUntil: Date | null }, templeId: string | null) {
+  return !!templeId && session.emergencyTempleId === templeId && !!session.emergencyUntil && session.emergencyUntil.getTime() > Date.now();
 }
 
 type UserRow = CurrentSession["user"];
@@ -78,13 +85,17 @@ export async function getCtx(req: Request): Promise<Ctx> {
     if (templeId !== cur.session.activeTempleId)
       await db.update(schema.sessions).set({ activeTempleId: templeId }).where(eq(schema.sessions.id, cur.session.id));
   }
-  const role = templeId ? access.get(templeId) : undefined;
-  return { ...cur, req, templeId, role, actor: { id: cur.user.id, name: cur.user.name, email: cur.user.email } };
+  let role = templeId ? access.get(templeId) : undefined;
+  const emergency = cur.user.isSuperAdmin && emergencyActive(cur.session, templeId);
+  if (cur.user.isSuperAdmin && templeId) role = emergency ? "superadmin" : "admin_view";
+  return { ...cur, req, templeId, role, emergency, actor: { id: cur.user.id, name: cur.user.name, email: cur.user.email } };
 }
 
 export async function requirePerm(ctx: Ctx, perm: Permission, what = "melakukan tindakan ini") {
   if (!can(ctx.role, perm)) {
     await logActivity({ actor: ctx.actor, action: "Akses ditolak", entity: "session", detail: `Mencoba ${what} tanpa izin (${perm})`, templeId: ctx.templeId, req: ctx.req });
+    if (ctx.role === "admin_view")
+      throw new ApiError(403, `Admin Utama sedang dalam mode lihat. Aktifkan "Mode darurat" (dengan alasan) di dashboard pura ini untuk ${what}.`);
     throw new ApiError(403, `Peran Anda tidak diizinkan untuk ${what}.`);
   }
 }

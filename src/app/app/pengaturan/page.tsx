@@ -277,7 +277,7 @@ function Transparency() {
   const toggles: { k: "showBalance" | "showRecentTransactions" | "showDonorList" | "showCampaigns" | "showPublishedSummaries" | "showPublicProfile"; label: string; desc: string }[] = [
     { k: "showBalance", label: "Tampilkan posisi kas", desc: "Saldo berdasarkan pencatatan pengurus (bukan saldo bank)." },
     { k: "showRecentTransactions", label: "Tampilkan transaksi terakhir", desc: "Pemasukan dan pengeluaran terbaru." },
-    { k: "showDonorList", label: "Tampilkan daftar punia", desc: "Punia terverifikasi. Donatur anonim tetap tampil sebagai \"Anonim\"." },
+    { k: "showDonorList", label: "Tampilkan daftar punia", desc: "Punia disahkan. Donatur anonim tetap tampil sebagai \"Anonim\"." },
     { k: "showCampaigns", label: "Tampilkan penggalangan dana", desc: "Kegiatan/odalan yang dipublikasikan." },
     { k: "showPublishedSummaries", label: "Tampilkan laporan yang dipublikasikan", desc: "Hanya laporan yang Anda publikasikan." },
     { k: "showPublicProfile", label: "Tampilkan pura di daftar pura", desc: "Jika dimatikan, halaman pura disembunyikan dari umat." },

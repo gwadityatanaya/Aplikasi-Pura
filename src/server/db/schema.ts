@@ -36,6 +36,10 @@ export const sessions = pgTable("sessions", {
   expiresAt: ts("expires_at").notNull(),
   ip: text("ip"),
   userAgent: text("user_agent"),
+  /** Admin Utama "Mode darurat": allowed to change data of this one temple until this time. */
+  emergencyTempleId: text("emergency_temple_id"),
+  emergencyUntil: ts("emergency_until"),
+  emergencyReason: text("emergency_reason"),
 }, (t) => [index("sessions_user").on(t.userId)]);
 
 /** One-time sign-in links (stored only as a SHA-256 hash). */

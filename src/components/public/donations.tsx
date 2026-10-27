@@ -33,7 +33,7 @@ export function DonorList({ donations, limit = 8 }: { donations: Donation[]; lim
   const list = showAll ? visible : visible.slice(0, limit);
 
   if (!verified.length)
-    return <p className="py-8 text-center text-[15px] text-muted">Belum ada donasi terverifikasi. Jadilah yang pertama berpunia.</p>;
+    return <p className="py-8 text-center text-[15px] text-muted">Belum ada donasi disahkan. Jadilah yang pertama berpunia.</p>;
 
   return (
     <div>
@@ -112,7 +112,7 @@ export function DonationFeed({ donations }: { donations: Donation[] }) {
                 {d.privacy === "private" ? "berpunia" : <>berpunia <span className="font-semibold">{rupiah(d.amount)}</span></>}
               </p>
               <p className="text-xs text-muted">
-                {d.status === "verified" ? `Terverifikasi · ${relativeTime(d.verifiedAt ?? d.createdAt)}` : "Menunggu verifikasi pengurus"}
+                {d.status === "verified" ? `Disahkan · ${relativeTime(d.verifiedAt ?? d.createdAt)}` : "Menunggu verifikasi pengurus"}
               </p>
             </div>
           </motion.li>

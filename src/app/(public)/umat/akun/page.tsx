@@ -88,7 +88,7 @@ export default function MyAccountPage() {
         ) : (
           <>
             <p className="mt-1 text-[15px] text-muted">
-              Akun dan data pribadi Anda dihapus. Punia yang sudah terverifikasi tetap tersimpan sebagai arsip keuangan pura, tetapi nama Anda diganti menjadi &quot;Anonim&quot;.
+              Akun dan data pribadi Anda dihapus. Punia yang sudah disahkan tetap tersimpan sebagai arsip keuangan pura, tetapi nama Anda diganti menjadi &quot;Anonim&quot;.
             </p>
             <Button variant="danger" className="mt-3" onClick={() => setAskDelete(true)}><Trash2 className="h-4 w-4" /> Hapus akun saya</Button>
           </>

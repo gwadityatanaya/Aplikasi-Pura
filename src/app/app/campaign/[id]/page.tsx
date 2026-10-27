@@ -86,7 +86,7 @@ function CampaignAdmin() {
             <TempleCover variant={c.cover} image={c.coverImage} className="h-36 md:h-auto" />
             <div className="p-5 md:p-6">
               <div className="flex flex-wrap items-center gap-2"><CampaignStatusBadge status={c.status} /> {c.status === "active" && <span className="text-sm text-muted">{daysLeftLabel(c.endDate)}</span>}</div>
-              <p className="mt-3 text-sm text-muted">Terkumpul (terverifikasi)</p>
+              <p className="mt-3 text-sm text-muted">Terkumpul (disahkan)</p>
               <AnimatedRupiah value={s.collected} className="tabular block text-3xl font-extrabold text-forest md:text-4xl" />
               <Progress value={s.progress} className="mt-3" height="h-3" label="Progres campaign" />
               <div className="mt-2 flex justify-between text-sm">
@@ -145,7 +145,7 @@ function CampaignAdmin() {
                 <div className="rounded-xl bg-ivory p-3"><dt className="text-sm text-muted">Verifikasi</dt><dd className="font-semibold">{c.manualVerification ? "Manual oleh bendahara" : "Otomatis"}</dd></div>
               </dl>
               <p className="flex items-start gap-2 rounded-xl bg-mint/50 p-3 text-sm text-emerald-900">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" /> Setiap donasi terverifikasi tercatat sebagai tepat satu transaksi pemasukan di buku kas pura, sehingga tidak ada dana yang terhitung dua kali.
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" /> Setiap donasi disahkan tercatat sebagai tepat satu transaksi pemasukan di buku kas pura, sehingga tidak ada dana yang terhitung dua kali.
               </p>
             </CardBody>
           </Card>
@@ -170,7 +170,7 @@ function CampaignAdmin() {
                     </div>
                     {manage && (
                       <div className="mt-3 flex gap-2">
-                        <Button className="flex-1" disabled={isMine(d)} title={isMine(d) ? "Punia Anda sendiri — harus disetujui pengurus lain" : undefined} onClick={() => setVerifying(d)}><CheckCircle2 className="h-4 w-4" /> {isMine(d) ? "Punia Anda" : "Verifikasi"}</Button>
+                        <Button className="flex-1" disabled={isMine(d)} title={isMine(d) ? "Punia Anda sendiri — harus disahkan pengurus lain" : undefined} onClick={() => setVerifying(d)}><CheckCircle2 className="h-4 w-4" /> {isMine(d) ? "Punia Anda" : "Sahkan"}</Button>
                         <Button variant="outline" className="flex-1 text-expense" onClick={() => { setRejecting(d); setRejectReason(""); }}><XCircle className="h-4 w-4" /> Tolak</Button>
                       </div>
                     )}
@@ -196,7 +196,7 @@ function CampaignAdmin() {
                       <td className="px-4 py-3 text-muted">{formatDateShort(d.date)}</td>
                       <td className="px-4 py-3 text-sm text-muted">{PRIVACY_LABEL[d.privacy]}</td>
                       <td className="px-4 py-3">
-                        {d.status === "verified" && (d.transactionId ? <Link href={`/app/transaksi/${d.transactionId}`}><Badge tone="green" dot>Terverifikasi</Badge></Link> : <Badge tone="green" dot>Terverifikasi</Badge>)}
+                        {d.status === "verified" && (d.transactionId ? <Link href={`/app/transaksi/${d.transactionId}`}><Badge tone="green" dot>Disahkan</Badge></Link> : <Badge tone="green" dot>Disahkan</Badge>)}
                         {d.status === "pending" && <Badge tone="amber" dot>Menunggu</Badge>}
                         {d.status === "rejected" && <span title={d.rejectedReason}><Badge tone="red" dot>Ditolak</Badge></span>}
                       </td>
@@ -238,7 +238,7 @@ function CampaignAdmin() {
           if (!verifying) return;
           const r = await verifyMany([verifying.id]);
           setVerifying(null);
-          r.ok ? toast.success("Punia terverifikasi", { description: "Tercatat di buku kas. Dashboard & halaman umat diperbarui." }) : toast.error(r.error);
+          r.ok ? toast.success("Punia disahkan", { description: "Tercatat di buku kas. Dashboard & halaman umat diperbarui." }) : toast.error(r.error);
         }}
       />
       <Dialog

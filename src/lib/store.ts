@@ -72,6 +72,8 @@ export interface Access {
   /** Has any staff role (Pengurus Pura, Pengurus Banjar, Pemeriksa or Admin Utama) */
   isStaff: boolean;
   banjarIds: string[];
+  /** Admin Utama emergency mode for the open temple (null = view only) */
+  emergency: { templeId: string; until: string; reason: string } | null;
 }
 
 interface ServerStatePayload {
@@ -133,7 +135,7 @@ const defaultPrefs: Preferences = {
   reduceMotion: false,
   notifications: { donationPending: true, campaignTarget: true, campaignEnding: true, reportReady: true, approvals: true, weeklySummary: false },
 };
-const noAccess: Access = { isSuperAdmin: false, isStaff: false, banjarIds: [] };
+const noAccess: Access = { isSuperAdmin: false, isStaff: false, banjarIds: [], emergency: null };
 
 export function emptyData(): DataState {
   return {

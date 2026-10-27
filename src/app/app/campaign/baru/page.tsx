@@ -145,7 +145,7 @@ function Wizard() {
                   </div>
                   <div className="mt-3"><ImageUpload value={f.coverImage} onChange={(v) => set("coverImage", v)} label="Foto sampul" allowCamera={false} compact /></div>
                 </Field>
-                <Field label="Kegiatan terkait" htmlFor="c-act" hint="Donasi terverifikasi otomatis tercatat ke kegiatan ini.">
+                <Field label="Kegiatan terkait" htmlFor="c-act" hint="Donasi disahkan otomatis tercatat ke kegiatan ini.">
                   <Select id="c-act" value={f.activityId ?? ""} onChange={(e) => set("activityId", e.target.value)}>
                     <option value="">— Tidak ada —</option>
                     {ws.activities.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}

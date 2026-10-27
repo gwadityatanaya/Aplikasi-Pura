@@ -1,14 +1,14 @@
 import "server-only";
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { db, schema } from "./db";
-import { banjarIdsOf, templeAccess, type Ctx } from "./context";
+import { banjarIdsOf, emergencyActive, templeAccess, type Ctx } from "./context";
 import * as m from "./map";
 import type { DataState, Donation, Role, Session, User } from "@/lib/types";
 
 export interface ServerState {
   me: User;
   role: Role | undefined;
-  access: { isSuperAdmin: boolean; isStaff: boolean; banjarIds: string[] };
+  access: { isSuperAdmin: boolean; isStaff: boolean; banjarIds: string[]; emergency: { templeId: string; until: string; reason: string } | null };
   session: Session;
   data: DataState;
 }
@@ -112,10 +112,20 @@ export async function loadState(ctx: Ctx): Promise<ServerState> {
   const me = m.toUser(ctx.user);
   if (!scoped.users.some((x) => x.id === me.id)) scoped.users.push(me);
 
+  // Admin Utama: read-only ("admin_view") unless emergency mode is on for this temple.
+  let role = templeId ? access.get(templeId) : undefined;
+  let emergency: ServerState["access"]["emergency"] = null;
+  if (ctx.user.isSuperAdmin && templeId) {
+    const [sess] = await db.select().from(schema.sessions).where(eq(schema.sessions.id, ctx.session.id));
+    const on = !!sess && emergencyActive(sess, templeId);
+    role = on ? "superadmin" : "admin_view";
+    if (on) emergency = { templeId, until: sess.emergencyUntil!.toISOString(), reason: sess.emergencyReason ?? "" };
+  }
+
   return {
     me,
-    role: templeId ? access.get(templeId) : undefined,
-    access: { isSuperAdmin: ctx.user.isSuperAdmin, isStaff: ctx.user.isSuperAdmin || access.size > 0, banjarIds },
+    role,
+    access: { isSuperAdmin: ctx.user.isSuperAdmin, isStaff: ctx.user.isSuperAdmin || access.size > 0, banjarIds, emergency },
     session: { userId: ctx.user.id, activeTempleId: templeId ?? undefined, startedAt: ctx.session.createdAt.toISOString() },
     data: {
       version: 0,

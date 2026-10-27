@@ -8,7 +8,11 @@ export type ID = string;
  * superadmin (Admin Utama) > pengurus (Pengurus Pura) > banjar (Pengurus Banjar) > pemeriksa (lihat saja).
  * Users with none of these are Umat.
  */
-export type Role = "superadmin" | "pengurus" | "banjar" | "pemeriksa";
+/**
+ * "superadmin" = Admin Utama in emergency mode for the open temple (may change its data);
+ * "admin_view" = Admin Utama looking at a temple (read-only until emergency mode is switched on).
+ */
+export type Role = "superadmin" | "admin_view" | "pengurus" | "banjar" | "pemeriksa";
 /** Roles that can be assigned per temple (through the Back Office). */
 export type MemberRole = "pengurus" | "pemeriksa";
 

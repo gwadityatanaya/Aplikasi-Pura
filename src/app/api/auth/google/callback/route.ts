@@ -56,7 +56,7 @@ export async function GET(req: Request) {
   }
   const validIss = claims.iss === "accounts.google.com" || claims.iss === "https://accounts.google.com";
   if (!validIss || claims.aud !== process.env.GOOGLE_CLIENT_ID || claims.exp * 1000 < Date.now() || !claims.email || claims.email_verified !== true) {
-    await logActivity({ actor: { id: null, name: "Tidak dikenal", email: claims.email ?? null }, action: "Login gagal", entity: "session", detail: "Token Google tidak valid atau email belum terverifikasi", req });
+    await logActivity({ actor: { id: null, name: "Tidak dikenal", email: claims.email ?? null }, action: "Login gagal", entity: "session", detail: "Token Google tidak valid atau email belum disahkan", req });
     return fail("google-gagal");
   }
   try {

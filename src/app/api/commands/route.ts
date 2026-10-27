@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { getCtx } from "@/server/context";
 import { housekeeping } from "@/server/commands";
-import { commands } from "@/server/registry";
+import { backOfficeCommands, commands } from "@/server/registry";
 import { ApiError, assertSameOrigin, json, readJson, route } from "@/server/http";
 import { loadState } from "@/server/state";
 
@@ -14,6 +14,7 @@ export const POST = route(async (req: Request) => {
   const handler = commands[body.name];
   if (!handler) throw new ApiError(400, "Perintah tidak dikenal.");
   const ctx = await getCtx(req);
+  if (backOfficeCommands.has(body.name)) ctx.emergency = false;
   try {
     const value = await handler(ctx, body.payload ?? {});
     if (Math.random() < 0.02) housekeeping().catch(() => {});

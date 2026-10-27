@@ -32,7 +32,7 @@ export default function CampaignsAdminPage() {
         actions={can("campaign.manage") && <Link href="/app/campaign/baru" className={buttonClass("primary")}><Plus className="h-4 w-4" /> Buat campaign</Link>}
       />
       <div className="mb-5 grid grid-cols-3 gap-3">
-        <Card className="p-4"><p className="text-sm text-muted">Total terverifikasi</p><p className="tabular mt-1 text-lg font-extrabold text-forest">{rupiah(totalCollected)}</p></Card>
+        <Card className="p-4"><p className="text-sm text-muted">Total disahkan</p><p className="tabular mt-1 text-lg font-extrabold text-forest">{rupiah(totalCollected)}</p></Card>
         <Card className="p-4"><p className="text-sm text-muted">Donatur</p><p className="tabular mt-1 text-lg font-extrabold">{all.reduce((s, x) => s + x.contributors, 0)}</p></Card>
         <Card className="p-4"><p className="text-sm text-muted">Menunggu verifikasi</p><p className="tabular mt-1 text-lg font-extrabold text-amber-700">{pending.length}</p></Card>
       </div>

@@ -85,7 +85,11 @@ export async function notify(tx: Tx, n: Omit<AppNotification, "id" | "date" | "r
 }
 
 export function log(ctx: Ctx, tx: Tx, e: { action: string; entity: string; detail: string; entityId?: string | null; changes?: unknown; templeId?: string | null }) {
-  return logActivity({ ...e, actor: ctx.actor, templeId: e.templeId === undefined ? ctx.templeId : e.templeId, req: ctx.req }, tx);
+  // Anything Admin Utama changes in a temple during emergency mode is labelled as such — in the
+  // Log Aktivitas and in that temple's Riwayat Audit Pura.
+  const templeId = e.templeId === undefined ? ctx.templeId : e.templeId;
+  const action = ctx.emergency && templeId && templeId === ctx.templeId ? `${e.action} — dilakukan oleh Admin Utama (mode darurat)` : e.action;
+  return logActivity({ ...e, action, actor: ctx.actor, templeId, req: ctx.req }, tx);
 }
 
 export async function one<R>(rows: Promise<R[]>, msg = "Data tidak ditemukan.") {
@@ -140,9 +144,11 @@ export const coreCommands: Record<string, Handler> = {
     const { templeId } = z.object({ templeId: id }).parse(p);
     const role = (await templeAccess(ctx.user)).get(templeId);
     if (!role) throw new ApiError(403, "Anda tidak memiliki akses ke pura ini.");
-    await db.update(T.sessions).set({ activeTempleId: templeId }).where(eq(T.sessions.id, ctx.session.id));
+    // Switching temple always ends Admin Utama's emergency mode: it is granted for one temple only.
+    await db.update(T.sessions).set({ activeTempleId: templeId, emergencyTempleId: null, emergencyUntil: null, emergencyReason: null }).where(eq(T.sessions.id, ctx.session.id));
     ctx.templeId = templeId;
-    ctx.role = role;
+    ctx.role = ctx.user.isSuperAdmin ? "admin_view" : role;
+    ctx.emergency = false;
     return null;
   },
 
@@ -229,7 +235,7 @@ export const coreCommands: Record<string, Handler> = {
       if (cur.status !== "confirmed") throw new ApiError(409, "Hanya transaksi terkonfirmasi yang dapat dikoreksi.");
       if (cur.reversedBy) throw new ApiError(409, "Transaksi ini sudah pernah dikoreksi.");
       if (cur.reversalOf) throw new ApiError(409, "Entri koreksi tidak dapat dikoreksi lagi.");
-      if (cur.donationId) throw new ApiError(409, "Transaksi dari donasi terverifikasi dikoreksi lewat halaman campaign.");
+      if (cur.donationId) throw new ApiError(409, "Transaksi punia dikoreksi lewat Verifikasi Punia → buka punianya → Koreksi punia ini.");
       const today = todayInAppTz();
       const revId = uid("tx");
       const [rev] = await tx

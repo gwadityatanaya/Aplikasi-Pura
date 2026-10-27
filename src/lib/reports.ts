@@ -177,7 +177,7 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
       }
       const tot = body.reduce((x, r) => x + (r[2] as number), 0);
       const used = body.reduce((x, r) => x + (r[4] as number), 0);
-      return { ...base, period: `Sampai ${formatDate(f.to)}`, summary: [{ label: "Total terkumpul", value: tot }, { label: "Telah digunakan", value: used }, { label: "Sisa dana campaign", value: tot - used }], tables, note: "Hanya donasi terverifikasi yang dihitung. Data pribadi donatur tidak dicantumkan." };
+      return { ...base, period: `Sampai ${formatDate(f.to)}`, summary: [{ label: "Total terkumpul", value: tot }, { label: "Telah digunakan", value: used }, { label: "Sisa dana campaign", value: tot - used }], tables, note: "Hanya donasi disahkan yang dihitung. Data pribadi donatur tidak dicantumkan." };
     }
     case "punia":
     case "punia_lengkap": {

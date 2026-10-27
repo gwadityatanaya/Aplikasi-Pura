@@ -65,9 +65,9 @@ const isSelf = (ctx: Ctx, d: { submittedBy: string | null; submitterEmail: strin
 async function verifyOne(ctx: Ctx, tx: Tx, donationId: string, templeId: string): Promise<{ ok: true; number: string } | { ok: false; reason: string }> {
   const [d] = await tx.select().from(T.donations).where(and(eq(T.donations.id, donationId), eq(T.donations.templeId, templeId))).for("update");
   if (!d) return { ok: false, reason: "Punia tidak ditemukan di pura ini." };
-  if (d.status === "verified") return { ok: false, reason: "Sudah terverifikasi." };
+  if (d.status === "verified") return { ok: false, reason: "Sudah disahkan." };
   if (d.status === "rejected") return { ok: false, reason: "Punia ini sudah ditolak." };
-  if (isSelf(ctx, d)) return { ok: false, reason: "Dikirim oleh Anda sendiri — harus disetujui pengurus lain." };
+  if (isSelf(ctx, d)) return { ok: false, reason: "Dikirim oleh Anda sendiri — harus disahkan pengurus lain." };
 
   const campaign = d.campaignId ? (await tx.select().from(T.campaigns).where(eq(T.campaigns.id, d.campaignId)))[0] : undefined;
   const accounts = await tx.select().from(T.accounts).where(and(eq(T.accounts.templeId, templeId), eq(T.accounts.archived, false)));
@@ -184,7 +184,7 @@ export const puniaCommands: Record<string, Handler> = {
       await log(ctx, tx, { action: "Mencatat punia manual", entity: "donation", entityId: donationId, detail: `${i.anonymous ? "Donatur anonim" : "Donatur tampil"} — ${rupiah(i.amount)} via ${i.channel}. Dicatat oleh ${ctx.user.name}.`, templeId });
       const self = !!i.donorEmail && i.donorEmail === ctx.user.email.toLowerCase();
       if (self) {
-        await notify(tx, { templeId, kind: "donation_pending", title: "Punia pengurus menunggu verifikasi", body: `${ctx.user.name} mencatat punianya sendiri ${rupiah(i.amount)} — perlu disetujui pengurus lain.`, href: `/app/punia?id=${donationId}` });
+        await notify(tx, { templeId, kind: "donation_pending", title: "Punia pengurus menunggu verifikasi", body: `${ctx.user.name} mencatat punianya sendiri ${rupiah(i.amount)} — perlu disahkan pengurus lain.`, href: `/app/punia?id=${donationId}` });
         return { id: donationId, verified: false };
       }
       const r = await verifyOne(ctx, tx, donationId, templeId);
@@ -206,7 +206,7 @@ export const puniaCommands: Record<string, Handler> = {
         if (r.ok) verified++;
         else skipped.push({ id: did, reason: r.reason });
       } catch (e) {
-        skipped.push({ id: did, reason: e instanceof Error && /sendiri/.test(e.message) ? "Dikirim oleh Anda sendiri — harus disetujui pengurus lain." : "Gagal diproses." });
+        skipped.push({ id: did, reason: e instanceof Error && /sendiri/.test(e.message) ? "Dikirim oleh Anda sendiri — harus disahkan pengurus lain." : "Gagal diproses." });
       }
     }
     if (!verified && skipped.length === 1) throw new ApiError(409, skipped[0].reason);
