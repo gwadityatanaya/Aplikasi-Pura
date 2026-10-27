@@ -12,7 +12,9 @@
     "db:generate": "drizzle-kit generate",
     "backup": "tsx scripts/backup.ts",
     "restore": "tsx scripts/restore.ts",
-    "admin:reset": "tsx scripts/admin-reset.ts"
+    "admin:reset": "tsx scripts/admin-reset.ts",
+    "db:seed-demo": "tsx --require ./scripts/allow-server-only.cjs scripts/seed-demo.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@fontsource-variable/plus-jakarta-sans": "^5.1.1",
@@ -39,6 +41,7 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/node": "^22.10.2",
     "@types/nodemailer": "^6.4.17",
     "@types/react": "^18.3.18",
