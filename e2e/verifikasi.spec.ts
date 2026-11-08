@@ -130,14 +130,31 @@ test("Tambah pura langsung Aktif: peringatan, alasan wajib (dijaga server), terc
   await page.getByRole("button", { name: /Tambah pura/ }).click();
   const dlg = page.getByRole("dialog");
   await dlg.locator("#tp-name").fill("CONTOH Pura Baru Lewat Layar");
+  // The form starts as "Nonaktif" (decision Phase 3.4): no warning, no reason needed.
+  await expect(dlg.getByLabel("Status")).toHaveValue("pending");
+  await expect(dlg.getByText(/belum punya checklist verifikasi/)).toHaveCount(0);
+  // Choosing "Aktif" shows the warning; saving without a reason is refused.
+  await dlg.getByLabel("Status").selectOption("active");
   await expect(dlg.getByText("Pura baru belum punya checklist verifikasi (0/4).")).toBeVisible();
   await dlg.getByRole("button", { name: "Simpan" }).click();
   await expect(page.getByText(/Tulis alasan \(minimal 5 huruf\)/)).toBeVisible();
-  await dlg.getByLabel("Status").selectOption("pending");
-  await expect(dlg.getByText(/belum punya checklist verifikasi/)).toHaveCount(0);
-  await dlg.getByLabel("Status").selectOption("active");
   await dlg.getByLabel("Alasan mengaktifkan sekarang (wajib)").fill("Uji layar: pura baru langsung aktif");
   await dlg.getByRole("button", { name: "Simpan" }).click();
   await expect(page.getByText("Pura ditambahkan")).toBeVisible();
   expect((await users()).temples.find((t) => t.name === "CONTOH Pura Baru Lewat Layar")!.status).toBe("active");
+});
+
+test("Tambah pura dengan status bawaan Nonaktif: tersimpan tanpa alasan dan belum tampil di publik", async ({ page }) => {
+  await signInUi(page, "admin@contoh.id");
+  await page.goto("/app/admin");
+  await page.getByRole("button", { name: /Tambah pura/ }).click();
+  const dlg = page.getByRole("dialog");
+  await dlg.locator("#tp-name").fill("CONTOH Pura Baru Bawaan Nonaktif");
+  await dlg.getByRole("button", { name: "Simpan" }).click();
+  await expect(page.getByText("Pura ditambahkan")).toBeVisible();
+  const admin = await pw.newContext({ baseURL: BASE });
+  await signInApi(admin, "admin@contoh.id");
+  const t = ((await (await admin.get("/api/admin/users")).json()).temples as { name: string; status: string }[]).find((x) => x.name === "CONTOH Pura Baru Bawaan Nonaktif")!;
+  expect(t.status).toBe("pending");
+  expect((await publicData(await pw.newContext({ baseURL: BASE }))).temples.some((x) => x.name === "CONTOH Pura Baru Bawaan Nonaktif")).toBe(false);
 });

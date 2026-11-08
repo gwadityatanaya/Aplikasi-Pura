@@ -45,7 +45,7 @@ const pickAddress = (x: AddressValue): AddressValue => ({
   province: x.province, regency: x.regency, district: x.district, village: x.village,
   provinceCode: x.provinceCode ?? null, regencyCode: x.regencyCode ?? null, districtCode: x.districtCode ?? null, villageCode: x.villageCode ?? null,
 });
-const emptyTemple = { id: "", name: "", ...emptyAddress, address: "", description: "", phone: "", status: "active" as "active" | "pending", banjarIds: [] as string[], activationReason: "" };
+const emptyTemple = { id: "", name: "", ...emptyAddress, address: "", description: "", phone: "", status: "pending" as "active" | "pending", banjarIds: [] as string[], activationReason: "" }; // new pura: Nonaktif until verified (decision Phase 3.4)
 const emptyBanjar = { id: "", name: "", ...emptyAddress, address: "" };
 
 export default function BackOfficePage() {
