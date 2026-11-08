@@ -14,7 +14,7 @@ import { NoAccess } from "@/components/app/page-header";
 import { ICONS } from "@/components/app/tx-row";
 import { useCan, useWorkspace } from "@/components/app/hooks";
 import { useStore } from "@/lib/store";
-import { cn, formatDateLong, rupiah, todayISO, uid } from "@/lib/format";
+import { cn, formatDate, formatDateLong, rupiah, todayISO, uid } from "@/lib/format";
 import type { TxType } from "@/lib/types";
 
 interface FormState {
@@ -213,7 +213,10 @@ function TxForm() {
                 </Field>
                 <QuickAmounts onPick={(v) => set("amount", v)} />
                 <Field label="Tanggal" htmlFor="date" error={errors.date} hint={f.date ? formatDateLong(f.date) : undefined}>
-                  <Input id="date" type="date" max={todayISO()} value={f.date} onChange={(e) => set("date", e.target.value)} />
+                  <Input id="date" type="date" min={ws.temple?.booksStartDate} max={todayISO()} value={f.date} onChange={(e) => set("date", e.target.value)} />
+                  {ws.temple?.booksStartDate && f.date && f.date < ws.temple.booksStartDate && (
+                    <p className="mt-1 text-sm font-semibold text-expense" role="alert">Tanggal ini sebelum tanggal mulai pembukuan ({formatDate(ws.temple.booksStartDate)}). Catatan itu termasuk buku lama dan akan ditolak.</p>
+                  )}
                 </Field>
               </>
             )}

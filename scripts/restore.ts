@@ -28,6 +28,9 @@ async function main() {
       // Older backups may contain columns that were removed since (e.g. temples.email): skip those.
       const cols = new Set((await tx`select column_name from information_schema.columns where table_schema = 'public' and table_name = ${table}`).map((c) => c.column_name as string));
       const clean = rows.map((r) => Object.fromEntries(Object.entries(r).filter(([k]) => cols.has(k))));
+      // The sum of opening-balance corrections is rebuilt by the database while the corrections
+      // themselves are restored (later in this list), so it starts at 0 here.
+      if (table === "accounts") clean.forEach((r) => "opening_adjust" in r && (r.opening_adjust = 0));
       for (let i = 0; i < clean.length; i += 200) {
         await tx`insert into ${tx(table)} ${tx(clean.slice(i, i + 200) as any)}`;
       }

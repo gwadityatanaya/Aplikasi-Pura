@@ -13,6 +13,7 @@ import { rupiah, uid } from "@/lib/format";
 import { campaignPhase } from "@/lib/campaign";
 import { personalDataIn } from "@/lib/personal-data";
 import { queuePuniaEmail } from "./email-queue";
+import { assertNotBeforeStart } from "./books-guard";
 import { originOf } from "./auth";
 import type { Campaign } from "@/lib/types";
 
@@ -93,6 +94,9 @@ async function verifyOne(ctx: Ctx, tx: Tx, donationId: string, templeId: string)
   const cats = await tx.select().from(T.categories).where(and(eq(T.categories.templeId, templeId), eq(T.categories.type, "income")));
   const cat = cats.find((c) => c.name === categoryName) ?? cats.find((c) => c.name.startsWith("Dana Punia")) ?? cats[0];
   const date = d.transferDate ?? d.date;
+  // A transfer from before the start of the books is already inside the counted opening balance.
+  const [start] = await tx.select({ s: T.temples.booksStartDate }).from(T.temples).where(eq(T.temples.id, templeId));
+  if (start?.s && date < start.s) return { ok: false, reason: `Tanggal transfer sebelum tanggal mulai pembukuan (${start.s}) — sudah termasuk saldo awal. Tolak dengan alasan itu bila perlu.` };
   const shown = d.privacy === "public" ? d.donorName : "Anonim";
 
   const [row] = await tx
@@ -205,6 +209,7 @@ export const puniaCommands: Record<string, Handler> = {
       .parse(p);
     checkDate(i.transferDate);
     return db.transaction(async (tx) => {
+      await assertNotBeforeStart(tx, templeId, i.transferDate, "Tanggal punia");
       await checkGrouping(tx, templeId, i.activityId, i.campaignId);
       const hash = imageHash(i.evidence);
       await assertNotDuplicate(tx, { hash, templeId, amount: i.amount, transferDate: i.transferDate, referenceNo: i.referenceNo });

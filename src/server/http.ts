@@ -50,7 +50,11 @@ export function route<A extends unknown[]>(fn: (...args: A) => Promise<Response>
       return await fn(...args);
     } catch (e) {
       if (e instanceof ApiError) return json({ ok: false, error: e.message }, e.status);
-      if (e && typeof e === "object" && "issues" in e) return json({ ok: false, error: "Data yang dikirim belum lengkap atau tidak valid." }, 400);
+      if (e && typeof e === "object" && "issues" in e) {
+        // Our own Indonesian messages (e.g. "Isi dua orang saksi") are shown; zod's English defaults are not.
+        const own = (e as { issues: { message?: string }[] }).issues.map((i) => i.message ?? "").find((msg) => msg && !/^(Required|Expected|Invalid|String must|Number must|Array must|Too |Unrecognized)/.test(msg));
+        return json({ ok: false, error: own ?? "Data yang dikirim belum lengkap atau tidak valid." }, 400);
+      }
       const msg = e instanceof Error ? e.message : String(e);
       // Messages raised by our database guards are safe to show.
       if (/tidak boleh|Admin Utama/.test(msg)) return json({ ok: false, error: msg.replace(/^.*?: /, "") }, 409);

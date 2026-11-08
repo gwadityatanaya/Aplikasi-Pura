@@ -19,7 +19,8 @@ Waktu yang dibutuhkan: sekitar **60 menit** untuk pertama kali (termasuk mengatu
 9. [Langkah 5 — Login Google](#langkah-5--login-google)
 10. [Langkah 6 — Akun Admin Utama (sekali saja)](#langkah-6--akun-admin-utama-sekali-saja)
 11. [Langkah 7 — Banjar, pura, rekening, dan pengurus](#langkah-7--banjar-pura-rekening-dan-pengurus)
-12. [Alur punia sehari-hari](#alur-punia-sehari-hari)
+12. [Mulai memakai aplikasi (pindah dari buku)](#mulai-memakai-aplikasi-pindah-dari-buku)
+    - [Alur punia sehari-hari](#alur-punia-sehari-hari)
 13. [Admin Utama: mode lihat dan mode darurat](#admin-utama-mode-lihat-dan-mode-darurat)
     - [Mengarsipkan atau menghapus pura dan banjar](#mengarsipkan-atau-menghapus-pura-dan-banjar)
     - [Foto profil](#foto-profil)
@@ -285,6 +286,22 @@ Tanda yang perlu diperhatikan di Back Office:
 - **"Rekening belum diisi"** — umat belum bisa berpunia lewat aplikasi.
 
 Pengurus pura lalu mengisi sendiri di **Pengaturan**: deskripsi & kontak pura (opsional), **saldo awal** kas (agar posisi kas di halaman umat benar), dan **Tampilan untuk umat** (tampilkan saldo, transaksi terakhir, daftar punia, berapa transaksi terakhir 3–5). Semua bawaannya **terbuka**.
+
+---
+
+## Mulai memakai aplikasi (pindah dari buku)
+
+Dua dokumen terpisah untuk pengurus, dengan bahasa sederhana:
+- **[Panduan pelatihan pengurus](PANDUAN-PELATIHAN.md)** — menghitung saldo awal bersama, jalan paralel dengan buku 1–3 bulan, mencocokkan setiap akhir bulan, dan kapan buku boleh dilepas.
+- **[Checklist hari mulai (cut-off)](CHECKLIST-HARI-MULAI.md)** — untuk dicetak dan dicentang pada hari mulai.
+
+Di aplikasi:
+1. **Pengaturan → Kas & saldo awal → Mulai pembukuan**: pilih **tanggal mulai memakai aplikasi**, isi **saldo awal setiap kas dan rekening** pada tanggal itu (hasil hitung bersama, bukan angka buku), dan tulis **nama dua pengurus yang menyaksikan**. Sekali saja; setelah disimpan, saldo awal **terkunci** (dijaga aplikasi dan database).
+2. Salah hitung? **Koreksi saldo awal** pada kas/rekening itu: selisih (tambah/kurangi), alasan, dan dua saksi. Koreksi dicatat terpisah, tidak bisa diubah atau dihapus, dan terlihat di Riwayat Audit Pura. Kas/rekening yang ditambah belakangan diberi saldo awal lewat **Isi saldo awal** (juga dua saksi).
+3. Transaksi dan punia bertanggal **sebelum tanggal mulai** ditolak — termasuk buku lama dan sudah ada di saldo awal. Form transaksi memperingatkan sebelum dikirim.
+4. **Laporan → Pencocokan saldo bulanan**: setiap akhir bulan isi saldo dari **mutasi bank** tiap rekening dan **hitungan kas tunai**. Aplikasi menampilkan saldo hitungan aplikasi dan **selisihnya** (hijau "Cocok" atau merah "Selisih"). Ini hanya catatan — saldo tidak berubah. Saat mengunduh laporan, centang **"Sertakan hasil pencocokan saldo bulanan"** agar ikut tercetak sebelum blok tanda tangan.
+
+Pura yang belum menekan **Mulai pembukuan** tetap berjalan seperti sebelumnya.
 
 ---
 

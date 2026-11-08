@@ -106,6 +106,13 @@ export const temples = pgTable("temples", {
   /** QRIS image (public attachment URL) and the bank account it pays into — Admin Utama only */
   qrisImage: text("qris_image"),
   qrisAccountId: text("qris_account_id"),
+  // "Mulai memakai aplikasi": the cut-off date of the old books. Set once (database trigger);
+  // no transaction may be dated before it.
+  booksStartDate: date("books_start_date", { mode: "string" }),
+  booksStartedAt: ts("books_started_at"),
+  booksStartedBy: text("books_started_by"),
+  /** The two pengurus who counted the opening balances together */
+  booksWitnesses: text("books_witnesses"),
   createdAt: ts("created_at").notNull().defaultNow(),
 });
 
@@ -187,6 +194,11 @@ export const accounts = pgTable("accounts", {
   label: text("label").notNull().default(""),
   /** The temple's main bank account (at most one per temple); also mirrored on temples.bank_* */
   isPrimary: boolean("is_primary").notNull().default(false),
+  /** Opening balance witnessed and locked (database trigger); changed only by openingCorrections */
+  openingSetAt: ts("opening_set_at"),
+  openingWitnesses: text("opening_witnesses"),
+  /** Sum of the opening-balance corrections (kept by a database trigger, never set by the app) */
+  openingAdjust: money("opening_adjust").notNull().default(0),
 }, (t) => [uniqueIndex("accounts_one_primary").on(t.templeId).where(sql`${t.isPrimary}`)]);
 
 export const categories = pgTable("categories", {
@@ -371,6 +383,38 @@ export const attachments = pgTable("attachments", {
   createdBy: text("created_by"),
   createdAt: ts("created_at").notNull().defaultNow(),
 });
+
+/** A correction of a locked opening balance: append-only, with reason and two witnesses. */
+export const openingCorrections = pgTable("opening_corrections", {
+  id: text("id").primaryKey(),
+  templeId: text("temple_id").notNull().references(() => temples.id),
+  accountId: text("account_id").notNull().references(() => accounts.id),
+  /** Signed: + adds to the opening balance, − takes off */
+  amount: money("amount").notNull(),
+  reason: text("reason").notNull(),
+  witnesses: text("witnesses").notNull(),
+  createdBy: text("created_by").notNull(),
+  createdAt: ts("created_at").notNull().defaultNow(),
+}, (t) => [index("opening_corrections_account").on(t.accountId)]);
+
+/**
+ * Monthly check (rekonsiliasi sederhana): the end-of-month balance from the bank statement or the
+ * cash count, next to the balance the app calculated. A note only — it never changes a balance.
+ * Append-only: a later check of the same month and account is shown instead of the earlier one.
+ */
+export const reconciliations = pgTable("reconciliations", {
+  id: text("id").primaryKey(),
+  templeId: text("temple_id").notNull().references(() => temples.id),
+  accountId: text("account_id").notNull().references(() => accounts.id),
+  /** yyyy-mm */
+  month: text("month").notNull(),
+  statementBalance: money("statement_balance").notNull(),
+  /** The app's balance at the end of that month, at the moment of the check */
+  appBalance: money("app_balance").notNull(),
+  note: text("note").notNull().default(""),
+  createdBy: text("created_by").notNull(),
+  createdAt: ts("created_at").notNull().defaultNow(),
+}, (t) => [index("reconciliations_temple_month").on(t.templeId, t.month)]);
 
 /** Pusat bantuan: a message from a signed-in person to Admin Utama, with the page context. */
 export const helpTickets = pgTable("help_tickets", {

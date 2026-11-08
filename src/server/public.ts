@@ -86,6 +86,7 @@ export async function loadPublic(): Promise<PublicData> {
       pengurusCount: undefined,
       hasPengurus: pengurus.some((p) => p.templeId === t.id),
       bankAccounts: m.publicBankAccounts(accRows, t.id),
+      booksWitnesses: undefined, // names of pengurus: not for the public
       acceptsPunia: false,
     };
     out.acceptsPunia = !!out.bankAccounts?.length;

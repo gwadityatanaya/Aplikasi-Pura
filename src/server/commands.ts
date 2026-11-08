@@ -4,6 +4,7 @@ import { and, eq, gt, isNull, ne, or, sql } from "drizzle-orm";
 import { db, schema, type Tx } from "./db";
 import { ApiError, todayInAppTz } from "./http";
 import { personalDataIn } from "@/lib/personal-data";
+import { assertNotBeforeStart } from "./books-guard";
 import { requirePerm, requireSuperAdmin, requireTemple, templeAccess, type Ctx } from "./context";
 import { diff, logActivity } from "./log";
 import { persistImage } from "./images";
@@ -109,6 +110,7 @@ export async function one<R>(rows: Promise<R[]>, msg = "Data tidak ditemukan.") 
 
 /** Validates that every referenced record belongs to the active temple. */
 async function checkRefs(tx: Tx, templeId: string, i: z.infer<typeof txInput>) {
+  await assertNotBeforeStart(tx, templeId, i.date);
   const acc = await tx.select().from(T.accounts).where(and(eq(T.accounts.id, i.accountId), eq(T.accounts.templeId, templeId)));
   if (!acc[0]) throw new ApiError(400, "Kas/rekening tidak ditemukan.");
   // A deactivated account keeps its history, but takes no new entries.
@@ -550,6 +552,8 @@ export const coreCommands: Record<string, Handler> = {
         const cur = await one(tx.select().from(T.accounts).where(and(eq(T.accounts.id, aid), eq(T.accounts.templeId, templeId))));
         if (!ctx.user.isSuperAdmin && (cur.type === "bank" || input.type === "bank") && (input.type !== cur.type || !!input.archived !== cur.archived))
           throw new ApiError(403, "Rekening bank hanya bisa diubah jenisnya atau dinonaktifkan oleh Admin Utama.");
+        if (cur.openingSetAt && (values.openingBalance !== cur.openingBalance || values.openingDate !== cur.openingDate))
+          throw new ApiError(409, "Saldo awal ini sudah disaksikan dan dikunci. Gunakan Koreksi saldo awal (dengan alasan dan dua saksi).");
         const used = await tx.select({ id: T.transactions.id }).from(T.transactions).where(and(eq(T.transactions.templeId, templeId), or(eq(T.transactions.accountId, aid), eq(T.transactions.toAccountId, aid)))).limit(1);
         if (used[0] && (values.openingBalance !== cur.openingBalance || values.openingDate !== cur.openingDate || values.type !== cur.type))
           throw new ApiError(409, "Saldo awal dan jenis rekening terkunci karena sudah ada transaksi.");
@@ -557,6 +561,10 @@ export const coreCommands: Record<string, Handler> = {
         await log(ctx, tx, { action: "Mengubah kas/rekening", entity: "settings", entityId: aid, detail: values.name, changes: diff(cur, values, Object.keys(values)) });
       } else {
         const newId = uid("acc");
+        // After the start of the books, a new cash box starts at 0; its opening balance is then
+        // counted with two witnesses (setOpeningBalance).
+        const [t] = await tx.select({ start: T.temples.booksStartDate }).from(T.temples).where(eq(T.temples.id, templeId));
+        if (t?.start) Object.assign(values, { openingBalance: 0, openingDate: todayInAppTz() });
         await tx.insert(T.accounts).values({ ...values, id: newId, templeId, isPublic: false, archived: false });
         await log(ctx, tx, { action: "Menambah kas/rekening", entity: "settings", entityId: newId, detail: `${values.name} (saldo awal ${rupiah(values.openingBalance)})` });
       }

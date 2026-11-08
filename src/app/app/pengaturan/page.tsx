@@ -29,6 +29,7 @@ import type { Result } from "@/lib/store";
 import { LogoutEverywhere } from "@/components/shared/logout-everywhere";
 import { AvatarEditor } from "@/components/shared/avatar-editor";
 import { PuniaEmailSwitch } from "@/components/shared/punia-email-switch";
+import { OpeningActions, StartBooks } from "@/components/app/books-setup";
 
 /** Shows the right toast for a save result; returns true on success. */
 function done(r: Result<unknown>, msg: string) {
@@ -213,6 +214,7 @@ function Accounts() {
     <Card>
       <CardHeader title="Kas & saldo awal" description="Saldo dihitung dari saldo awal ditambah semua transaksi — tidak pernah diketik manual." action={!ro && <Button size="sm" onClick={() => setEdit({ type: "cash", name: "", openingBalance: 0, openingDate: `${new Date().getFullYear()}-01-01` })}><Plus className="h-4 w-4" /> Tambah</Button>} />
       <CardBody className="space-y-3">
+        <StartBooks canEdit={!ro} />
         <div className="rounded-2xl border border-emerald-200 bg-mint/40 p-4">
           <p className="flex items-center gap-2 font-bold"><Landmark className="h-5 w-5 text-emerald-700" /> Rekening resmi untuk punia</p>
           {ws.accounts.some((a) => a.type === "bank" && !a.archived && a.accountNumber) ? (
@@ -234,21 +236,28 @@ function Accounts() {
               <p className="flex flex-wrap items-center gap-2 font-bold">{a.label || a.name} {a.isPrimary && <Badge tone="gold">Utama</Badge>} {a.archived && <Badge tone="gray">Nonaktif</Badge>}</p>
               <p className="text-sm text-muted">{a.type === "cash" ? "Kas tunai" : `Rekening bank${a.bankName ? ` · ${a.bankName} ${a.accountNumber ?? ""}` : ""}`} · saldo awal {rupiah(a.openingBalance)}</p>
             </div>
-            <div className="text-right"><p className="text-xs text-muted">Saldo menurut catatan</p><p className="tabular font-extrabold">{rupiah(accountBalance(a, ws.transactions))}</p></div>
-            {!ro && <Button variant="ghost" size="icon" onClick={() => setEdit(a)} aria-label={`Ubah ${a.name}`}><Pencil className="h-4 w-4" /></Button>}
+            <div className="order-last w-full sm:order-none sm:w-auto sm:text-right"><p className="text-xs text-muted">Saldo menurut catatan</p><p className="tabular font-extrabold">{rupiah(accountBalance(a, ws.transactions))}</p></div>
+            {!ro && <Button variant="ghost" size="icon" onClick={() => setEdit({ ...a, openingBalance: a.openingBase ?? a.openingBalance })} aria-label={`Ubah ${a.name}`}><Pencil className="h-4 w-4" /></Button>}
+            <OpeningActions a={a} canEdit={!ro} />
           </div>
         ))}
-        <p className="text-sm text-muted">Isi <strong>saldo awal</strong> sesuai uang yang ada saat mulai memakai PURA. Saldo awal terkunci setelah ada transaksi.</p>
+        {!t.booksStartDate && <p className="text-sm text-muted">Isi <strong>saldo awal</strong> lewat <strong>Mulai pembukuan</strong> di atas (dua saksi). Sebelum itu, saldo awal masih bisa diubah sampai ada transaksi.</p>}
       </CardBody>
       <Dialog open={!!edit} onClose={() => setEdit(null)} title={edit?.id ? "Ubah kas" : "Kas baru"} footer={<Button size="lg" className="w-full" disabled={(edit?.name ?? "").trim().length < 3} onClick={async () => { const r = await save({ ...(edit as Account), name: edit!.name!.trim() }); if (done(r, "Tersimpan")) setEdit(null); }}>Simpan</Button>}>
         {edit && (
           <div className="space-y-4">
             <Field label="Nama" htmlFor="ac-name"><Input id="ac-name" value={edit.name ?? ""} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder="Kas Tunai Pura" /></Field>
             <Field label="Jenis" htmlFor="ac-type"><Select id="ac-type" value={edit.type} disabled={hasTx(edit.id) || (!isAdmin && edit.type === "bank")} onChange={(e) => setEdit({ ...edit, type: e.target.value as Account["type"] })}><option value="cash">Kas tunai</option><option value="bank" disabled={!isAdmin}>Rekening bank (ditambah Admin Utama)</option></Select></Field>
-            <Field label="Saldo awal" hint={hasTx(edit.id) ? "Saldo awal terkunci karena sudah ada transaksi. Gunakan transaksi koreksi bila perlu." : "Jumlah uang saat mulai memakai PURA."}>
-              {hasTx(edit.id) ? <Input disabled value={rupiah(edit.openingBalance ?? 0)} /> : <MoneyInput value={edit.openingBalance ?? 0} onChange={(v) => setEdit({ ...edit, openingBalance: v })} />}
-            </Field>
-            <Field label="Per tanggal" htmlFor="ac-date"><Input id="ac-date" type="date" disabled={hasTx(edit.id)} value={edit.openingDate ?? ""} onChange={(e) => setEdit({ ...edit, openingDate: e.target.value })} /></Field>
+            {t.booksStartDate ? (
+              <p className="rounded-xl bg-ivory p-3 text-sm text-muted">Saldo awal diisi lewat <b>Isi saldo awal</b> / <b>Koreksi saldo awal</b> dengan dua saksi, bukan di sini.</p>
+            ) : (
+              <>
+                <Field label="Saldo awal" hint={hasTx(edit.id) ? "Saldo awal terkunci karena sudah ada transaksi. Gunakan transaksi koreksi bila perlu." : "Jumlah uang saat mulai memakai PURA."}>
+                  {hasTx(edit.id) ? <Input disabled value={rupiah(edit.openingBalance ?? 0)} /> : <MoneyInput value={edit.openingBalance ?? 0} onChange={(v) => setEdit({ ...edit, openingBalance: v })} />}
+                </Field>
+                <Field label="Per tanggal" htmlFor="ac-date"><Input id="ac-date" type="date" disabled={hasTx(edit.id)} value={edit.openingDate ?? ""} onChange={(e) => setEdit({ ...edit, openingDate: e.target.value })} /></Field>
+              </>
+            )}
           </div>
         )}
       </Dialog>

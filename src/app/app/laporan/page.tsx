@@ -20,6 +20,8 @@ import { displayCell } from "@/lib/export";
 import { buildReport, filterTx, REPORT_TYPES, whatsappSummary, type ReportFilters } from "@/lib/reports";
 import { ReportSignOptions, defaultSignOptions, signatureBlock, type SignOptions } from "@/components/app/report-signatures";
 import { exportCsv, exportPdf, exportXlsx, sharePdfFile } from "@/lib/export";
+import { reconciliationTable } from "@/lib/reconciliation";
+import { ReconciliationCard } from "@/components/app/reconciliation-card";
 import { byCategory, monthlyCashflow } from "@/lib/ledger";
 import { useRole, useStore } from "@/lib/store";
 import { cn, formatDateShort, rupiah, todayISO } from "@/lib/format";
@@ -58,6 +60,8 @@ function Reports() {
   const [f, setF] = useState<ReportFilters>({ type: "summary", from: from0, to: to0, txType: "", categoryId: "", activityId: "", campaignId: "", accountId: "", status: "confirmed", version: "umum" });
   const [sign, setSign] = useState<SignOptions>(defaultSignOptions);
   const [more, setMore] = useState(false);
+  // Print the monthly checks of the period with the report (above the signature block).
+  const [withRecon, setWithRecon] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [wa, setWa] = useState(false);
   const [waText, setWaText] = useState("");
@@ -69,9 +73,12 @@ function Reports() {
   const signed = useMemo(() => (canSign ? signatureBlock(ws, sign) : { missing: [] as string[] }), [ws, sign, canSign]);
   const doc = useMemo(() => {
     if (!ws.temple) return null;
-    const d = buildReport(ws, { ...f, version: role && READ_ONLY_ROLES.includes(role) ? "umum" : f.version });
+    const d0 = buildReport(ws, { ...f, version: role && READ_ONLY_ROLES.includes(role) ? "umum" : f.version });
+    const recon = withRecon ? reconciliationTable(ws.data.reconciliations ?? [], ws.accounts, f.from, f.to) : null;
+    const d = recon ? { ...d0, tables: [...d0.tables, recon] } : d0;
     return signed.block ? { ...d, signatures: signed.block } : d;
-  }, [ws, f, role, signed]);
+  }, [ws, f, role, signed, withRecon]);
+  const hasRecon = !!reconciliationTable(ws.data.reconciliations ?? [], ws.accounts, f.from, f.to);
   const blockedBySign = signed.missing.length > 0 && !sign.allowBlank;
   const rows = useMemo(() => filterTx(ws, f), [ws, f]);
   const monthly = useMemo(() => monthlyCashflow(ws.data, ws.templeId, f.from, f.to).map((r) => ({ label: r.month.split(" ")[0].slice(0, 3), income: r.income, expense: r.expense })), [ws, f.from, f.to]);
@@ -153,6 +160,12 @@ function Reports() {
       </Card>
 
       {canSign && <ReportSignOptions ws={ws} value={sign} onChange={setSign} missing={signed.missing} />}
+      {hasRecon && (
+        <label className="mt-3 flex items-center gap-2 text-[15px] font-semibold">
+          <input type="checkbox" className="h-5 w-5 accent-emerald-600" checked={withRecon} onChange={(e) => setWithRecon(e.target.checked)} />
+          Sertakan hasil pencocokan saldo bulanan di laporan
+        </label>
+      )}
 
       <div className="sticky top-16 z-20 -mx-4 mt-4 border-b border-line/60 bg-ivory/90 px-4 py-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
         <div className="no-scrollbar flex gap-2 overflow-x-auto">
@@ -233,6 +246,8 @@ function Reports() {
       </div>
 
       {/* PUBLISHED */}
+      <ReconciliationCard canEdit={can("settings.manage")} />
+
       <Card className="mt-6">
         <CardHeader title="Laporan yang dipublikasikan" description="Hanya ringkasan ini yang dapat dilihat publik di halaman pura." />
         <CardBody className="divide-y divide-line py-2">

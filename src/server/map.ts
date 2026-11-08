@@ -40,6 +40,7 @@ export const toTemple = (r: Row<typeof schema.temples>): Temple => ({
   transparency: { ...DEFAULT_TRANSPARENCY, ...r.transparency }, branding: r.branding,
   bankName: u(r.bankName), bankAccountNumber: u(r.bankAccountNumber), bankAccountHolder: u(r.bankAccountHolder),
   qrisImage: u(r.qrisImage), qrisAccountId: u(r.qrisAccountId),
+  booksStartDate: u(r.booksStartDate), booksStartedAt: iso(r.booksStartedAt), booksWitnesses: u(r.booksWitnesses),
 });
 
 export const toBanjar = (r: Row<typeof schema.banjars>): Banjar => ({
@@ -61,7 +62,8 @@ export const toMembership = (r: Row<typeof schema.memberships>): Membership => (
 
 export const toAccount = (r: Row<typeof schema.accounts>): Account => ({
   id: r.id, templeId: r.templeId, name: r.name, type: r.type as Account["type"], bankName: u(r.bankName), accountNumber: u(r.accountNumber),
-  accountHolder: u(r.accountHolder), openingBalance: r.openingBalance, openingDate: r.openingDate, isPublic: r.isPublic, archived: r.archived,
+  accountHolder: u(r.accountHolder), openingBalance: r.openingBalance + r.openingAdjust, openingDate: r.openingDate, isPublic: r.isPublic, archived: r.archived,
+  openingBase: r.openingBalance, openingCorrection: r.openingAdjust, openingSetAt: iso(r.openingSetAt), openingWitnesses: u(r.openingWitnesses),
   label: r.label || undefined, isPrimary: r.isPrimary,
 });
 

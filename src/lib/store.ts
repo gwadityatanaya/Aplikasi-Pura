@@ -145,7 +145,7 @@ const noAccess: Access = { isSuperAdmin: false, isStaff: false, banjarIds: [], e
 export function emptyData(): DataState {
   return {
     version: 0, users: [], memberships: [], temples: [], banjars: [], templeBanjars: [], banjarMembers: [], accounts: [], categories: [],
-    activities: [], transactions: [], campaigns: [], donations: [], reports: [], notifications: [], audit: [], counters: { tx: 0 }, resetRequests: [],
+    activities: [], transactions: [], campaigns: [], donations: [], reports: [], notifications: [], audit: [], openingCorrections: [], reconciliations: [], counters: { tx: 0 }, resetRequests: [],
   };
 }
 

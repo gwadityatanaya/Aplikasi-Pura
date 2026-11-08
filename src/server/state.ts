@@ -98,6 +98,11 @@ export async function loadState(ctx: Ctx): Promise<ServerState> {
       const x = m.toUser(u);
       return seePhotos && active ? x : { ...x, avatarVersion: undefined };
     };
+    // Opening-balance corrections and monthly checks (both append-only) with who wrote them.
+    const [corrRows, recRows] = await Promise.all([
+      db.select({ c: schema.openingCorrections, name: schema.users.name }).from(schema.openingCorrections).leftJoin(schema.users, eq(schema.users.id, schema.openingCorrections.createdBy)).where(eq(schema.openingCorrections.templeId, templeId)).orderBy(schema.openingCorrections.createdAt),
+      db.select({ c: schema.reconciliations, name: schema.users.name }).from(schema.reconciliations).leftJoin(schema.users, eq(schema.users.id, schema.reconciliations.createdBy)).where(eq(schema.reconciliations.templeId, templeId)).orderBy(schema.reconciliations.createdAt),
+    ]);
     const people = new Map<string, User>();
     members.forEach((x) => people.set(x.u.id, staffUser(x.u, x.m.status === "active")));
     banjarMembers.forEach((x) => people.set(x.u.id, staffUser(x.u, x.b.status === "active")));
@@ -117,6 +122,8 @@ export async function loadState(ctx: Ctx): Promise<ServerState> {
       reports: reports.map(m.toReport),
       notifications: notifications.map(m.toNotification),
       audit: audit.map(m.toAudit),
+      openingCorrections: corrRows.map((r) => ({ ...r.c, createdAt: r.c.createdAt.toISOString(), createdByName: r.name ?? undefined })),
+      reconciliations: recRows.map((r) => ({ ...r.c, createdAt: r.c.createdAt.toISOString(), createdByName: r.name ?? undefined })),
     };
   }
   const me = { ...m.toUser(ctx.user), notice: ctx.user.notice ?? undefined };

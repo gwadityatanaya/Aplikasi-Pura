@@ -90,6 +90,11 @@ export interface Temple {
   /** QRIS image set by Admin Utama, and the bank account it pays into */
   qrisImage?: string;
   qrisAccountId?: ID;
+  /** "Mulai memakai aplikasi": no transaction may be dated before it (set once) */
+  booksStartDate?: string;
+  booksStartedAt?: string;
+  /** The two pengurus who counted the opening balances */
+  booksWitnesses?: string;
   /** Banjar Pengempon */
   banjarIds?: ID[];
   /** Number of active Pengurus Pura (0 = "Pengurus pura belum terdaftar") */
@@ -175,6 +180,37 @@ export interface Account {
   label?: string;
   /** The temple's main bank account */
   isPrimary?: boolean;
+  /** openingBalance = openingBase + openingCorrection (corrections are separate, append-only records) */
+  openingBase?: number;
+  openingCorrection?: number;
+  /** Set when the opening balance was counted with two witnesses — locked from then on */
+  openingSetAt?: string;
+  openingWitnesses?: string;
+}
+
+/** A correction of a locked opening balance (append-only). */
+export interface OpeningCorrection {
+  id: ID;
+  templeId: ID;
+  accountId: ID;
+  amount: number;
+  reason: string;
+  witnesses: string;
+  createdByName?: string;
+  createdAt: string;
+}
+
+/** Monthly check: bank statement / cash count vs the app's balance at the end of a month. A note only. */
+export interface Reconciliation {
+  id: ID;
+  templeId: ID;
+  accountId: ID;
+  month: string;
+  statementBalance: number;
+  appBalance: number;
+  note: string;
+  createdByName?: string;
+  createdAt: string;
 }
 
 /** A bank account umat can transfer to (public view: no balances). */
@@ -435,6 +471,8 @@ export interface DataState {
   reports: PublishedReport[];
   notifications: AppNotification[];
   audit: AuditEntry[];
+  openingCorrections?: OpeningCorrection[];
+  reconciliations?: Reconciliation[];
   counters: { tx: number };
   resetRequests: PasswordResetRequest[];
 }
