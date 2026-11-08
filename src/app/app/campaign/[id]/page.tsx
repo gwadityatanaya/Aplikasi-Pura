@@ -23,7 +23,9 @@ import { MoneyInput } from "@/components/ui/money-input";
 import { ImageUpload } from "@/components/ui/file-upload";
 import { AnimatedRupiah } from "@/components/ui/animated-number";
 import { TempleCover } from "@/components/brand/temple-cover";
-import { CampaignStatusBadge, daysLeftLabel } from "@/components/shared/campaign-card";
+import { CampaignEndNotice, CampaignStatusBadge, campaignTimeLabel } from "@/components/shared/campaign-card";
+import { CampaignCloseActions } from "@/components/app/campaign-close";
+import { campaignPhase, hasTarget } from "@/lib/campaign";
 import { ShareActions } from "@/components/shared/share";
 import { ManualPuniaDialog } from "@/components/app/manual-punia";
 import { PrivacyPicker } from "@/components/public/donations";
@@ -50,7 +52,7 @@ function CampaignAdmin() {
   const [rejecting, setRejecting] = useState<Donation | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [manual, setManual] = useState(false);
-  const [closing, setClosing] = useState<"completed" | "active" | null>(null);
+  const [closing, setClosing] = useState<"active" | null>(null);
   const [upd, setUpd] = useState({ open: false, title: "", body: "" });
   const [evidence, setEvidence] = useState<Donation | null>(null);
 
@@ -60,13 +62,15 @@ function CampaignAdmin() {
   const own = ws.donations.filter((d) => d.campaignId === c.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const spent = ws.transactions.filter((t) => t.campaignId === c.id && t.type === "expense" && t.status === "confirmed").reduce((sum, t) => sum + (t.reversalOf ? -t.amount : t.amount), 0);
   const manage = can("donation.manage");
+  const phase = campaignPhase(c, todayISO());
+  const target = hasTarget(c);
 
   return (
     <div>
       <PageHeader
         back={{ href: "/app/campaign", label: "Penggalangan Dana" }}
         title={c.title}
-        description={`${formatDate(c.startDate)} – ${formatDate(c.endDate)}`}
+        description={c.endDate ? `${formatDate(c.startDate)} – ${formatDate(c.endDate)}` : `Mulai ${formatDate(c.startDate)} · tanpa batas waktu`}
         actions={
           <>
             {c.status !== "draft" && <Link href={`/donasi/${c.slug}`} target="_blank" className={buttonClass("outline")}><ExternalLink className="h-4 w-4" /> Halaman publik</Link>}
@@ -85,14 +89,20 @@ function CampaignAdmin() {
           <div className="grid md:grid-cols-[220px_1fr]">
             <TempleCover variant={c.cover} image={c.coverImage} className="h-36 md:h-auto" />
             <div className="p-5 md:p-6">
-              <div className="flex flex-wrap items-center gap-2"><CampaignStatusBadge status={c.status} /> {c.status === "active" && <span className="text-sm text-muted">{daysLeftLabel(c.endDate)}</span>}</div>
+              <div className="flex flex-wrap items-center gap-2"><CampaignStatusBadge campaign={c} /> {c.status !== "draft" && <span className="text-sm text-muted">{campaignTimeLabel(c)}</span>}</div>
               <p className="mt-3 text-sm text-muted">Terkumpul (disahkan)</p>
               <AnimatedRupiah value={s.collected} className="tabular block text-3xl font-extrabold text-forest md:text-4xl" />
-              <Progress value={s.progress} className="mt-3" height="h-3" label="Progres campaign" />
-              <div className="mt-2 flex justify-between text-sm">
-                <span className="tabular font-bold text-emerald-700">{formatPercent(s.progress)}</span>
-                <span className="tabular text-muted">Target {rupiah(c.target)}</span>
-              </div>
+              {target ? (
+                <>
+                  <Progress value={s.progress} className="mt-3" height="h-3" label="Progres campaign" />
+                  <div className="mt-2 flex justify-between text-sm">
+                    <span className="tabular font-bold text-emerald-700">{formatPercent(s.progress)}</span>
+                    <span className="tabular text-muted">Target {rupiah(c.target)}</span>
+                  </div>
+                </>
+              ) : (
+                <p className="mt-2 text-sm text-muted">Tanpa target dana</p>
+              )}
               <div className="mt-4 grid grid-cols-3 gap-2 text-center">
                 <div className="rounded-xl bg-ivory p-2.5"><p className="tabular font-extrabold">{s.contributors}</p><p className="text-xs text-muted">donatur</p></div>
                 <div className="rounded-xl bg-amber-50 p-2.5"><p className="tabular font-extrabold text-amber-800">{s.pending.length}</p><p className="text-xs text-amber-800/80">menunggu</p></div>
@@ -102,7 +112,7 @@ function CampaignAdmin() {
           </div>
         </Card>
         <div className="space-y-3">
-          {manage && c.status === "active" && (
+          {manage && phase === "active" && (
             <>
               <Button size="lg" className="w-full" onClick={() => setManual(true)}><Plus className="h-5 w-5" /> Input punia manual</Button>
             </>
@@ -110,12 +120,10 @@ function CampaignAdmin() {
           {c.status !== "draft" && (
             <Card className="p-4">
               <p className="mb-3 text-sm font-bold">Bagikan ke krama</p>
-              <ShareActions compact path={`/donasi/${c.slug}`} title={c.title} message={`🙏 ${c.title}\nTerkumpul ${rupiah(s.collected)} dari ${rupiah(c.target)}. Mari berpunia:`} />
+              <ShareActions compact path={`/donasi/${c.slug}`} title={c.title} message={`🙏 ${c.title}\nTerkumpul ${rupiah(s.collected)}${target ? ` dari ${rupiah(c.target)}` : ""}.${phase === "active" ? " Mari berpunia:" : ""}`} />
             </Card>
           )}
-          {c.status === "active" && can("campaign.manage") && (
-            <Button variant="ghost" className="w-full text-muted" onClick={() => setClosing("completed")}><Square className="h-4 w-4" /> Tutup penggalangan</Button>
-          )}
+          {phase === "active" && can("campaign.manage") && <CampaignCloseActions campaign={c} mode="close" />}
         </div>
       </div>
 
@@ -137,9 +145,11 @@ function CampaignAdmin() {
         {tab === "ringkasan" && (
           <Card>
             <CardBody className="space-y-4 text-[15px]">
-              <p className="leading-relaxed text-charcoal/80">{c.description}</p>
+              <CampaignEndNotice campaign={c} />
+              {phase === "closed" && can("campaign.manage") && <CampaignCloseActions campaign={c} mode="note" />}
+              {c.description ? <p className="whitespace-pre-line leading-relaxed text-charcoal/80">{c.description}</p> : <p className="text-muted">Belum ada cerita.</p>}
               <dl className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl bg-ivory p-3"><dt className="text-sm text-muted">Penggunaan dana</dt><dd className="font-semibold">{c.purpose}</dd></div>
+                <div className="rounded-xl bg-ivory p-3"><dt className="text-sm text-muted">Penggunaan dana</dt><dd className="font-semibold">{c.purpose || "—"}</dd></div>
                 <div className="rounded-xl bg-ivory p-3"><dt className="text-sm text-muted">Kegiatan</dt><dd className="font-semibold">{ws.activities.find((a) => a.id === c.activityId)?.name ?? "—"}</dd></div>
                 <div className="rounded-xl bg-ivory p-3"><dt className="text-sm text-muted">Rekening</dt><dd className="font-semibold">{ws.accounts.find((a) => a.id === c.accountId)?.name}</dd></div>
                 <div className="rounded-xl bg-ivory p-3"><dt className="text-sm text-muted">Verifikasi</dt><dd className="font-semibold">{c.manualVerification ? "Manual oleh bendahara" : "Otomatis"}</dd></div>
@@ -273,13 +283,13 @@ function CampaignAdmin() {
       <ConfirmDialog
         open={!!closing}
         onClose={() => setClosing(null)}
-        title={closing === "completed" ? "Tutup penggalangan dana?" : "Terbitkan campaign?"}
-        description={closing === "completed" ? "Halaman publik tetap ada dengan status Selesai. Donasi yang menunggu masih bisa diverifikasi." : "Campaign akan langsung tampil di portal publik."}
-        confirmLabel={closing === "completed" ? "Ya, tutup" : "Ya, terbitkan"}
+        title="Terbitkan penggalangan?"
+        description="Penggalangan akan langsung tampil di portal publik."
+        confirmLabel="Ya, terbitkan"
         onConfirm={async () => {
           if (!closing) return;
           const r = await setStatus(c.id, closing);
-          if (r.ok) toast.success(closing === "completed" ? "Penggalangan ditutup" : "Campaign diterbitkan");
+          if (r.ok) toast.success("Penggalangan diterbitkan");
           else toast.error(r.error);
           setClosing(null);
         }}

@@ -1,5 +1,6 @@
 "use client";
 import { templeLocation } from "@/lib/temple";
+import { campaignOpen } from "@/lib/campaign";
 import Link from "next/link";
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -50,7 +51,7 @@ function Directory() {
         {!hydrated
           ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-72 rounded-3xl" />)
           : list.map((t) => {
-              const n = campaigns.filter((c) => c.templeId === t.id && c.status === "active").length;
+              const n = campaigns.filter((c) => c.templeId === t.id && campaignOpen(c)).length;
               return (
                 <Link key={t.id} href={`/pura/${t.slug}`} className="group overflow-hidden rounded-3xl border border-line bg-white shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift">
                   <TempleCover variant={t.cover} image={t.photo} alt={`Sampul ${t.name}`} className="h-40" />

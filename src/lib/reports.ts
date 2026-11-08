@@ -227,7 +227,8 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
       const body = cps.map((c) => {
         const st = campaignStats(c, donations);
         const used = data.transactions.filter((t) => t.campaignId === c.id && t.type === "expense" && t.status === "confirmed").reduce((x, t) => x + signed(t), 0);
-        return [c.title, c.target, st.collected, st.contributors, used, st.collected - used];
+        // No target → an empty cell, not "Rp0".
+        return [c.title, c.target > 0 ? c.target : "—", st.collected, st.contributors, used, st.collected - used];
       });
       const tables: ReportTable[] = [{ title: "Ringkasan campaign", head: ["Campaign", "Target", "Terkumpul", "Donatur", "Digunakan", "Sisa"], body, money: [1, 2, 4, 5] }];
       for (const c of cps) {

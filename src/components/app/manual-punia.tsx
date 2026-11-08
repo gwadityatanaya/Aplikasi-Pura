@@ -1,5 +1,6 @@
 "use client";
 import { Controller, useForm } from "react-hook-form";
+import { campaignOpen } from "@/lib/campaign";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -70,11 +71,11 @@ export function ManualPuniaDialog({ open, onClose, campaignId }: { open: boolean
         <Field label="Tujuan punia" htmlFor="mp-purpose">
           <Select id="mp-purpose" {...register("purpose")}>{(Object.keys(PURPOSE_LABEL) as (keyof typeof PURPOSE_LABEL)[]).map((k) => <option key={k} value={k}>{PURPOSE_LABEL[k]}</option>)}</Select>
         </Field>
-        {!campaignId && ws.campaigns.some((c) => c.status === "active") && (
+        {!campaignId && ws.campaigns.some((c) => campaignOpen(c)) && (
           <Field label="Kegiatan / odalan (opsional)" htmlFor="mp-camp">
             <Select id="mp-camp" {...register("campaignId")}>
               <option value="">— Tidak terkait —</option>
-              {ws.campaigns.filter((c) => c.status === "active").map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+              {ws.campaigns.filter((c) => campaignOpen(c)).map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
             </Select>
           </Field>
         )}

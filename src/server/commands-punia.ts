@@ -10,6 +10,8 @@ import * as m from "./map";
 import { PURPOSE_CATEGORY } from "@/lib/categories";
 import { PURPOSE_LABEL } from "@/lib/permissions";
 import { rupiah, uid } from "@/lib/format";
+import { campaignPhase } from "@/lib/campaign";
+import type { Campaign } from "@/lib/types";
 
 const purpose = z.enum(["umum", "odalan", "pembangunan", "lainnya"]);
 const amount = z.number().int().min(1_000, "Minimal Rp1.000").max(10_000_000_000);
@@ -51,7 +53,11 @@ async function checkGrouping(tx: Tx, templeId: string, activityId: string | null
     const a = await one(tx.select().from(T.activities).where(and(eq(T.activities.id, activityId), eq(T.activities.templeId, templeId))), "Kegiatan tidak ditemukan.");
     if (a.archivedAt) throw new ApiError(409, "Kegiatan ini sudah diarsipkan dan tidak bisa dipilih lagi.");
   }
-  if (campaignId) await one(tx.select().from(T.campaigns).where(and(eq(T.campaigns.id, campaignId), eq(T.campaigns.templeId, templeId))), "Kegiatan/campaign tidak ditemukan.");
+  if (campaignId) {
+    const c = await one(tx.select().from(T.campaigns).where(and(eq(T.campaigns.id, campaignId), eq(T.campaigns.templeId, templeId))), "Penggalangan dana tidak ditemukan.");
+    const phase = campaignPhase({ status: c.status as Campaign["status"], endDate: c.endDate ?? undefined, closedAt: c.closedAt?.toISOString() }, todayInAppTz());
+    if (phase !== "active") throw new ApiError(409, phase === "draft" ? "Penggalangan ini belum terbit." : "Penggalangan ini sudah ditutup atau berakhir, jadi tidak menerima punia baru.");
+  }
 }
 
 /**

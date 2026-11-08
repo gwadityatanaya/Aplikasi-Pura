@@ -82,10 +82,11 @@ export const toTx = (r: Row<typeof schema.transactions>): Transaction => ({
 
 export const toCampaign = (r: Row<typeof schema.campaigns>): Campaign => ({
   id: r.id, slug: r.slug, templeId: r.templeId, title: r.title, description: r.description, cover: r.cover as Campaign["cover"],
-  coverImage: u(r.coverImage), activityId: u(r.activityId), target: r.target, startDate: r.startDate, endDate: r.endDate, purpose: r.purpose,
+  coverImage: u(r.coverImage), activityId: u(r.activityId), target: r.target, startDate: r.startDate, endDate: u(r.endDate), purpose: r.purpose,
   accountId: r.accountId, instructions: r.instructions, manualVerification: r.manualVerification, showDonorList: r.showDonorList,
   defaultPrivacy: r.defaultPrivacy as Campaign["defaultPrivacy"], status: r.status as Campaign["status"], updates: r.updates ?? [],
   createdAt: r.createdAt.toISOString(), publishedAt: iso(r.publishedAt),
+  closedAt: iso(r.closedAt), closeReason: u(r.closeReason), closeNotes: r.closeNotes ?? [],
 });
 
 export const toDonation = (r: Row<typeof schema.donations>): Donation => ({

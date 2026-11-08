@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { hasTarget } from "@/lib/campaign";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
@@ -144,9 +145,9 @@ function Deck() {
                         <div key={c.id} className="rounded-3xl border border-line bg-white p-6 shadow-soft">
                           <p className="text-2xl font-bold leading-snug">{c.title}</p>
                           <p className="tabular mt-4 text-4xl font-extrabold text-forest">{rupiah(st.collected)}</p>
-                          <p className="text-lg text-muted">dari {rupiah(c.target)} · {st.contributors} donatur</p>
-                          <Progress value={st.progress} className="mt-4" height="h-4" label={c.title} />
-                          <p className="tabular mt-2 text-xl font-bold text-emerald-700">{formatPercent(st.progress)}</p>
+                          <p className="text-lg text-muted">{hasTarget(c) ? `dari ${rupiah(c.target)} · ` : ""}{st.contributors} donatur</p>
+                          {hasTarget(c) && <Progress value={st.progress} className="mt-4" height="h-4" label={c.title} />}
+                          {hasTarget(c) && <p className="tabular mt-2 text-xl font-bold text-emerald-700">{formatPercent(st.progress)}</p>}
                         </div>
                       ))}
                       {!d.campaigns.length && <p className="text-2xl text-muted">Tidak ada penggalangan dana pada periode ini.</p>}

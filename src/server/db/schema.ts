@@ -247,9 +247,11 @@ export const campaigns = pgTable("campaigns", {
   cover: text("cover").notNull(),
   coverImage: text("cover_image"),
   activityId: text("activity_id"),
+  /** 0 = no target: the public page shows no progress bar or percentage */
   target: money("target").notNull(),
   startDate: date("start_date", { mode: "string" }).notNull(),
-  endDate: date("end_date", { mode: "string" }).notNull(),
+  /** null = no end date */
+  endDate: date("end_date", { mode: "string" }),
   purpose: text("purpose").notNull(),
   accountId: text("account_id").notNull(),
   instructions: text("instructions").notNull(),
@@ -260,6 +262,12 @@ export const campaigns = pgTable("campaigns", {
   updates: jsonb("updates").$type<CampaignUpdate[]>().notNull().default([]),
   createdAt: ts("created_at").notNull().defaultNow(),
   publishedAt: ts("published_at"),
+  // Closed before its end date ("Tutup penggalangan"): reason shown publicly and never edited
+  // afterwards (database trigger); corrections are appended to closeNotes.
+  closedAt: ts("closed_at"),
+  closeReason: text("close_reason"),
+  closedBy: text("closed_by"),
+  closeNotes: jsonb("close_notes").$type<{ at: string; text: string }[]>().notNull().default([]),
 });
 
 export const donations = pgTable("donations", {

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { campaignOpen } from "@/lib/campaign";
 import { Suspense, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -26,7 +27,7 @@ function PuniaForm() {
   const { hydrated, temples, campaigns } = usePublicData();
   const run = useStore((s) => s.run);
   const temple = temples.find((t) => t.slug === slug);
-  const active = campaigns.filter((c) => c.templeId === temple?.id && c.status === "active");
+  const active = campaigns.filter((c) => c.templeId === temple?.id && campaignOpen(c));
 
   const [amount, setAmount] = useState(0);
   const [transferDate, setTransferDate] = useState(todayISO());

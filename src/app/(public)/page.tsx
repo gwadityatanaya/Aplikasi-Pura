@@ -1,5 +1,6 @@
 "use client";
 import { templeLocation } from "@/lib/temple";
+import { campaignOpen, hasTarget } from "@/lib/campaign";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -34,7 +35,7 @@ export default function HomePage() {
   const { hydrated, temples, campaigns, donations } = usePublicData();
   const router = useRouter();
   const [q, setQ] = useState("");
-  const active = campaigns.filter((c) => c.status === "active");
+  const active = campaigns.filter((c) => campaignOpen(c));
   const hero = active.find((c) => c.id === "cp_piodalan") ?? active[0];
   const heroStats = hero ? campaignStats(hero, donations) : null;
 
@@ -101,11 +102,11 @@ export default function HomePage() {
                       <p className="text-sm text-muted">Terkumpul (disahkan)</p>
                       <p className="tabular text-3xl font-extrabold text-forest">{rupiah(heroStats.collected)}</p>
                     </div>
-                    <span className="tabular rounded-full bg-mint px-3 py-1 text-sm font-bold text-emerald-800">{formatPercent(heroStats.progress)}</span>
+                    {hasTarget(hero) && <span className="tabular rounded-full bg-mint px-3 py-1 text-sm font-bold text-emerald-800">{formatPercent(heroStats.progress)}</span>}
                   </div>
-                  <Progress value={heroStats.progress} className="mt-3" height="h-3" />
+                  {hasTarget(hero) && <Progress value={heroStats.progress} className="mt-3" height="h-3" />}
                   <div className="mt-3 flex justify-between text-sm text-muted">
-                    <span>Target {rupiah(hero.target)}</span>
+                    <span>{hasTarget(hero) ? `Target ${rupiah(hero.target)}` : "Tanpa target"}</span>
                     <span>{heroStats.contributors} donatur</span>
                   </div>
                 </div>

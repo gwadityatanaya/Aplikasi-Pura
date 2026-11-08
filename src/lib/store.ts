@@ -37,9 +37,11 @@ export interface CampaignInput {
   cover: Campaign["cover"];
   coverImage?: string;
   activityId?: string;
+  /** 0 = no target */
   target: number;
   startDate: string;
-  endDate: string;
+  /** "" or missing = no end date */
+  endDate?: string;
   purpose: string;
   accountId: string;
   instructions: string;
@@ -103,7 +105,8 @@ interface Actions {
   deleteDraft: (id: string) => R;
   reverseTransaction: (id: string, reason: string) => R<Transaction>;
   saveActivity: (a: Omit<Activity, "id" | "templeId"> & { id?: string }) => R<Activity>;
-  saveCampaign: (input: CampaignInput, status: "draft" | "active", id?: string) => R<Campaign>;
+  /** newActivity: a kegiatan created in the same database transaction and linked to the campaign */
+  saveCampaign: (input: CampaignInput, status: "draft" | "active", id?: string, newActivity?: Record<string, unknown>) => R<Campaign>;
   setCampaignStatus: (id: string, status: Campaign["status"]) => R;
   addCampaignUpdate: (campaignId: string, u: Omit<CampaignUpdate, "id">) => R;
   addManualPunia: (input: ManualPuniaInput) => R<Donation>;
@@ -232,7 +235,7 @@ export const useStore = create<StoreState & Actions>()(
         deleteDraft: (id) => command("deleteDraft", { id }),
         reverseTransaction: (id, reason) => command("reverseTransaction", { id, reason }),
         saveActivity: (a) => command("saveActivity", a),
-        saveCampaign: (input, status, id) => command("saveCampaign", { input, status, id }),
+        saveCampaign: (input, status, id, newActivity) => command("saveCampaign", { input, status, id, newActivity }),
         setCampaignStatus: (id, status) => command("setCampaignStatus", { id, status }),
         addCampaignUpdate: (campaignId, u) => command("addCampaignUpdate", { campaignId, u }),
         addManualPunia: (input) => command("addManualPunia", input),

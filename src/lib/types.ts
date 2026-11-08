@@ -246,9 +246,11 @@ export interface Campaign {
   cover: CoverVariant;
   coverImage?: string;
   activityId?: ID;
+  /** 0 = no target (no progress bar or percentage) */
   target: number;
   startDate: string;
-  endDate: string;
+  /** Missing = no end date */
+  endDate?: string;
   purpose: string;
   accountId: ID;
   instructions: string;
@@ -259,6 +261,10 @@ export interface Campaign {
   updates: CampaignUpdate[];
   createdAt: string;
   publishedAt?: string;
+  /** Closed early with a public reason (never edited; corrections go to closeNotes) */
+  closedAt?: string;
+  closeReason?: string;
+  closeNotes?: { at: string; text: string }[];
 }
 
 export type DonorPrivacy = "public" | "anonymous" | "private";

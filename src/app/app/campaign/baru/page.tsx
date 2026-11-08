@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Check, Eye, Landmark, PartyPopper, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, NoAccess } from "@/components/app/page-header";
+import { ActivityFields, activityDraftErrors, emptyActivityDraft, randomActivityColor, type ActivityDraft } from "@/components/app/activity-form";
 import { useCan, useWorkspace } from "@/components/app/hooks";
 import { Card } from "@/components/ui/card";
 import { Button, buttonClass } from "@/components/ui/button";
@@ -38,7 +39,7 @@ function Wizard() {
   const [published, setPublished] = useState<{ id: string; slug: string; status: string } | null>(null);
   const [f, setF] = useState<CampaignInput>(() =>
     editing
-      ? { ...editing }
+      ? { ...editing, endDate: editing.endDate ?? "" }
       : {
           title: "",
           description: "",
@@ -55,6 +56,9 @@ function Wizard() {
           defaultPrivacy: "public",
         }
   );
+  // "Kegiatan terkait": an existing one, none, or a NEW one saved together with the campaign.
+  const [newAct, setNewAct] = useState<ActivityDraft | null>(null);
+  const [actErrors, setActErrors] = useState<Partial<Record<keyof ActivityDraft, string>>>({});
   const set = <K extends keyof CampaignInput>(k: K, v: CampaignInput[K]) => {
     setF((p) => ({ ...p, [k]: v }));
     setErrors((e) => ({ ...e, [k]: "" }));
@@ -65,27 +69,28 @@ function Wizard() {
 
   function validate(s: number) {
     const e: Record<string, string> = {};
+    // Only the title is required; everything else may stay empty.
     if (s === 0) {
-      if (f.title.trim().length < 5) e.title = "Judul minimal 5 huruf";
-      if (f.description.trim().length < 20) e.description = "Ceritakan tujuan penggalangan (min. 20 huruf)";
+      if (f.title.trim().length < 3) e.title = "Judul minimal 3 huruf";
+      if (newAct) {
+        const ae = activityDraftErrors(newAct);
+        setActErrors(ae);
+        if (Object.keys(ae).length) e.activityId = "Lengkapi isian kegiatan baru";
+      }
     }
     if (s === 1) {
-      if (f.target < 100_000) e.target = "Target minimal Rp100.000";
       if (!f.startDate) e.startDate = "Pilih tanggal mulai";
-      if (!f.endDate) e.endDate = "Pilih tanggal berakhir";
-      else if (f.endDate <= f.startDate) e.endDate = "Harus setelah tanggal mulai";
-      if (f.purpose.trim().length < 5) e.purpose = "Jelaskan penggunaan dana";
+      if (f.endDate && f.endDate <= f.startDate) e.endDate = "Harus setelah tanggal mulai";
     }
     if (s === 2) {
       if (!f.accountId) e.accountId = "Pilih rekening resmi";
-      if (f.instructions.trim().length < 10) e.instructions = "Tulis petunjuk berpunia";
     }
     setErrors(e);
     return !Object.keys(e).length;
   }
   async function submit(status: "draft" | "active") {
     for (let i = 0; i < 3; i++) if (!validate(i)) return setStep(i);
-    const r = await save({ ...f, activityId: f.activityId || undefined }, status, editing?.id);
+    const r = await save({ ...f, activityId: newAct ? undefined : f.activityId || undefined, endDate: f.endDate || undefined }, status, editing?.id, newAct ? { ...newAct, color: randomActivityColor() } : undefined);
     setConfirm(false);
     if (!r.ok) return toast.error(r.error);
     const c = r.value;
@@ -132,7 +137,7 @@ function Wizard() {
                 <Field label="Judul campaign" htmlFor="c-title" required error={errors.title} hint="Singkat dan jelas, mis. Dana Punia Piodalan November 2026">
                   <Input id="c-title" value={f.title} onChange={(e) => set("title", e.target.value)} maxLength={90} />
                 </Field>
-                <Field label="Cerita & tujuan" htmlFor="c-desc" required error={errors.description}>
+                <Field label="Cerita & tujuan (opsional)" htmlFor="c-desc" error={errors.description}>
                   <Textarea id="c-desc" rows={4} value={f.description} onChange={(e) => set("description", e.target.value)} />
                 </Field>
                 <Field label="Gambar sampul">
@@ -145,24 +150,44 @@ function Wizard() {
                   </div>
                   <div className="mt-3"><ImageUpload value={f.coverImage} onChange={(v) => set("coverImage", v)} label="Foto sampul" allowCamera={false} compact /></div>
                 </Field>
-                <Field label="Kegiatan terkait" htmlFor="c-act" hint="Donasi disahkan otomatis tercatat ke kegiatan ini.">
-                  <Select id="c-act" value={f.activityId ?? ""} onChange={(e) => set("activityId", e.target.value)}>
-                    <option value="">— Tidak ada —</option>
+                <Field label="Kegiatan terkait" htmlFor="c-act" hint="Donasi disahkan otomatis tercatat ke kegiatan ini." error={errors.activityId}>
+                  <Select
+                    id="c-act"
+                    value={newAct ? "__baru__" : f.activityId ?? ""}
+                    onChange={(e) => {
+                      if (e.target.value === "__baru__") {
+                        setNewAct(emptyActivityDraft());
+                        set("activityId", "");
+                      } else {
+                        setNewAct(null);
+                        set("activityId", e.target.value);
+                      }
+                    }}
+                  >
+                    <option value="">— Tanpa kegiatan —</option>
                     {ws.activities.filter((a) => !a.archivedAt).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                    {can("activity.manage") && <option value="__baru__">+ Kegiatan baru…</option>}
                   </Select>
                 </Field>
+                {newAct && (
+                  <fieldset className="rounded-2xl border border-emerald-200 bg-mint/30 p-4">
+                    <legend className="px-1 text-[15px] font-bold">Kegiatan baru</legend>
+                    <p className="mb-3 text-sm text-muted">Kegiatan ini ikut tersimpan dan langsung tertaut saat penggalangan disimpan.</p>
+                    <ActivityFields value={newAct} onChange={(v) => { setNewAct(v); setActErrors({}); }} errors={actErrors} />
+                  </fieldset>
+                )}
               </>
             )}
             {step === 1 && (
               <>
-                <Field label="Target dana" required error={errors.target}>
+                <Field label="Target dana (opsional)" error={errors.target} hint="Biarkan Rp0 jika tanpa target — halaman publik tidak menampilkan bilah kemajuan dan persentase.">
                   <MoneyInput large value={f.target} onChange={(v) => set("target", v)} invalid={!!errors.target} />
                 </Field>
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="Mulai" htmlFor="c-start" error={errors.startDate}><Input id="c-start" type="date" value={f.startDate} onChange={(e) => set("startDate", e.target.value)} /></Field>
-                  <Field label="Berakhir" htmlFor="c-end" error={errors.endDate}><Input id="c-end" type="date" value={f.endDate} onChange={(e) => set("endDate", e.target.value)} /></Field>
+                  <Field label="Berakhir (opsional)" htmlFor="c-end" error={errors.endDate}><Input id="c-end" type="date" value={f.endDate ?? ""} onChange={(e) => set("endDate", e.target.value)} /></Field>
                 </div>
-                <Field label="Dana akan digunakan untuk" htmlFor="c-purpose" required error={errors.purpose}>
+                <Field label="Dana akan digunakan untuk (opsional)" htmlFor="c-purpose" error={errors.purpose}>
                   <Input id="c-purpose" value={f.purpose} onChange={(e) => set("purpose", e.target.value)} placeholder="Upakara, sewa tenda, konsumsi…" />
                 </Field>
               </>
@@ -183,7 +208,7 @@ function Wizard() {
                     ))}
                   </div>
                 </Field>
-                <Field label="Petunjuk berpunia" htmlFor="c-instr" error={errors.instructions}>
+                <Field label="Petunjuk berpunia (opsional)" htmlFor="c-instr" error={errors.instructions}>
                   <Textarea id="c-instr" rows={3} value={f.instructions} onChange={(e) => set("instructions", e.target.value)} />
                 </Field>
                 <div className="divide-y divide-line rounded-2xl border border-line px-4">
@@ -200,11 +225,12 @@ function Wizard() {
                   <div className="p-5">
                     <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">{ws.temple?.name}</p>
                     <h2 className="mt-1 text-xl font-bold">{f.title || "Judul campaign"}</h2>
-                    <p className="mt-2 line-clamp-3 text-[15px] text-charcoal/80">{f.description}</p>
+                    {f.description && <p className="mt-2 line-clamp-3 text-[15px] text-charcoal/80">{f.description}</p>}
                     <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                      <div className="rounded-xl bg-ivory p-3"><p className="text-muted">Target</p><p className="tabular font-bold">{rupiah(f.target)}</p></div>
-                      <div className="rounded-xl bg-ivory p-3"><p className="text-muted">Periode</p><p className="font-bold">{f.startDate ? formatDate(f.startDate) : "—"} – {f.endDate ? formatDate(f.endDate) : "—"}</p></div>
+                      <div className="rounded-xl bg-ivory p-3"><p className="text-muted">Target</p><p className="tabular font-bold">{f.target > 0 ? rupiah(f.target) : "Tanpa target"}</p></div>
+                      <div className="rounded-xl bg-ivory p-3"><p className="text-muted">Periode</p><p className="font-bold">{f.startDate ? formatDate(f.startDate) : "—"} – {f.endDate ? formatDate(f.endDate) : "tanpa batas"}</p></div>
                     </div>
+                    {newAct && <p className="mt-3 text-sm text-muted">Kegiatan baru: <strong className="text-charcoal">{newAct.name}</strong></p>}
                     {bankAcc && <p className="mt-3 text-sm text-muted">Rekening: <strong className="text-charcoal">{bankAcc.bankName ?? bankAcc.name} {bankAcc.accountNumber}</strong></p>}
                   </div>
                 </div>

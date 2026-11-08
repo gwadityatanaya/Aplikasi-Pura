@@ -3,6 +3,7 @@ import { z } from "zod";
 import { and, eq, gt, isNull, ne, or, sql } from "drizzle-orm";
 import { db, schema, type Tx } from "./db";
 import { ApiError, todayInAppTz } from "./http";
+import { personalDataIn } from "@/lib/personal-data";
 import { requirePerm, requireSuperAdmin, requireTemple, templeAccess, type Ctx } from "./context";
 import { diff, logActivity } from "./log";
 import { persistImage } from "./images";
@@ -28,6 +29,12 @@ export const transparencySchema = z.object({
   showBalance: z.boolean(), showRecentTransactions: z.boolean(), recentCount: z.number().int().min(3).max(5),
 }).partial();
 
+/** The fields of a kegiatan — the Kegiatan page and "Kegiatan baru" in the campaign form. */
+const activityInput = z.object({
+  name: text(120).min(3, "Isi nama kegiatan"), description: text(400).default(""), startDate: isoDate, endDate: isoDate, budget: money.default(0),
+  fundType: z.enum(["general", "restricted"]), status: z.enum(["planned", "ongoing", "done"]), color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+});
+
 export const txInput = z.object({
   type: z.enum(["income", "expense", "transfer"]),
   amount: money.min(1, "Nominal harus lebih dari nol"),
@@ -45,18 +52,20 @@ export const txInput = z.object({
   status: z.enum(["draft", "confirmed"]),
 });
 
+// Only the title is required (the temple is the open one). Story, purpose, target, end date and
+// instructions are optional: target 0 = no target, no end date = open until closed.
 const campaignInput = z.object({
-  title: text(120).min(5),
-  description: text(4000).min(20),
+  title: text(120).min(3, "Judul minimal 3 huruf"),
+  description: text(4000).default(""),
   cover: coverVariant,
   coverImage: image,
   activityId: optId,
-  target: money.min(100_000),
+  target: money.min(0).default(0),
   startDate: isoDate,
-  endDate: isoDate,
-  purpose: text(300).min(5),
+  endDate: isoDate.optional().nullable().or(z.literal("")).transform((v) => v || null),
+  purpose: text(300).default(""),
   accountId: id,
-  instructions: text(1000).min(10),
+  instructions: text(1000).default(""),
   manualVerification: z.boolean(),
   showDonorList: z.boolean(),
   defaultPrivacy: z.enum(["public", "anonymous", "private"]),
@@ -257,12 +266,7 @@ export const coreCommands: Record<string, Handler> = {
   async saveActivity(ctx, p) {
     const templeId = requireTemple(ctx);
     await requirePerm(ctx, "activity.manage", "mengelola kegiatan");
-    const i = z
-      .object({
-        id: optId, name: text(120).min(3), description: text(400), startDate: isoDate, endDate: isoDate, budget: money,
-        fundType: z.enum(["general", "restricted"]), status: z.enum(["planned", "ongoing", "done"]), color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
-      })
-      .parse(p);
+    const i = activityInput.extend({ id: optId }).parse(p);
     if (i.endDate < i.startDate) throw new ApiError(400, "Tanggal selesai harus setelah tanggal mulai.");
     return db.transaction(async (tx) => {
       const { id: aid, ...values } = i;
@@ -325,9 +329,21 @@ export const coreCommands: Record<string, Handler> = {
   async saveCampaign(ctx, p) {
     const templeId = requireTemple(ctx);
     await requirePerm(ctx, "campaign.manage", "mengelola campaign");
-    const { input, status, id: cid } = z.object({ input: campaignInput, status: z.enum(["draft", "active"]), id: optId }).parse(p);
-    if (input.endDate <= input.startDate) throw new ApiError(400, "Tanggal berakhir harus setelah tanggal mulai.");
+    const { input, status, id: cid, newActivity } = z.object({ input: campaignInput, status: z.enum(["draft", "active"]), id: optId, newActivity: activityInput.optional().nullable() }).parse(p);
+    if (input.endDate && input.endDate <= input.startDate) throw new ApiError(400, "Tanggal berakhir harus setelah tanggal mulai.");
+    if (newActivity && newActivity.endDate < newActivity.startDate) throw new ApiError(400, "Tanggal selesai kegiatan harus setelah tanggal mulai.");
+    // One database transaction: if saving the campaign fails, the new kegiatan is not kept either.
     return db.transaction(async (tx) => {
+      if (newActivity) {
+        await requirePerm(ctx, "activity.manage", "membuat kegiatan");
+        const [act] = await tx.insert(T.activities).values({ ...newActivity, id: uid("a"), templeId }).returning();
+        await log(ctx, tx, { action: "Membuat kegiatan", entity: "activity", entityId: act.id, detail: `${act.name} (dari form penggalangan dana)` });
+        input.activityId = act.id;
+      }
+      if (cid) {
+        const [cur] = await tx.select().from(T.campaigns).where(and(eq(T.campaigns.id, cid), eq(T.campaigns.templeId, templeId)));
+        if (cur && (cur.closedAt || cur.status === "completed")) throw new ApiError(409, "Penggalangan yang sudah ditutup tidak bisa diubah. Tambahkan catatan jika perlu koreksi.");
+      }
       const acc = await tx.select().from(T.accounts).where(and(eq(T.accounts.id, input.accountId), eq(T.accounts.templeId, templeId)));
       if (!acc[0]) throw new ApiError(400, "Rekening tidak ditemukan.");
       if (input.activityId) {
@@ -362,11 +378,47 @@ export const coreCommands: Record<string, Handler> = {
   async setCampaignStatus(ctx, p) {
     const templeId = requireTemple(ctx);
     await requirePerm(ctx, "campaign.manage", "mengelola campaign");
-    const { id: cid, status } = z.object({ id, status: z.enum(["draft", "active", "completed"]) }).parse(p);
+    // Closing goes through closeCampaign (reason required); a closed campaign stays closed.
+    const { id: cid, status } = z.object({ id, status: z.enum(["draft", "active"]) }).parse(p);
     return db.transaction(async (tx) => {
       const cur = await one(tx.select().from(T.campaigns).where(and(eq(T.campaigns.id, cid), eq(T.campaigns.templeId, templeId))));
+      if (cur.closedAt || cur.status === "completed") throw new ApiError(409, "Penggalangan ini sudah ditutup.");
       await tx.update(T.campaigns).set({ status, publishedAt: status === "active" && !cur.publishedAt ? now() : cur.publishedAt }).where(eq(T.campaigns.id, cid));
-      await log(ctx, tx, { action: status === "completed" ? "Menutup campaign" : status === "active" ? "Mempublikasikan campaign" : "Menjadikan draf", entity: "campaign", entityId: cid, detail: cur.title });
+      await log(ctx, tx, { action: status === "active" ? "Mempublikasikan campaign" : "Menjadikan draf", entity: "campaign", entityId: cid, detail: cur.title });
+      return null;
+    });
+  },
+
+  /**
+   * Closes a penggalangan before its end date. The reason is PUBLIC and can never be edited
+   * (database trigger, migration 0017); corrections are added as separate notes.
+   */
+  async closeCampaign(ctx, p) {
+    const templeId = requireTemple(ctx);
+    await requirePerm(ctx, "campaign.manage", "menutup penggalangan dana");
+    const i = z.object({ id, reason: text(300).min(5, "Tuliskan alasan penutupan (minimal 5 huruf).") }).parse(p);
+    publicTextCheck(i.reason);
+    return db.transaction(async (tx) => {
+      const c = await one(tx.select().from(T.campaigns).where(and(eq(T.campaigns.id, i.id), eq(T.campaigns.templeId, templeId))).for("update"), "Penggalangan tidak ditemukan.");
+      if (c.status === "draft") throw new ApiError(409, "Draf belum terbit, jadi tidak perlu ditutup.");
+      if (c.closedAt || c.status === "completed") throw new ApiError(409, "Penggalangan ini sudah ditutup.");
+      await tx.update(T.campaigns).set({ status: "completed", closedAt: new Date(), closeReason: i.reason, closedBy: ctx.user.id }).where(eq(T.campaigns.id, c.id));
+      await log(ctx, tx, { action: "Menutup penggalangan dana", entity: "campaign", entityId: c.id, detail: `${c.title} — alasan: ${i.reason}` });
+      return null;
+    });
+  },
+
+  /** A correction or addition to a closed penggalangan, shown publicly under the original reason. */
+  async addCampaignCloseNote(ctx, p) {
+    const templeId = requireTemple(ctx);
+    await requirePerm(ctx, "campaign.manage", "menambah catatan penutupan");
+    const i = z.object({ id, text: text(300).min(5, "Catatan minimal 5 huruf.") }).parse(p);
+    publicTextCheck(i.text);
+    return db.transaction(async (tx) => {
+      const c = await one(tx.select().from(T.campaigns).where(and(eq(T.campaigns.id, i.id), eq(T.campaigns.templeId, templeId))).for("update"), "Penggalangan tidak ditemukan.");
+      if (!c.closedAt && c.status !== "completed") throw new ApiError(409, "Catatan tambahan hanya untuk penggalangan yang sudah ditutup.");
+      await tx.update(T.campaigns).set({ closeNotes: [...(c.closeNotes ?? []), { at: new Date().toISOString(), text: i.text }] }).where(eq(T.campaigns.id, c.id));
+      await log(ctx, tx, { action: "Menambah catatan penutupan penggalangan", entity: "campaign", entityId: c.id, detail: `${c.title} — ${i.text}` });
       return null;
     });
   },
@@ -537,6 +589,12 @@ export async function activityData(tx: Tx, activityId: string) {
     (await tx.select({ n: sql<number>`count(*)::int` }).from(table).where(eq(table.activityId, activityId)))[0].n;
   const [txs, dons, camps] = await Promise.all([n(T.transactions), n(T.donations), n(T.campaigns)]);
   return [txs && `${txs} transaksi`, dons && `${dons} punia`, camps && `${camps} penggalangan dana`].filter(Boolean) as string[];
+}
+
+/** Public texts must not carry an email address, phone number or account number. */
+export function publicTextCheck(t: string) {
+  const found = personalDataIn(t);
+  if (found) throw new ApiError(400, `Tulisan ini tampil untuk umum dan sepertinya memuat ${found}. Hapus data pribadi itu terlebih dahulu.`);
 }
 
 async function canWriteTx(ctx: Ctx) {

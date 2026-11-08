@@ -120,6 +120,13 @@
       "when": 1794100199875,
       "tag": "0016_activity_archive",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794102049111,
+      "tag": "0017_campaign_close",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { campaignOpen, hasTarget } from "@/lib/campaign";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -57,7 +58,7 @@ export default function DashboardPage() {
   );
   const pendingDonations = ws.donations.filter((d) => d.status === "pending");
   const drafts = ws.transactions.filter((t) => t.status === "draft");
-  const activeCampaigns = ws.campaigns.filter((c) => c.status === "active");
+  const activeCampaigns = ws.campaigns.filter((c) => campaignOpen(c));
   const catName = (id?: string) => ws.categories.find((c) => c.id === id);
   const accName = (id: string) => ws.accounts.find((a) => a.id === id)?.name;
   const actName = (id?: string) => ws.activities.find((a) => a.id === id)?.name;
@@ -212,9 +213,9 @@ export default function DashboardPage() {
                     <p className="font-semibold leading-snug">{c.title}</p>
                     <div className="mt-1 flex justify-between text-sm">
                       <span className="tabular font-bold text-forest">{rupiah(s.collected)}</span>
-                      <span className="tabular text-muted">{formatPercent(s.progress)} dari {rupiah(c.target)}</span>
+                      {hasTarget(c) && <span className="tabular text-muted">{formatPercent(s.progress)} dari {rupiah(c.target)}</span>}
                     </div>
-                    <Progress value={s.progress} className="mt-2" label={c.title} />
+                    {hasTarget(c) && <Progress value={s.progress} className="mt-2" label={c.title} />}
                     {s.pending.length > 0 && <p className="mt-2 text-xs font-semibold text-amber-700">{s.pending.length} donasi menunggu verifikasi</p>}
                   </Link>
                 );

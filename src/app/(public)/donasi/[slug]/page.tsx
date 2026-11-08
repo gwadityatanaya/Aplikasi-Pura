@@ -13,12 +13,13 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AnimatedRupiah } from "@/components/ui/animated-number";
-import { CampaignStatusBadge, daysLeftLabel } from "@/components/shared/campaign-card";
+import { CampaignEndNotice, CampaignStatusBadge, daysLeftLabel } from "@/components/shared/campaign-card";
+import { campaignPhase, hasTarget } from "@/lib/campaign";
 import { ShareActions } from "@/components/shared/share";
 import { DonationFeed, DonorList } from "@/components/public/donations";
 import { usePublicData } from "@/lib/public";
 import { campaignStats } from "@/lib/ledger";
-import { formatDate, formatDateShort, formatPercent, rupiah } from "@/lib/format";
+import { formatDate, formatDateShort, formatPercent, rupiah, todayISO } from "@/lib/format";
 
 export default function CampaignPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -45,14 +46,22 @@ export default function CampaignPage() {
   const showBank = temple.acceptsPunia;
   const puniaHref = `/pura/${temple.slug}/punia?campaign=${campaign.id}`;
   const showDonors = campaign.showDonorList && temple.transparency.showDonorList;
-  const shareMsg = `🙏 ${campaign.title}\n${temple.name}\nTerkumpul ${rupiah(s.collected)} dari ${rupiah(campaign.target)} (${formatPercent(s.progress)}). Mari berpunia bersama:`;
+  const phase = campaignPhase(campaign, todayISO());
+  const open = phase === "active";
+  const target = hasTarget(campaign);
+  const shareMsg = `🙏 ${campaign.title}\n${temple.name}\nTerkumpul ${rupiah(s.collected)}${target ? ` dari ${rupiah(campaign.target)} (${formatPercent(s.progress)})` : ""}.${open ? " Mari berpunia bersama:" : ""}`;
+  const facts = [
+    campaign.purpose && { icon: Target, label: "Dana digunakan untuk", value: campaign.purpose },
+    { icon: CalendarDays, label: "Mulai", value: formatDate(campaign.startDate) },
+    campaign.endDate && { icon: CalendarDays, label: "Berakhir", value: formatDate(campaign.endDate) },
+  ].filter(Boolean) as { icon: typeof Target; label: string; value: string }[];
 
   return (
     <div className="pb-[calc(7rem+env(safe-area-inset-bottom))] lg:pb-12">
       <div className="container pt-4 md:pt-6">
         <TempleCover variant={campaign.cover} image={campaign.coverImage} alt={`Sampul ${campaign.title}`} className="h-56 rounded-[2rem] md:h-[340px]">
           <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
-          <div className="absolute left-5 top-5"><CampaignStatusBadge status={campaign.status} /></div>
+          <div className="absolute left-5 top-5"><CampaignStatusBadge campaign={campaign} /></div>
         </TempleCover>
       </div>
       <div className="container mt-6 grid gap-6 lg:grid-cols-[1fr_400px]">
@@ -62,11 +71,10 @@ export default function CampaignPage() {
               <MapPin className="h-4 w-4" /> {temple.name}
             </Link>
             <h1 className="mt-2 text-balance text-3xl font-extrabold leading-tight text-forest md:text-4xl">{campaign.title}</h1>
-            <p className="mt-4 text-[17px] leading-relaxed text-charcoal/80">{campaign.description}</p>
+            <CampaignEndNotice campaign={campaign} className="mt-4" />
+            {campaign.description && <p className="mt-4 whitespace-pre-line text-[17px] leading-relaxed text-charcoal/80">{campaign.description}</p>}
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <Info icon={Target} label="Tujuan dana" value={campaign.purpose} />
-              <Info icon={CalendarDays} label="Mulai" value={formatDate(campaign.startDate)} />
-              <Info icon={CalendarDays} label="Berakhir" value={formatDate(campaign.endDate)} />
+              {facts.map((f) => <Info key={f.label} icon={f.icon} label={f.label} value={f.value} />)}
             </div>
           </div>
 
@@ -101,14 +109,18 @@ export default function CampaignPage() {
             <div className="p-6">
               <p className="text-sm font-medium text-muted">Terkumpul &amp; disahkan</p>
               <AnimatedRupiah value={s.collected} className="tabular mt-1 block text-4xl font-extrabold tracking-tight text-forest" />
-              <p className="mt-1 text-sm text-muted">dari target <span className="tabular font-semibold text-charcoal">{rupiah(campaign.target)}</span></p>
-              <Progress value={s.progress} className="mt-4" height="h-3.5" label="Progres penggalangan" />
-              <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                <Stat value={formatPercent(s.progress)} label="tercapai" />
+              {target && (
+                <>
+                  <p className="mt-1 text-sm text-muted">dari target <span className="tabular font-semibold text-charcoal">{rupiah(campaign.target)}</span></p>
+                  <Progress value={s.progress} className="mt-4" height="h-3.5" label="Progres penggalangan" />
+                </>
+              )}
+              <div className={`mt-4 grid gap-2 text-center ${target ? "grid-cols-3" : "grid-cols-2"}`}>
+                {target && <Stat value={formatPercent(s.progress)} label="tercapai" />}
                 <Stat value={String(s.contributors)} label="donatur" icon={Users} />
-                <Stat value={campaign.status === "completed" ? "Selesai" : daysLeftLabel(campaign.endDate).replace(" lagi", "")} label={campaign.status === "completed" ? "" : "tersisa"} />
+                <Stat value={phase === "closed" ? "Ditutup" : phase === "ended" ? "Berakhir" : campaign.endDate ? daysLeftLabel(campaign.endDate).replace(" lagi", "") : "Tanpa batas"} label={open && campaign.endDate ? "tersisa" : phase === "active" ? "waktu" : ""} />
               </div>
-              {campaign.status === "active" && (
+              {open && (
                 showBank ? (
                   <Link href={puniaHref} className={buttonClass("primary", "xl", "mt-5 w-full")}>
                     <HandHeart className="h-5 w-5" /> Saya sudah transfer — unggah bukti
@@ -118,10 +130,10 @@ export default function CampaignPage() {
                 )
               )}
             </div>
-            {showBank && campaign.status === "active" && (
+            {showBank && open && (
               <div className="border-t border-line bg-ivory/70 p-6">
                 <h2 className="font-bold">Cara berpunia</h2>
-                <p className="mt-1 text-[15px] leading-relaxed text-charcoal/80">{campaign.instructions}</p>
+                {campaign.instructions && <p className="mt-1 text-[15px] leading-relaxed text-charcoal/80">{campaign.instructions}</p>}
                 <div className="mt-3 rounded-2xl bg-gradient-to-br from-emerald-600 to-forest p-4 text-white">
                   <p className="flex items-center gap-2 text-sm text-white/80"><Landmark className="h-4 w-4" /> {temple.bankName}</p>
                   <p className="tabular mt-2 text-xl font-bold tracking-wider">{temple.bankAccountNumber}</p>
@@ -158,12 +170,12 @@ export default function CampaignPage() {
         </aside>
       </div>
       <OrnamentDivider className="container mt-12 max-w-md" />
-      {campaign.status === "active" && (
+      {open && (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:hidden">
           <div className="flex items-center gap-3">
             <div className="min-w-0 flex-1">
-              <p className="tabular truncate text-sm font-extrabold text-forest">{rupiah(s.collected)} <span className="font-medium text-muted">· {formatPercent(s.progress)}</span></p>
-              <Progress value={s.progress} className="mt-1.5" height="h-1.5" label="Progres penggalangan" />
+              <p className="tabular truncate text-sm font-extrabold text-forest">{rupiah(s.collected)} {target && <span className="font-medium text-muted">· {formatPercent(s.progress)}</span>}</p>
+              {target && <Progress value={s.progress} className="mt-1.5" height="h-1.5" label="Progres penggalangan" />}
             </div>
             <Link href={puniaHref} className={buttonClass("primary", "lg")}><HandHeart className="h-5 w-5" /> Berpunia</Link>
           </div>

@@ -1,5 +1,6 @@
 "use client";
 import { templeLocation } from "@/lib/temple";
+import { campaignOpen } from "@/lib/campaign";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -45,7 +46,8 @@ export default function TemplePage() {
   const own = donations.filter((d) => d.templeId === temple.id && !d.campaignId);
   const allOwn = donations.filter((d) => d.templeId === temple.id);
   const tc = campaigns.filter((c) => c.templeId === temple.id);
-  const active = tc.filter((c) => c.status === "active");
+  // Open ones first; closed/ended ones stay visible with "Ditutup"/"Berakhir" and their reason.
+  const active = [...tc].sort((a, b) => Number(campaignOpen(b)) - Number(campaignOpen(a)));
   const pubReports = tp.showPublishedSummaries ? reports.filter((r) => r.templeId === temple.id).sort((a, b) => b.periodEnd.localeCompare(a.periodEnd)) : [];
 
   async function download(id: string) {
