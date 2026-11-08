@@ -165,9 +165,10 @@ function PuniaQueue() {
                     {formatDate(d.transferDate ?? d.date)} · {CHANNEL[d.channel]} · {PURPOSE_LABEL[d.purpose ?? "umum"]}
                     {d.campaignId && ` · ${ws.campaigns.find((c) => c.id === d.campaignId)?.title ?? "Kegiatan"}`}
                   </p>
-                  {d.accountId && ws.accounts.filter((a) => a.type === "bank").length > 1 && (() => {
+                  {d.accountId && (ws.accounts.filter((a) => a.type === "bank").length > 1 || ws.accounts.find((x) => x.id === d.accountId)?.type === "cash") && (() => {
                     const a = ws.accounts.find((x) => x.id === d.accountId);
-                    return a ? <p className="text-sm font-semibold text-emerald-800">Ke rekening: {a.label || a.name} · {a.bankName} {a.accountNumber}</p> : null;
+                    if (!a) return null;
+                    return <p className="text-sm font-semibold text-emerald-800">{a.type === "cash" ? "Masuk ke: Tunai (kas pura)" : `Ke rekening: ${a.label || a.name} · ${a.bankName} ${a.accountNumber}`}</p>;
                   })()}
                   {d.referenceNo && <p className="text-sm text-muted">Ref: {d.referenceNo}</p>}
                 </button>

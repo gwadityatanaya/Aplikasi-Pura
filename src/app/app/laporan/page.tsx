@@ -246,7 +246,7 @@ function Reports() {
       </div>
 
       {/* PUBLISHED */}
-      <ReconciliationCard canEdit={can("settings.manage")} />
+      <ReconciliationCard canEdit={can("reconcile.manage")} />
 
       <Card className="mt-6">
         <CardHeader title="Laporan yang dipublikasikan" description="Hanya ringkasan ini yang dapat dilihat publik di halaman pura." />

@@ -254,6 +254,12 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
         .filter((r) => (r[1] as number) > 0);
       const camps = Array.from(new Set(list.map((d) => d.campaignId).filter(Boolean))) as string[];
       const channel = { transfer: "Transfer", qris: "QRIS", tunai: "Tunai", whatsapp: "WhatsApp", simulasi: "Simulasi" } as const;
+      // Where the money went: the account its income entry was booked to (label only, no number).
+      const into = (d: (typeof list)[number]) => {
+        const accId = data.transactions.find((t) => t.id === d.transactionId)?.accountId ?? d.accountId;
+        const a = data.accounts.find((x) => x.id === accId);
+        return a ? (a.type === "cash" ? "Tunai (kas)" : a.label || a.name) : "—";
+      };
       const tables: ReportTable[] = [{ title: "Per tujuan punia", head: ["Tujuan", "Jumlah", "Nominal"], body: purposes, foot: ["Total", list.length, total], money: [2] }];
       if (camps.length) {
         tables.push({
@@ -267,18 +273,18 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
         full
           ? {
               title: `Rincian punia (${list.length}) — INTERNAL`,
-              head: ["Tgl transfer", "Nama donatur", "Tampil di publik", "Tujuan", "Lewat", "Dicatat oleh", "Nominal"],
-              body: list.map((d) => [(d.transferDate ?? d.date), d.donorName, d.privacy === "public" ? "Tampil" : "Anonim", PURPOSE_LABEL[d.purpose ?? "umum"], channel[d.channel], d.inputByName ?? "Umat (aplikasi)", d.amount]),
-              foot: ["", "", "", "", "", "Total", total],
-              money: [6],
+              head: ["Tgl transfer", "Nama donatur", "Tampil di publik", "Tujuan", "Lewat", "Masuk ke", "Dicatat oleh", "Nominal"],
+              body: list.map((d) => [(d.transferDate ?? d.date), d.donorName, d.privacy === "public" ? "Tampil" : "Anonim", PURPOSE_LABEL[d.purpose ?? "umum"], channel[d.channel], into(d), d.inputByName ?? "Umat (aplikasi)", d.amount]),
+              foot: ["", "", "", "", "", "", "Total", total],
+              money: [7],
               dateCols: [0],
             }
           : {
               title: `Rincian punia (${list.length})`,
-              head: ["Tgl transfer", "Nama", "Tujuan", "Kegiatan", "Lewat", "Nominal"],
-              body: list.map((d) => [(d.transferDate ?? d.date), d.privacy === "public" ? d.donorName : "Anonim", PURPOSE_LABEL[d.purpose ?? "umum"], campName(d.campaignId), channel[d.channel], d.amount]),
-              foot: ["", "", "", "", "Total", total],
-              money: [5],
+              head: ["Tgl transfer", "Nama", "Tujuan", "Kegiatan", "Lewat", "Masuk ke", "Nominal"],
+              body: list.map((d) => [(d.transferDate ?? d.date), d.privacy === "public" ? d.donorName : "Anonim", PURPOSE_LABEL[d.purpose ?? "umum"], campName(d.campaignId), channel[d.channel], into(d), d.amount]),
+              foot: ["", "", "", "", "", "Total", total],
+              money: [6],
               dateCols: [0],
             }
       );

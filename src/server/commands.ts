@@ -629,4 +629,5 @@ export async function housekeeping() {
   await (await import("./commands-help")).cleanupHelpAttachments();
   // Waiting punia emails (e.g. postponed yesterday because of the daily quota).
   if ((await import("./email")).puniaEmailEnabled()) await (await import("./email-queue")).processEmailQueue(10);
+  await (await import("./email-queue")).cleanupEmailQueue();
 }

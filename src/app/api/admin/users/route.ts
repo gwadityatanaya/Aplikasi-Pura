@@ -3,6 +3,7 @@ import { db, schema } from "@/server/db";
 import { getCtx, requireSuperAdmin } from "@/server/context";
 import { json, route } from "@/server/http";
 import { pendingCounts } from "@/server/commands-punia";
+import { failedEmailCount } from "@/server/email-queue";
 import * as m from "@/server/map";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,7 @@ export const GET = route(async (req: Request) => {
     db.select().from(schema.accounts).where(eq(schema.accounts.type, "bank")),
   ]);
   const pending = await pendingCounts(temples.map((t) => t.id));
+  const failedEmails = await failedEmailCount();
   return json({
     ok: true,
     users: users.filter((u) => u.status !== "deleted").map(m.toUser),
@@ -35,5 +37,6 @@ export const GET = route(async (req: Request) => {
     })),
     banjars: banjars.map(m.toBanjar),
     banjarMembers: banjarMembers.map(m.toBanjarMember),
+    failedEmails,
   });
 });

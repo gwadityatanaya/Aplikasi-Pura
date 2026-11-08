@@ -58,26 +58,26 @@ Semua sudah berjalan dengan pilihan "saran" di bawah. Jawab hanya yang ingin diu
 **Rekening & QRIS**
 
 6. **Rekening tanpa centang "Tampil untuk umat"** tetap tercatat di buku kas tetapi tidak bisa dipilih umat (mis. rekening tabungan internal). *Saran: biarkan.*
-7. **Input punia manual** belum menanyakan rekening tujuan; punia manual "transfer" dicatat ke rekening utama (atau rekening penggalangan). Perlu pilihan rekening di input manual juga?
+7. ✅ **Input punia manual** kini punya pilihan **Masuk ke** (rekening atau Tunai) — Phase 3.4.
 8. **QRIS hanya satu per pura.** Perlu QRIS per rekening?
 
 **Email konfirmasi**
 
 9. **Kuota harian:** 250 email konfirmasi per hari (Brevo Free 300, sisa 50 untuk tautan masuk dan ringkasan harian). *Saran: biarkan untuk pilot.*
-10. **Email gagal dicoba sampai 5 kali** (jeda makin lama), lalu berhenti dengan status gagal di database (tidak ada layar khusus). Perlu daftar "email gagal" di Back Office?
-11. **Isi email antrean disimpan di database** (agar bisa dikirim ulang). Perlu dihapus otomatis setelah terkirim, mis. 90 hari? *Saran: ya, 90 hari — belum saya buat.*
+10. ✅ **Email gagal** dicoba sampai 5 kali; jumlah yang tetap gagal kini tampil sebagai peringatan di Back Office (Phase 3.4).
+11. ✅ **Isi email antrean dihapus otomatis 90 hari** setelah selesai (terkirim, dibatalkan, atau gagal) — Phase 3.4.
 12. Email penolakan juga memuat kalimat "bukan kuitansi" (seragam dengan email pengesahan). *Saran: biarkan.*
 
 **Migrasi dari buku**
 
 13. **Saksi saldo awal berupa nama yang diketik** (dengan saran nama pengurus pura). Haruskah wajib dipilih dari daftar pengurus berakun saja? *Saran: biarkan diketik* — saksi kadang pengurus banjar yang belum punya akun.
 14. **Transaksi sebelum tanggal mulai ditolak** (bukan sekadar peringatan), termasuk pengesahan punia yang ditransfer sebelum tanggal mulai (karena uangnya sudah masuk saldo awal). *Saran: biarkan.*
-15. **Pencocokan bulanan diisi Pengurus Pura** (izin pengaturan). Perlu Pengurus Banjar juga bisa mengisi?
+15. ✅ **Pencocokan bulanan** bisa diisi Pengurus Pura dan Pengurus Banjar (Phase 3.4); Pemeriksa tidak.
 16. **Tanggal mulai tidak boleh setelah transaksi pertama yang sudah tercatat** (untuk pura demo/pilot yang sudah berjalan). Pura yang sudah punya transaksi lama sebaiknya memilih tanggal mulai sama dengan atau sebelum transaksi pertamanya.
 
 **Lanjutan**
 
-17. ⏳ **Skrip ganti email Admin Utama** → Phase 3.4 (sesuai keputusan Anda).
+17. ⏳ **Skrip ganti email Admin Utama** → dikerjakan di Phase 3.4 tahap 4.
 18. ⏳ **Batas nominal pengesahan pengeluaran** → menunggu angka dari pengurus banjar.
 
 ## Bahan pilot (dijawab sebelum pilot, tidak perlu untuk demo)

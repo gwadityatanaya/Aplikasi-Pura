@@ -64,6 +64,8 @@ export interface ManualPuniaInput {
   referenceNo?: string;
   evidence?: string;
   message?: string;
+  /** Bank account or the cash box ("Tunai") the money went to */
+  accountId?: string;
 }
 
 export type Result<T = undefined> = { ok: true; value: T } | { ok: false; error: string };

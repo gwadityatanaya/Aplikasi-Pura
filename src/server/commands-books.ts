@@ -100,7 +100,7 @@ export const booksCommands: Record<string, Handler> = {
    */
   async saveReconciliation(ctx, p) {
     const templeId = requireTemple(ctx);
-    await requirePerm(ctx, "settings.manage", "mencatat pencocokan bulanan");
+    await requirePerm(ctx, "reconcile.manage", "mencatat pencocokan bulanan");
     const i = z
       .object({
         month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),

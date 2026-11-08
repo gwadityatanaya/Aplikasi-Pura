@@ -205,11 +205,18 @@ export const puniaCommands: Record<string, Handler> = {
         donorName: text(80).min(2, "Isi nama donatur"), donorEmail: z.string().trim().toLowerCase().email().optional().or(z.literal("")).transform((v) => v || null),
         amount, transferDate: isoDate, anonymous: z.boolean(), purpose, channel: z.enum(["tunai", "whatsapp", "transfer"]),
         activityId: optId, campaignId: optId, referenceNo: refNo, evidence: image, message: optText(300),
+        // Where the money went: one of the bank accounts, or the cash box ("Tunai").
+        accountId: optId,
       })
       .parse(p);
     checkDate(i.transferDate);
     return db.transaction(async (tx) => {
       await assertNotBeforeStart(tx, templeId, i.transferDate, "Tanggal punia");
+      if (i.accountId) {
+        const [acc] = await tx.select().from(T.accounts).where(and(eq(T.accounts.id, i.accountId), eq(T.accounts.templeId, templeId)));
+        if (!acc) throw new ApiError(400, "Rekening/kas tujuan tidak ditemukan.");
+        if (acc.archived) throw new ApiError(409, "Rekening/kas ini sudah nonaktif. Pilih yang lain.");
+      }
       await checkGrouping(tx, templeId, i.activityId, i.campaignId);
       const hash = imageHash(i.evidence);
       await assertNotDuplicate(tx, { hash, templeId, amount: i.amount, transferDate: i.transferDate, referenceNo: i.referenceNo });
@@ -220,6 +227,7 @@ export const puniaCommands: Record<string, Handler> = {
         id: donationId, templeId, campaignId: i.campaignId, activityId: i.activityId, purpose: i.purpose, donorName: i.donorName, amount: i.amount,
         date: todayInAppTz(), transferDate: i.transferDate, referenceNo: i.referenceNo, privacy: i.anonymous ? "anonymous" : "public", status: "pending",
         message: i.message, evidence, evidenceHash: hash, channel: i.channel, inputBy: ctx.user.id, submittedBy: donor?.id ?? null, submitterEmail: i.donorEmail,
+        accountId: i.accountId,
       });
       await log(ctx, tx, { action: "Mencatat punia manual", entity: "donation", entityId: donationId, detail: `${i.anonymous ? "Donatur anonim" : "Donatur tampil"} — ${rupiah(i.amount)} via ${i.channel}. Dicatat oleh ${ctx.user.name}.`, templeId });
       const self = !!i.donorEmail && i.donorEmail === ctx.user.email.toLowerCase();

@@ -132,6 +132,17 @@ export async function processEmailQueue(max = 25) {
   return { sent, postponed: 0 };
 }
 
+/** Emails that are done (sent, cancelled, given up) are removed 90 days later — they hold personal data. */
+export async function cleanupEmailQueue() {
+  await db.delete(T.emailQueue).where(and(inArray(T.emailQueue.status, ["sent", "cancelled", "failed"]), sql`${T.emailQueue.createdAt} < now() - interval '90 days'`));
+}
+
+/** Emails that could not be sent after every retry (shown in the Back Office). */
+export async function failedEmailCount() {
+  const [r] = await db.select({ n: sql<number>`count(*)::int` }).from(T.emailQueue).where(eq(T.emailQueue.status, "failed"));
+  return r.n;
+}
+
 /** The person switched these emails off: drop what is still waiting for them. */
 export async function cancelPuniaEmails(userId: string) {
   await db.update(T.emailQueue).set({ status: "cancelled" }).where(and(eq(T.emailQueue.userId, userId), inArray(T.emailQueue.status, ["waiting"])));

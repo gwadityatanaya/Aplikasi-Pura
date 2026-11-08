@@ -80,9 +80,12 @@ export function MutasiImport({ open, onClose, pending: allPending, isOwn, accoun
   const banks = accounts.filter((a) => a.type === "bank" && !a.archived);
   const primary = banks.find((a) => a.isPrimary) ?? banks[0];
   const [accountId, setAccountId] = useState(primary?.id ?? "");
+  // Punia received in cash (recorded "Tunai") never appear on a bank statement.
+  const cashIds = new Set(accounts.filter((a) => a.type === "cash").map((a) => a.id));
   const pending = useMemo(
-    () => (banks.length > 1 ? allPending.filter((d) => (d.accountId ?? primary?.id) === accountId) : allPending),
-    [allPending, accountId, banks.length, primary?.id]
+    () => allPending.filter((d) => !(d.accountId && cashIds.has(d.accountId))).filter((d) => banks.length <= 1 || (d.accountId ?? primary?.id) === accountId),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allPending, accountId, banks.length, primary?.id, accounts]
   );
   const [rows, setRows] = useState<string[][]>([]);
   const [dateCol, setDateCol] = useState(0);

@@ -32,6 +32,8 @@ interface AdminData {
   temples: AdminTemple[];
   banjars: Banjar[];
   banjarMembers: BanjarMember[];
+  /** Punia emails given up after every retry */
+  failedEmails?: number;
 }
 
 const pickAddress = (x: AddressValue): AddressValue => ({
@@ -114,12 +116,13 @@ export default function BackOfficePage() {
     <div>
       <PageHeader title="Back Office" description="Kelola banjar, pura, rekening, dan pengurus. Setiap perubahan tercatat di Log Aktivitas." actions={<Link href="/app/log-aktivitas" className={buttonClass("outline")}>Buka Log Aktivitas</Link>} />
 
-      {data && (warnings.noPengurus.length > 0 || warnings.single.length > 0 || warnings.noBank.length > 0) && (
+      {data && (warnings.noPengurus.length > 0 || warnings.single.length > 0 || warnings.noBank.length > 0 || !!data.failedEmails) && (
         <Card className="mb-5 border-amber-200 bg-amber-50/50 p-4">
           <p className="flex items-center gap-2 font-bold text-amber-900"><AlertTriangle className="h-5 w-5" /> Perlu perhatian</p>
           <ul className="mt-2 space-y-1.5 text-[15px] text-amber-900">
             {warnings.noPengurus.length > 0 && <li>• <strong>{warnings.noPengurus.length} pura</strong> belum punya Pengurus Pura — punianya diverifikasi oleh Pengurus Banjar: {warnings.noPengurus.map((t) => t.name).join(", ")}.</li>}
             {warnings.single.length > 0 && <li>• <strong>{warnings.single.length} pura</strong> hanya punya satu pengurus. Punia yang dikirim pengurus itu sendiri harus disetujui Pengurus Banjar: {warnings.single.map((t) => t.name).join(", ")}.</li>}
+            {!!data.failedEmails && <li>• <strong>{data.failedEmails} email konfirmasi punia</strong> gagal terkirim setelah 5 kali dicoba. Periksa pengaturan email (SMTP) di Vercel; statusnya tetap terlihat umat di Punia Saya.</li>}
             {warnings.noBank.length > 0 && <li>• <strong>{warnings.noBank.length} pura</strong> belum diisi info rekening, jadi umat belum bisa berpunia lewat aplikasi: {warnings.noBank.map((t) => t.name).join(", ")}.</li>}
           </ul>
         </Card>

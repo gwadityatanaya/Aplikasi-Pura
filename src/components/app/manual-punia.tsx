@@ -1,4 +1,5 @@
 "use client";
+import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { campaignOpen } from "@/lib/campaign";
 import { z } from "zod";
@@ -27,6 +28,7 @@ const schema = z.object({
   referenceNo: z.string().max(60).optional(),
   evidence: z.string().optional(),
   message: z.string().max(300).optional(),
+  accountId: z.string().optional(),
 });
 
 /** Records a punia received outside the app (cash, WhatsApp, or a transfer reported by phone). */
@@ -34,16 +36,25 @@ export function ManualPuniaDialog({ open, onClose, campaignId }: { open: boolean
   const ws = useWorkspace();
   const add = useStore((s) => s.addManualPunia);
   const me = useStore((s) => s.me);
-  const { register, control, handleSubmit, formState, reset, watch } = useForm<z.infer<typeof schema>>({
+  const { register, control, handleSubmit, formState, reset, watch, setValue } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: { donorName: "", donorEmail: "", amount: 0, transferDate: todayISO(), channel: "tunai", privacy: "public", purpose: "umum", campaignId: campaignId ?? "" },
   });
   const email = watch("donorEmail");
+  // "Masuk ke": every active bank account, plus the cash box ("Tunai") — not a bank account.
+  const banks = ws.accounts.filter((a) => a.type === "bank" && !a.archived);
+  const cashBox = ws.accounts.find((a) => a.type === "cash" && !a.archived);
+  const primary = banks.find((a) => a.isPrimary) ?? banks[0];
+  const channel = watch("channel");
+  useEffect(() => {
+    setValue("accountId", channel === "tunai" ? cashBox?.id ?? primary?.id ?? "" : primary?.id ?? cashBox?.id ?? "");
+  }, [channel, cashBox?.id, primary?.id, setValue]);
   const isSelf = !!email && !!me && email.trim().toLowerCase() === me.email.toLowerCase();
   const onSubmit = handleSubmit(async (v) => {
     const r = await add({
       donorName: v.donorName, donorEmail: v.donorEmail || undefined, amount: v.amount, transferDate: v.transferDate, anonymous: v.privacy !== "public",
       purpose: v.purpose, channel: v.channel, campaignId: v.campaignId || undefined, referenceNo: v.referenceNo || undefined, evidence: v.evidence, message: v.message || undefined,
+      accountId: v.accountId || undefined,
     });
     if (!r.ok) return toast.error(r.error);
     const val = r.value as unknown as { verified: boolean; number?: string };
@@ -68,11 +79,19 @@ export function ManualPuniaDialog({ open, onClose, campaignId }: { open: boolean
             <Select id="mp-ch" {...register("channel")}><option value="tunai">Tunai</option><option value="whatsapp">WhatsApp</option><option value="transfer">Transfer</option></Select>
           </Field>
         </div>
+        {(banks.length > 0 || cashBox) && (
+          <Field label="Masuk ke" htmlFor="mp-acc" hint="Rekening yang menerima transfer, atau Tunai jika uangnya diterima langsung. Dipakai di laporan dan saat mencocokkan mutasi.">
+            <Select id="mp-acc" {...register("accountId")}>
+              {banks.map((a) => <option key={a.id} value={a.id}>{a.label || a.name} · {a.bankName ?? ""} {a.accountNumber ?? ""}</option>)}
+              {cashBox && <option value={cashBox.id}>Tunai (kas pura, bukan rekening bank)</option>}
+            </Select>
+          </Field>
+        )}
         <Field label="Tujuan punia" htmlFor="mp-purpose">
           <Select id="mp-purpose" {...register("purpose")}>{(Object.keys(PURPOSE_LABEL) as (keyof typeof PURPOSE_LABEL)[]).map((k) => <option key={k} value={k}>{PURPOSE_LABEL[k]}</option>)}</Select>
         </Field>
         {!campaignId && ws.campaigns.some((c) => campaignOpen(c)) && (
-          <Field label="Kegiatan / odalan (opsional)" htmlFor="mp-camp">
+          <Field label="Penggalangan dana (opsional)" htmlFor="mp-camp">
             <Select id="mp-camp" {...register("campaignId")}>
               <option value="">— Tidak terkait —</option>
               {ws.campaigns.filter((c) => campaignOpen(c)).map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
