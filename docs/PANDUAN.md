@@ -330,6 +330,12 @@ Pura yang belum menekan **Mulai pembukuan** tetap berjalan seperti sebelumnya.
 1. Buka halaman pura → **Berpunia** → salin nomor rekening → transfer lewat m-banking. Jika pura punya **beberapa rekening**, umat **memilih rekening yang ia transfer** (label, bank, nomor, dan nama pemilik tampil di tiap pilihan). Jika ada **QRIS**, umat bisa memilih tab **QRIS**.
 2. Isi nominal, tanggal transfer, unggah foto/tangkapan layar bukti, pilih **TAMPIL** atau **ANONIM**, tujuan (umum / odalan / pembangunan / lainnya), dan kegiatan jika ada → **Kirim punia**.
 3. Pantau di **Punia Saya → Riwayat punia**. Jika ditolak, alasannya terlihat dan bisa **Perbaiki & kirim ulang**.
+4. **Bukti pencatatan (digital):** di **Punia Saya**, setiap punia punya tautan **Bukti pencatatan**. Halaman ini (dan **Unduh PDF** / **Cetak**) berisi nama pura, nominal, tanggal transfer, status, **nomor catatan** (setelah disahkan; sebelum itu ada **kode kiriman**), tanggal pengesahan, tujuan, dan rekening tujuan (hanya **4 angka terakhir** nomor rekening).
+   - Di bagian atas tertulis jelas: **konfirmasi pencatatan, BUKAN kuitansi bank** — bukti pembayaran yang sah tetap catatan m-banking/rekening umat sendiri.
+   - **Tidak** memuat nama pengurus yang mengesahkan, nomor rekening lengkap, atau foto bukti transfer.
+   - **Hanya pemilik akun** yang bisa membukanya. Akun lain — termasuk pengurus dan Admin Utama — mendapat "tidak ditemukan" (dijaga di server).
+   - Punia **ANONIM**: nama donatur tertulis **"Anonim"** di bukti. Pemilik akun bisa mencentang **"Tampilkan nama saya di bukti ini"** jika PDF untuk dirinya sendiri; biarkan tidak dicentang jika PDF akan dibagikan.
+   - Punia yang dicatat pengurus secara manual (tunai/WhatsApp) tidak tertaut ke akun umat, jadi tidak punya bukti digital ini.
 
 **Pengurus:**
 1. Lencana **"N punia menunggu"** muncul di menu **Punia**. Buka **Verifikasi Punia**.

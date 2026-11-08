@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, HandHeart, Inbox, RotateCcw } from "lucide-react";
+import { ArrowLeft, FileText, HandHeart, Inbox, RotateCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -71,7 +71,10 @@ export default function MyPuniaPage() {
                   )}
                 </div>
               )}
-              {d.evidence && <a href={d.evidence} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm font-semibold text-emerald-800 underline">Lihat bukti transfer</a>}
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                <Link href={`/umat/punia/${d.id}`} className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-800 underline"><FileText className="h-4 w-4" aria-hidden /> Bukti pencatatan</Link>
+                {d.evidence && <a href={d.evidence} target="_blank" rel="noreferrer" className="text-sm font-semibold text-emerald-800 underline">Lihat bukti transfer</a>}
+              </div>
             </li>
           );
         })}
