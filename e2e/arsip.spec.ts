@@ -119,7 +119,7 @@ test("pura dengan transaksi: hapus ditolak (aplikasi & database), arsip menyembu
 test("pura kosong: hapus permanen berhasil, peran pengurusnya dicabut, tercatat di Log", async () => {
   const admin = await as("admin@contoh.id");
   const banjarA = (await adminData(admin)).banjars.find((b) => b.name === "CONTOH Banjar Adat Kertha Sari")!;
-  const created = await command<{ id: string }>(admin, "adminSaveTemple", { name: "CONTOH Pura Uji Hapus", banjarIds: [banjarA.id] });
+  const created = await command<{ id: string }>(admin, "adminSaveTemple", { name: "CONTOH Pura Uji Hapus", banjarIds: [banjarA.id], activationReason: "Pura uji otomatis (tes e2e)" });
   expect(created.ok, created.error).toBe(true);
   const id = created.value.id;
   expect((await command(admin, "adminAddStaff", { email: "pengurus.uji.hapus@contoh.id", name: "Pengurus Uji Hapus (contoh)", kind: "pengurus", templeId: id })).ok).toBe(true);

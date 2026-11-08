@@ -16,6 +16,8 @@ export interface Ctx extends CurrentSession {
   emergency?: boolean;
   /** ctx.templeId is archived: everything can be read, nothing can be changed */
   templeArchived?: boolean;
+  /** Set ONLY by scripts that call commands directly on the server (the demo seed); never from HTTP */
+  internalScript?: boolean;
 }
 
 

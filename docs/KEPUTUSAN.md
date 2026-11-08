@@ -89,7 +89,7 @@ Semua sudah berjalan dengan pilihan "saran" di bawah. Jawab hanya yang ingin diu
 1. ✅ *(diputuskan: biarkan)* **Pengajuan yang disetujui membuat pura berstatus belum aktif** (lencana "Nonaktif"), bukan langsung aktif. Pura baru aktif setelah Admin Utama mengubah statusnya lewat **Ubah data** (biasanya setelah checklist verifikasi selesai). Tidak ada akun pengurus atau rekening yang dibuat otomatis. *Saran: biarkan.*
 2. **Batas kirim: 3 pengajuan per hari per jaringan internet**, dan WA/email yang masih punya pengajuan menunggu ditolak dengan pesan "sudah kami terima". Satu warnet atau wifi balai banjar bisa terkena batas yang sama. *Saran: biarkan.*
 3. ✅ *(diputuskan, sudah dikerjakan)* Pengajuan berstatus **Ditolak dihapus otomatis 6 bulan** setelah perubahan terakhirnya; Log mencatat jumlahnya saja.
-4. ✅ *(diputuskan, sudah dikerjakan)* **Aktivasi pura tidak dikunci**, tetapi jika checklist belum 4/4 muncul peringatan dan **alasan wajib**, tercatat di Log Aktivitas. Catatan: aturan ini berlaku saat pura yang **belum aktif** diaktifkan. Pura yang **langsung ditambahkan** Admin Utama lewat **Tambah pura** dengan status Aktif tidak dimintai alasan. Perlu juga di sana?
+4. ✅ *(diputuskan, sudah dikerjakan)* **Aktivasi pura tidak dikunci**, tetapi jika checklist belum 4/4 muncul peringatan dan **alasan wajib**, tercatat di Log Aktivitas. Berlaku juga ✅ *(diputuskan, sudah dikerjakan)* saat pura **langsung dibuat Aktif** lewat **Tambah pura** (kecuali checklist sudah 4/4). Skrip data demo tidak terkena aturan ini.
 
 **Pemeliharaan**
 

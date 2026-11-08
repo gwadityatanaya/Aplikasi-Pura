@@ -51,6 +51,8 @@ async function ctxFor(user: UserRow, templeId: string | null = null): Promise<Ct
     templeId,
     role: await roleFor(user, templeId),
     actor: { id: user.id, name: user.name, email: user.email },
+    // The demo temples are created "Aktif" without a verification checklist (decision Phase 3.4).
+    internalScript: true,
   };
 }
 

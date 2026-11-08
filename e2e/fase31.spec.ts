@@ -36,7 +36,7 @@ test("Admin Utama mendaftarkan pura hanya dengan nama dan banjar", async () => {
   const admin = await as("admin@contoh.id");
   const state = await (await admin.get("/api/admin/users")).json();
   const banjarId = state.banjars[0].id as string;
-  const r = await command<{ id: string }>(admin, "adminSaveTemple", { name: "CONTOH Pura Tanpa Data", banjarIds: [banjarId] });
+  const r = await command<{ id: string }>(admin, "adminSaveTemple", { name: "CONTOH Pura Tanpa Data", banjarIds: [banjarId], activationReason: "Pura uji otomatis (tes e2e)" });
   expect(r.ok, r.error).toBe(true);
   const noBanjar = await command(admin, "adminSaveTemple", { name: "CONTOH Pura Tanpa Banjar", banjarIds: [] });
   expect(noBanjar.ok).toBe(false);

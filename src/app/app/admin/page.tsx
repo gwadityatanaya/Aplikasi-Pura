@@ -348,12 +348,15 @@ export default function BackOfficePage() {
             </Field>
             {(() => {
               // Activating before the checklist is 4/4: allowed, with a warning and a required reason (logged).
+              // Also for a new temple created straight away as "Aktif" (it has no checklist yet: 0/4).
               const orig = templeForm.id ? data?.temples.find((t) => t.id === templeForm.id) : undefined;
               const pr = verificationProgress(orig?.verification);
-              if (!orig || orig.status === "active" || templeForm.status !== "active" || pr.done >= pr.total) return null;
+              if ((templeForm.id && (!orig || orig.status === "active")) || templeForm.status !== "active" || pr.done >= pr.total) return null;
               return (
                 <div className="space-y-3 rounded-xl border border-amber-300 bg-amber-50 p-3" role="alert">
-                  <p className="text-[0.9375rem] font-semibold text-amber-900">Checklist verifikasi pura ini baru {pr.done}/{pr.total}. Pura tetap bisa diaktifkan, tetapi alasannya wajib ditulis dan tercatat di Log Aktivitas.</p>
+                  <p className="text-[0.9375rem] font-semibold text-amber-900">
+                    {templeForm.id ? `Checklist verifikasi pura ini baru ${pr.done}/${pr.total}.` : `Pura baru belum punya checklist verifikasi (0/${pr.total}).`} Pura tetap bisa {templeForm.id ? "diaktifkan" : "langsung dibuat Aktif"}, tetapi alasannya wajib ditulis dan tercatat di Log Aktivitas. Atau pilih status <b>Nonaktif</b> dan aktifkan setelah verifikasi.
+                  </p>
                   <Field label="Alasan mengaktifkan sekarang (wajib)" htmlFor="tp-act-reason"><Textarea id="tp-act-reason" rows={2} value={templeForm.activationReason} onChange={(e) => setTempleForm({ ...templeForm, activationReason: e.target.value })} /></Field>
                 </div>
               );

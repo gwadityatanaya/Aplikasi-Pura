@@ -85,11 +85,13 @@ test("pura: lokasi lengkap dari dropdown; pura tanpa alamat tetap bisa disimpan"
   await pick(page, "tp-regency", "badung", "Kabupaten Badung");
   await pick(page, "tp-district", "mengwi", "Mengwi");
   await pick(page, "tp-village", "kapal", "Kapal");
+  await page.getByLabel("Alasan mengaktifkan sekarang (wajib)").fill("Pura uji otomatis (tes e2e)");
   await page.getByRole("button", { name: "Simpan" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
   await page.getByRole("button", { name: /Tambah pura/ }).click();
   await page.locator("#tp-name").fill("CONTOH Pura Tanpa Alamat Uji");
+  await page.getByLabel("Alasan mengaktifkan sekarang (wajib)").fill("Pura uji otomatis (tes e2e)");
   await page.getByRole("button", { name: "Simpan" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 

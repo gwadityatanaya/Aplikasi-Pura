@@ -94,7 +94,12 @@ export const adminCommands: Record<string, Handler> = {
         if (earlyActivation) await log(ctx, tx, { action: "Mengaktifkan pura sebelum verifikasi lengkap", entity: "settings", entityId: templeId, detail: `${values.name} — ${earlyActivation}`, templeId });
       } else {
         templeId = await insertTemple(tx, values);
+        // Same rule when a temple is created straight away as "Aktif": a reason unless its checklist
+        // is already 4/4 (decision Phase 3.4). Only the demo seed script, which runs on the server
+        // itself and never through an HTTP request, is exempt. Throwing rolls the insert back.
+        const earlyActivation = values.status === "active" && !ctx.internalScript ? await earlyActivationNote(tx, templeId, activationReason) : "";
         await log(ctx, tx, { action: "Menambah pura", entity: "settings", entityId: templeId, detail: `${values.name} (banjar: ${banjars.map((b) => b.name).join(", ")})`, templeId });
+        if (earlyActivation) await log(ctx, tx, { action: "Mengaktifkan pura sebelum verifikasi lengkap", entity: "settings", entityId: templeId, detail: `${values.name} (pura baru) — ${earlyActivation}`, templeId });
       }
       await tx.insert(T.templeBanjars).values(banjarIds.map((banjarId) => ({ templeId: templeId!, banjarId })));
       return { id: templeId };

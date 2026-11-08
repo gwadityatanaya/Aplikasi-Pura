@@ -26,7 +26,7 @@ test("mulai pembukuan: tanggal mulai + saldo awal tiap kas/rekening dengan dua s
   const admin = await as("admin@contoh.id");
   const users = await (await admin.get("/api/admin/users")).json();
   const banjar = users.banjars.find((b: { name: string }) => b.name === "CONTOH Banjar Adat Kertha Sari");
-  const t = await command<{ id: string }>(admin, "adminSaveTemple", { name: NAME, banjarIds: [banjar.id] });
+  const t = await command<{ id: string }>(admin, "adminSaveTemple", { name: NAME, banjarIds: [banjar.id], activationReason: "Pura uji otomatis (tes e2e)" });
   temple = t.value.id;
   for (const email of ["made@contoh.id", "komang@contoh.id"]) expect((await command(admin, "adminAddStaff", { email, kind: "pengurus", templeId: temple })).ok).toBe(true);
   const made = await as("made@contoh.id", temple);

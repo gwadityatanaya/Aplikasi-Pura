@@ -95,3 +95,49 @@ test("mengaktifkan pura sebelum checklist 4/4: peringatan, alasan wajib, tercata
   await expect(page.getByText("Data pura disimpan")).toBeVisible();
   expect((await users()).temples.find((t) => t.id === ui)!.status).toBe("active");
 });
+
+// Same rule when Admin Utama creates a pura straight away as "Aktif" through "Tambah pura".
+test("Tambah pura langsung Aktif: peringatan, alasan wajib (dijaga server), tercatat; Nonaktif tanpa alasan", async ({ page }) => {
+  const admin = await pw.newContext({ baseURL: BASE });
+  await signInApi(admin, "admin@contoh.id");
+  const users = async () => (await (await admin.get("/api/admin/users")).json()) as { temples: { id: string; name: string; status: string }[]; banjars: { id: string; name: string }[] };
+  const banjarId = (await users()).banjars.find((b) => b.name === "CONTOH Banjar Adat Kertha Sari")!.id;
+
+  // API: active without a reason → refused and NOT created (the insert is rolled back).
+  const refused = await command(admin, "adminSaveTemple", { name: "CONTOH Pura Baru Tanpa Alasan", banjarIds: [banjarId], status: "active" });
+  expect(refused.ok).toBe(false);
+  expect(refused.error).toContain("Checklist verifikasi baru 0/4");
+  expect((await users()).temples.some((t) => t.name === "CONTOH Pura Baru Tanpa Alasan")).toBe(false);
+  // The status left out means "Aktif" too, so the same rule applies.
+  expect((await command(admin, "adminSaveTemple", { name: "CONTOH Pura Baru Tanpa Status", banjarIds: [banjarId] })).ok).toBe(false);
+  // A reason that is too short is refused as well; an "internalScript" flag sent by a client changes nothing.
+  expect((await command(admin, "adminSaveTemple", { name: "CONTOH Pura Baru Alasan Pendek", banjarIds: [banjarId], status: "active", activationReason: "ok" })).ok).toBe(false);
+  expect((await command(admin, "adminSaveTemple", { name: "CONTOH Pura Baru Coba Lewati", banjarIds: [banjarId], status: "active", internalScript: true })).ok).toBe(false);
+
+  // With a reason → created active, both entries in the Log.
+  const ok = await command<{ id: string }>(admin, "adminSaveTemple", { name: "CONTOH Pura Baru Dengan Alasan", banjarIds: [banjarId], status: "active", activationReason: "Sudah dikenal lama, verifikasi menyusul minggu ini" });
+  expect(ok.ok, ok.error).toBe(true);
+  expect((await users()).temples.find((t) => t.id === ok.value.id)!.status).toBe("active");
+  const log = await (await admin.get("/api/admin/log")).text();
+  expect(log).toContain("CONTOH Pura Baru Dengan Alasan (pura baru) — Diaktifkan sebelum checklist verifikasi lengkap (0/4). Alasan: Sudah dikenal lama");
+
+  // Nonaktif → no reason needed.
+  expect((await command(admin, "adminSaveTemple", { name: "CONTOH Pura Baru Nonaktif", banjarIds: [banjarId], status: "pending" })).ok).toBe(true);
+
+  // Screen: the warning appears for "Aktif" and disappears for "Nonaktif".
+  await signInUi(page, "admin@contoh.id");
+  await page.goto("/app/admin");
+  await page.getByRole("button", { name: /Tambah pura/ }).click();
+  const dlg = page.getByRole("dialog");
+  await dlg.locator("#tp-name").fill("CONTOH Pura Baru Lewat Layar");
+  await expect(dlg.getByText("Pura baru belum punya checklist verifikasi (0/4).")).toBeVisible();
+  await dlg.getByRole("button", { name: "Simpan" }).click();
+  await expect(page.getByText(/Tulis alasan \(minimal 5 huruf\)/)).toBeVisible();
+  await dlg.getByLabel("Status").selectOption("pending");
+  await expect(dlg.getByText(/belum punya checklist verifikasi/)).toHaveCount(0);
+  await dlg.getByLabel("Status").selectOption("active");
+  await dlg.getByLabel("Alasan mengaktifkan sekarang (wajib)").fill("Uji layar: pura baru langsung aktif");
+  await dlg.getByRole("button", { name: "Simpan" }).click();
+  await expect(page.getByText("Pura ditambahkan")).toBeVisible();
+  expect((await users()).temples.find((t) => t.name === "CONTOH Pura Baru Lewat Layar")!.status).toBe("active");
+});
