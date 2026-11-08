@@ -418,6 +418,24 @@ export const registrationRequests = pgTable("registration_requests", {
   updatedAt: ts("updated_at").notNull().defaultNow(),
 }, (t) => [index("registration_status").on(t.status, t.createdAt)]);
 
+/**
+ * Internal verification checklist of a temple (Admin Utama only): when each check was done, the
+ * trial period and free notes. Every change is written to the Log Aktivitas.
+ */
+export const templeVerifications = pgTable("temple_verifications", {
+  templeId: text("temple_id").primaryKey().references(() => temples.id),
+  referenceContactedAt: date("reference_contacted_at", { mode: "string" }),
+  videoCallAt: date("video_call_at", { mode: "string" }),
+  accountCheckedAt: date("account_checked_at", { mode: "string" }),
+  /** pura | banjar | lain (the official account is in the name of …) */
+  accountHolderType: text("account_holder_type"),
+  trialStart: date("trial_start", { mode: "string" }),
+  trialEnd: date("trial_end", { mode: "string" }),
+  notes: text("notes").notNull().default(""),
+  updatedBy: text("updated_by"),
+  updatedAt: ts("updated_at").notNull().defaultNow(),
+});
+
 /** A correction of a locked opening balance: append-only, with reason and two witnesses. */
 export const openingCorrections = pgTable("opening_corrections", {
   id: text("id").primaryKey(),

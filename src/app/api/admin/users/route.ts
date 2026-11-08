@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const GET = route(async (req: Request) => {
   const ctx = await getCtx(req);
   await requireSuperAdmin(ctx, "membuka Back Office");
-  const [users, memberships, temples, banjars, templeBanjars, banjarMembers, banks] = await Promise.all([
+  const [users, memberships, temples, banjars, templeBanjars, banjarMembers, banks, verifications] = await Promise.all([
     db.select().from(schema.users).orderBy(desc(schema.users.isSuperAdmin), schema.users.name),
     db.select().from(schema.memberships),
     db.select().from(schema.temples).orderBy(schema.temples.name),
@@ -20,6 +20,7 @@ export const GET = route(async (req: Request) => {
     db.select().from(schema.templeBanjars),
     db.select().from(schema.banjarMembers),
     db.select().from(schema.accounts).where(eq(schema.accounts.type, "bank")),
+    db.select().from(schema.templeVerifications),
   ]);
   const pending = await pendingCounts(temples.map((t) => t.id));
   const failedEmails = await failedEmailCount();
@@ -34,6 +35,8 @@ export const GET = route(async (req: Request) => {
       pendingCount: pending.get(t.id) ?? 0,
       // Every bank account incl. inactive ones (no balances here).
       bankAccountsAll: banks.filter((a) => a.templeId === t.id).map(m.toAccount).sort((a, b) => Number(!!b.isPrimary) - Number(!!a.isPrimary)),
+      // Internal verification notes — this route is Admin Utama only.
+      verification: (({ updatedAt, ...v }) => ({ ...v, updatedAt: updatedAt.toISOString() }))(verifications.find((v) => v.templeId === t.id) ?? { templeId: t.id, referenceContactedAt: null, videoCallAt: null, accountCheckedAt: null, accountHolderType: null, trialStart: null, trialEnd: null, notes: "", updatedBy: null, updatedAt: new Date(0) }),
     })),
     banjars: banjars.map(m.toBanjar),
     banjarMembers: banjarMembers.map(m.toBanjarMember),

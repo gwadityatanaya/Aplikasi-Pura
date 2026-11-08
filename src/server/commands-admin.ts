@@ -7,7 +7,7 @@ import { decodeImage, persistImage } from "./images";
 import { requireSuperAdmin, requireTemple } from "./context";
 import { resolveAddress, type AddressInput } from "./wilayah";
 import { diff } from "./log";
-import { id, log, one, optId, optText, text, type Handler } from "./commands";
+import { id, isoDate, log, one, optId, optText, text, type Handler } from "./commands";
 import * as m from "./map";
 import { categoriesFor } from "@/lib/categories";
 import { callNameOf, slugify, uid } from "@/lib/format";
@@ -412,6 +412,32 @@ export const adminCommands: Record<string, Handler> = {
     });
   },
 
+  // ---- Catatan verifikasi per pura (internal, Admin Utama) ---------------------
+  /** Saves the verification checklist of one temple; every changed item is written to the Log. */
+  async adminSaveVerification(ctx, p) {
+    await requireSuperAdmin(ctx, "mengisi catatan verifikasi pura");
+    const day = isoDate.optional().nullable().or(z.literal("")).transform((v) => v || null);
+    const i = z
+      .object({
+        templeId: id, referenceContactedAt: day, videoCallAt: day, accountCheckedAt: day,
+        accountHolderType: z.enum(["pura", "banjar", "lain"]).optional().nullable().or(z.literal("")).transform((v) => v || null),
+        trialStart: day, trialEnd: day, notes: z.string().trim().max(3000).default(""),
+      })
+      .parse(p);
+    if (i.trialStart && i.trialEnd && i.trialEnd < i.trialStart) throw new ApiError(400, "Akhir masa percobaan harus setelah tanggal mulainya.");
+    if (i.accountCheckedAt && !i.accountHolderType) throw new ApiError(400, "Pilih rekening atas nama siapa.");
+    return db.transaction(async (tx) => {
+      const t = await one(tx.select({ name: T.temples.name }).from(T.temples).where(eq(T.temples.id, i.templeId)), "Pura tidak ditemukan.");
+      const [cur] = await tx.select().from(T.templeVerifications).where(eq(T.templeVerifications.templeId, i.templeId)).for("update");
+      const { templeId, ...values } = i;
+      if (cur) await tx.update(T.templeVerifications).set({ ...values, updatedBy: ctx.user.id, updatedAt: new Date() }).where(eq(T.templeVerifications.templeId, templeId));
+      else await tx.insert(T.templeVerifications).values({ templeId, ...values, updatedBy: ctx.user.id });
+      const changes = diff(cur ?? {}, values, Object.keys(values));
+      await log(ctx, tx, { action: "Mengubah catatan verifikasi pura", entity: "settings", entityId: templeId, detail: t.name, changes, templeId: null });
+      return null;
+    });
+  },
+
   // ---- Pengajuan pendaftaran (Admin Utama) ------------------------------------
   /** Status and internal note of a registration request (never visible to the applicant). */
   async adminUpdateRegistration(ctx, p) {
@@ -513,6 +539,7 @@ export const adminCommands: Record<string, Handler> = {
       await tx.update(T.sessions).set({ activeTempleId: null }).where(eq(T.sessions.activeTempleId, t.id));
       await tx.update(T.sessions).set({ emergencyTempleId: null, emergencyUntil: null, emergencyReason: null }).where(eq(T.sessions.emergencyTempleId, t.id));
       await tx.delete(T.notifications).where(eq(T.notifications.templeId, t.id));
+      await tx.delete(T.templeVerifications).where(eq(T.templeVerifications.templeId, t.id));
       await tx.delete(T.memberships).where(eq(T.memberships.templeId, t.id));
       await tx.delete(T.templeBanjars).where(eq(T.templeBanjars.templeId, t.id));
       await tx.delete(T.activities).where(and(eq(T.activities.templeId, t.id), eq(T.activities.auto, true)));

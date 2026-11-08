@@ -267,6 +267,10 @@ Banjar yang ingin memakai PURA mengisi formulir publik **Ajukan pendaftaran** (a
 - Setelah yakin, tekan **Jadikan banjar & pura**: pilih banjar yang sudah ada atau buat banjar baru, periksa nama pura, lalu **Ya, buat**. Wilayah terisi otomatis. Pura dibuat dengan status **menunggu** (belum tampil di publik), dan **tidak ada akun atau peran yang dibuat** — lanjutkan seperti biasa: isi rekening, daftarkan pengurus, lalu aktifkan pura lewat **Ubah data**.
 - Log Aktivitas hanya mencatat nama banjar dan pura, bukan data pribadi pemohon.
 
+### Catatan verifikasi per pura (internal)
+
+Pada kartu pura di **Back Office → Pura** tekan **Verifikasi**. Isinya checklist bertanggal: **pemberi referensi sudah dihubungi**, **panggilan video** dengan pengurus, **rekening resmi sudah dicek** (atas nama pura, banjar, atau lainnya), **masa percobaan** (mulai dan selesai), dan **catatan bebas**. Kartu pura menampilkan **Verifikasi n/4** dan **Percobaan s.d. …** (merah jika sudah lewat). Hanya Admin Utama yang bisa melihat dan mengubahnya; setiap perubahan tercatat di Log Aktivitas.
+
 ### Jabatan pengurus (Ketua, Sekretaris, Bendahara, Kelian Banjar)
 
 Jabatan dipakai untuk tanda tangan laporan. Jabatan disimpan **per kepengurusan**: satu orang bisa menjadi Ketua di satu pura dan Bendahara di pura lain.

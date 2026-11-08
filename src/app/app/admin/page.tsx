@@ -4,11 +4,12 @@ import { ARCHIVE_COMMAND, ArchiveDialog, type ArchiveTarget } from "@/components
 import { HelpInbox } from "@/components/app/help-inbox";
 import { RegistrationInbox } from "@/components/app/registration-inbox";
 import { BankAccountsDialog } from "@/components/app/bank-accounts-dialog";
+import { VerificationDialog, trialLabel, verificationProgress, type Verification } from "@/components/app/verification-dialog";
 import { useRouter } from "next/navigation";
 import { templeLocation } from "@/lib/temple";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Archive, ArchiveRestore, Building2, Crown, DatabaseBackup, Download, Eye, ImageOff, Landmark, Mail, MapPin, Pencil, Plus, Search, ShieldCheck, Trash2, UserCheck, UserPlus, UserX, Users, X } from "lucide-react";
+import { AlertTriangle, Archive, ArchiveRestore, Building2, ClipboardCheck, Crown, DatabaseBackup, Download, Eye, ImageOff, Landmark, Mail, MapPin, Pencil, Plus, Search, ShieldCheck, Trash2, UserCheck, UserPlus, UserX, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, NoAccess } from "@/components/app/page-header";
 import { Avatar, avatarSrc } from "@/components/app/app-shell";
@@ -26,7 +27,7 @@ import { BANJAR_POSITIONS, POSITION_LABEL, ROLE_LABEL, ROLE_TONE, TEMPLE_POSITIO
 import { cn, relativeTime } from "@/lib/format";
 import type { Account, Banjar, BanjarMember, Membership, Position, Temple, User } from "@/lib/types";
 
-type AdminTemple = Temple & { banjarIds: string[]; pengurusCount: number; pendingCount: number; bankAccountsAll: Account[] };
+type AdminTemple = Temple & { banjarIds: string[]; pengurusCount: number; pendingCount: number; bankAccountsAll: Account[]; verification?: Verification };
 interface AdminData {
   users: User[];
   memberships: Membership[];
@@ -64,6 +65,7 @@ export default function BackOfficePage() {
   const [templeForm, setTempleForm] = useState<typeof emptyTemple | null>(null);
   const [banjarForm, setBanjarForm] = useState<typeof emptyBanjar | null>(null);
   const [bankFor, setBankFor] = useState<string | null>(null);
+  const [verifyFor, setVerifyFor] = useState<string | null>(null);
   const [staffFor, setStaffFor] = useState<{ kind: "temple"; t: AdminTemple } | { kind: "banjar"; b: Banjar } | null>(null);
   const [newStaff, setNewStaff] = useState({ email: "", name: "", role: "pengurus" as "pengurus" | "pemeriksa" });
   const [removeStaff, setRemoveStaff] = useState<{ kind: "temple" | "banjar"; id: string; label: string } | null>(null);
@@ -162,6 +164,11 @@ export default function BackOfficePage() {
                         {t.bankAccountNumber ? <Badge tone="emerald"><Landmark className="h-3 w-3" /> {t.bankName} · a.n. {t.bankAccountHolder}</Badge> : <Badge tone="red">Rekening belum diisi</Badge>}
                         {t.bankAccountsAll.filter((a) => !a.archived).length > 1 && <Badge tone="emerald">{t.bankAccountsAll.filter((a) => !a.archived).length} rekening</Badge>}
                         {t.qrisImage && <Badge tone="emerald">QRIS</Badge>}
+                        {(() => {
+                          const pr = verificationProgress(t.verification);
+                          return <Badge tone={pr.done === pr.total ? "green" : "gray"}><ClipboardCheck className="h-3 w-3" /> Verifikasi {pr.done}/{pr.total}</Badge>;
+                        })()}
+                        {trialLabel(t.verification) && <Badge tone={t.verification!.trialEnd! < new Date().toISOString().slice(0, 10) ? "red" : "amber"}>{trialLabel(t.verification)}</Badge>}
                         {t.pendingCount > 0 && <Badge tone="gold">{t.pendingCount} punia menunggu</Badge>}
                       </div>
                       {t.status === "archived" && <p className="mt-1.5 text-sm text-muted">Diarsipkan{t.archiveReason ? `: ${t.archiveReason}` : ""}. Hanya bisa dilihat; tidak tampil di publik.</p>}
@@ -171,6 +178,7 @@ export default function BackOfficePage() {
                     <Button size="sm" onClick={async () => { const r = await setActive(t.id); if (!r.ok) return toast.error(r.error); router.push("/app"); }}><Eye className="h-4 w-4" /> Buka dashboard</Button>
                     <Button size="sm" variant="outline" onClick={() => setTempleForm({ id: t.id, name: t.name, ...pickAddress(t), address: t.address, description: t.description, phone: t.phone, status: t.status === "active" ? "active" : "pending", banjarIds: t.banjarIds })}><Pencil className="h-4 w-4" /> Ubah data</Button>
                     <Button size="sm" variant="outline" onClick={() => setBankFor(t.id)}><Landmark className="h-4 w-4" /> Rekening</Button>
+                    <Button size="sm" variant="outline" onClick={() => setVerifyFor(t.id)}><ClipboardCheck className="h-4 w-4" /> Verifikasi</Button>
                     <Button size="sm" variant="outline" onClick={() => { setNewStaff({ email: "", name: "", role: "pengurus" }); setStaffFor({ kind: "temple", t }); }}><Users className="h-4 w-4" /> Pengurus</Button>
                     {t.status === "archived"
                       ? <Button size="sm" variant="outline" onClick={() => setArchiveFor({ kind: "temple", action: "unarchive", id: t.id, name: t.name })}><ArchiveRestore className="h-4 w-4" /> Aktifkan kembali</Button>
@@ -370,6 +378,9 @@ export default function BackOfficePage() {
           if (await done(run(ARCHIVE_COMMAND[t.kind][t.action], { id: t.id, ...input }), msg)) setArchiveFor(null);
         }}
       />
+
+      {/* Internal verification checklist */}
+      {verifyFor && <VerificationDialog temple={data?.temples.find((t) => t.id === verifyFor) ?? null} onClose={() => setVerifyFor(null)} run={(name, payload, msg) => done(run(name, payload), msg)} />}
 
       {/* Bank accounts & QRIS */}
       <BankAccountsDialog temple={data?.temples.find((t) => t.id === bankFor) ?? null} onClose={() => setBankFor(null)} run={(name, payload, msg) => done(run(name, payload), msg)} />
