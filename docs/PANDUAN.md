@@ -512,12 +512,26 @@ Untuk mencoba perubahan, data contoh, cadangan lengkap, atau pemulihan.
 ```
 npm run db:seed-demo -- --ya
 ```
-Isinya (semuanya **fiktif**, berawalan "CONTOH"): 2 banjar, 6 pura (satu diempon dua banjar, satu tanpa pengurus dan tanpa alamat/email), Pengurus Banjar `ketut.banjar@contoh.id` dan `gede.banjar@contoh.id`, pengurus pura (`made@`, `komang@`, `wayan@`, `putu@`, `nengah@`, `kadek.taman@contoh.id`), dan umat (`ayu@`, `nyoman@`, `kadek@contoh.id`). Masuk dengan tautan email; di laptop tautannya tampil di layar.
+Isinya (semuanya **fiktif**, berawalan "CONTOH"): 2 banjar, 6 pura, satu penggalangan dana, satu pengajuan pendaftaran (satu diempon dua banjar, satu tanpa pengurus dan tanpa alamat/email), Pengurus Banjar `ketut.banjar@contoh.id` dan `gede.banjar@contoh.id`, pengurus pura (`made@`, `komang@`, `wayan@`, `putu@`, `nengah@`, `kadek.taman@contoh.id`), dan umat (`ayu@`, `nyoman@`, `kadek@contoh.id`). Masuk dengan tautan email; di laptop tautannya tampil di layar.
 
 **Tes otomatis** — butuh database tes terpisah yang namanya mengandung `test` atau `e2e` (isinya dihapus setiap kali tes jalan). Tes juga otomatis membuat database kedua yang **kosong** (nama sama + `_setup`) untuk menguji langkah pertama: `/setup` → masuk → Back Office.
 ```
 E2E_DATABASE_URL="postgres://.../pura_e2e" npm run test:e2e
 ```
+
+Yang diuji untuk Phase 3.4 (berkas di folder `e2e/`):
+
+| Hal | Berkas tes |
+|---|---|
+| Input punia manual: pilihan rekening atau **Tunai**, tersimpan dan masuk laporan | `perbaikan34.spec.ts` |
+| Pencocokan saldo bulanan oleh **Pengurus Banjar** (Pemeriksa ditolak), tercatat | `perbaikan34.spec.ts` |
+| Formulir **Ajukan pendaftaran** dan anti-spam; hanya Admin Utama yang melihat; ubah jadi banjar + pura | `pendaftaran.spec.ts` |
+| Checklist **verifikasi per pura**, tercatat di Log | `verifikasi.spec.ts` |
+| Skrip **ganti email Admin Utama**, pengingat cadangan, **dasbor angka** tanpa nama donatur | `pemeliharaan.spec.ts` |
+| **Ukuran huruf** Sangat besar tanpa gulir ke samping | `responsif.spec.ts` |
+| **Bukti punia digital**: hanya pemilik, tanpa nama pengurus/rekening lengkap, nama anonim tidak bocor (juga di PDF) | `bukti-punia.spec.ts` |
+| Pengaman **isi ulang demo** menolak pura/banjar nyata | `demo.spec.ts` |
+| Halaman baru tanpa gulir ke samping di HP, tablet, laptop | `responsif.spec.ts` |
 
 ---
 

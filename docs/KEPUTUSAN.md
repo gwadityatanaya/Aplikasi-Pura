@@ -49,11 +49,11 @@ Semua sudah berjalan dengan pilihan "saran" di bawah. Jawab hanya yang ingin diu
 
 **Kegiatan & penggalangan dana**
 
-1. **Tanggal berakhir penggalangan ikut opsional.** Agar benar-benar "hanya judul yang wajib", tanggal berakhir boleh kosong; penggalangan tanpa tanggal berakhir berjalan sampai ditutup. *Saran: biarkan.* Jika ingin tanggal berakhir tetap wajib, beri tahu saya.
-2. **"Cerita" dan "Tujuan" tetap satu isian** ("Cerita & tujuan", opsional), terpisah dari "Dana akan digunakan untuk". Perlu dipecah menjadi dua isian?
-3. **Penggalangan yang sudah ditutup tidak bisa dibuka lagi** (alasan penutupan juga tidak bisa diubah). Jika perlu, buat penggalangan baru. *Saran: biarkan.*
+1. ✅ *(diputuskan: opsional)* **Tanggal berakhir penggalangan ikut opsional.** Agar benar-benar "hanya judul yang wajib", tanggal berakhir boleh kosong; penggalangan tanpa tanggal berakhir berjalan sampai ditutup. *Saran: biarkan.* Jika ingin tanggal berakhir tetap wajib, beri tahu saya.
+2. ✅ *(diputuskan: satu isian)* **"Cerita" dan "Tujuan" tetap satu isian** ("Cerita & tujuan", opsional), terpisah dari "Dana akan digunakan untuk". Perlu dipecah menjadi dua isian?
+3. ✅ *(diputuskan)* **Penggalangan yang sudah ditutup tidak bisa dibuka lagi** (alasan penutupan juga tidak bisa diubah). Jika perlu, buat penggalangan baru. *Saran: biarkan.*
 4. **Kegiatan kosong boleh dihapus oleh Pengurus Banjar** juga (sesuai permintaan). Kegiatan "Operasional Pura" yang dibuat otomatis juga bisa dihapus jika kosong. *Saran: biarkan.*
-5. **Pemeriksaan data pribadi** pada alasan penutupan dan alasan penolakan hanya mengenali **email, nomor HP, dan nomor rekening**. Nama orang tidak bisa dikenali otomatis — hanya peringatan di form. Cukup?
+5. ✅ *(diputuskan: cukup, dengan peringatan di form)* **Pemeriksaan data pribadi** pada alasan penutupan dan alasan penolakan hanya mengenali **email, nomor HP, dan nomor rekening**. Nama orang tidak bisa dikenali otomatis — hanya peringatan di form. Cukup?
 
 **Rekening & QRIS**
 
@@ -71,14 +71,47 @@ Semua sudah berjalan dengan pilihan "saran" di bawah. Jawab hanya yang ingin diu
 **Migrasi dari buku**
 
 13. **Saksi saldo awal berupa nama yang diketik** (dengan saran nama pengurus pura). Haruskah wajib dipilih dari daftar pengurus berakun saja? *Saran: biarkan diketik* — saksi kadang pengurus banjar yang belum punya akun.
-14. **Transaksi sebelum tanggal mulai ditolak** (bukan sekadar peringatan), termasuk pengesahan punia yang ditransfer sebelum tanggal mulai (karena uangnya sudah masuk saldo awal). *Saran: biarkan.*
+14. ✅ *(diputuskan)* **Transaksi sebelum tanggal mulai ditolak** (bukan sekadar peringatan), termasuk pengesahan punia yang ditransfer sebelum tanggal mulai (karena uangnya sudah masuk saldo awal). *Saran: biarkan.*
 15. ✅ **Pencocokan bulanan** bisa diisi Pengurus Pura dan Pengurus Banjar (Phase 3.4); Pemeriksa tidak.
 16. **Tanggal mulai tidak boleh setelah transaksi pertama yang sudah tercatat** (untuk pura demo/pilot yang sudah berjalan). Pura yang sudah punya transaksi lama sebaiknya memilih tanggal mulai sama dengan atau sebelum transaksi pertamanya.
 
 **Lanjutan**
 
-17. ⏳ **Skrip ganti email Admin Utama** → dikerjakan di Phase 3.4 tahap 4.
+17. ✅ **Skrip ganti email Admin Utama** → selesai di Phase 3.4 tahap 4 (`npm run admin:ganti-email`).
 18. ⏳ **Batas nominal pengesahan pengeluaran** → menunggu angka dari pengurus banjar.
+
+## Phase 3.4 — perlu keputusan Anda
+
+Semua sudah berjalan dengan pilihan "saran" di bawah. Jawab hanya yang ingin diubah.
+
+**Pengajuan pendaftaran & verifikasi**
+
+1. **Pengajuan yang disetujui membuat pura berstatus belum aktif** (lencana "Nonaktif"), bukan langsung aktif. Pura baru aktif setelah Admin Utama mengubah statusnya lewat **Ubah data** (biasanya setelah checklist verifikasi selesai). Tidak ada akun pengurus atau rekening yang dibuat otomatis. *Saran: biarkan.*
+2. **Batas kirim: 3 pengajuan per hari per jaringan internet**, dan WA/email yang masih punya pengajuan menunggu ditolak dengan pesan "sudah kami terima". Satu warnet atau wifi balai banjar bisa terkena batas yang sama. *Saran: biarkan.*
+3. **Data pemohon disimpan selama aplikasi dipakai**, juga yang ditolak. Perlu pengajuan berstatus **Ditolak** dihapus otomatis, misalnya setelah 6 bulan?
+4. **Checklist verifikasi tidak mengunci aktivasi pura.** Pura tetap bisa diaktifkan walau checklist belum 4/4 (checklist hanya catatan). Haruskah aktivasi menunggu 4/4?
+
+**Pemeliharaan**
+
+5. **Pengingat cadangan** hanya menghitung cadangan dari aplikasi (**Cadangan data → Unduh**) dan skrip `npm run backup`. Riwayat otomatis Neon tidak terlihat oleh aplikasi, jadi tidak dihitung. Batasnya **7 hari**. *Saran: biarkan.*
+6. **Dasbor angka per banjar:** pura yang diempon dua banjar dihitung di **kedua** banjar, jadi jumlah per banjar bisa lebih besar dari total keseluruhan. Ini tertulis di bawah tabel. *Saran: biarkan.*
+7. **Skrip ganti email Admin Utama** hanya bisa dijalankan dengan akses database (dari laptop). Login Google lama otomatis diputus; Admin Utama masuk lagi dengan email baru. *Saran: biarkan.*
+
+**Kenyamanan pengguna**
+
+8. **Ukuran huruf** satu pilihan per akun, berlaku di Dashboard maupun Tampilan Umat. Sebelum masuk, pilihan disimpan di perangkat saja. *Saran: biarkan.*
+9. **Bukti pencatatan punia** tersedia untuk semua status (menunggu, disahkan, ditolak, dikoreksi). Nomor catatan hanya ada setelah disahkan; sebelumnya tampil **kode kiriman**. *Saran: biarkan.*
+10. **Nama pada bukti punia ANONIM** disembunyikan secara bawaan ("Anonim"). Pemilik akun bisa mencentang agar namanya ikut tercetak. *Saran: biarkan.*
+11. **Pengurus dan Admin Utama tidak bisa membuka bukti punia umat** (hanya pemilik akun). Akibatnya pengurus tidak bisa mencetakkan bukti untuk umat yang datang ke pura. Punia yang dicatat manual juga tidak punya bukti digital. Perlu versi bukti yang bisa dicetak pengurus?
+
+**Mode demo**
+
+12. **Nama wilayah di data contoh adalah wilayah nyata** (Badung › Mengwi, Gianyar › Ubud) agar dropdown alamat bisa dicoba. Banjar, pura, orang, dan rekening tetap fiktif. *Saran: biarkan.*
+13. **Pengaman isi ulang demo hanya memeriksa nama pura dan banjar**, bukan nama akun. Alasannya: calon klien yang mencoba situs demo dengan akun Google membuat akun bernama asli, dan itu tidak boleh menghalangi isi ulang. Akun-akun itu ikut terhapus saat demo diisi ulang. *Saran: biarkan.*
+
+**Panduan**
+
+14. **PANDUAN.md masih menulis email Google Anda** di langkah pemasangan (Admin Utama, `ADMIN_EMAIL`, `/setup`). Ini bukan kunci rahasia, tetapi jika panduan akan dibagikan ke banjar lain, sebaiknya diganti dengan contoh seperti `email-admin@contoh.com`. Saya tidak mengubahnya tanpa persetujuan Anda. Ganti?
 
 ## Bahan pilot (dijawab sebelum pilot, tidak perlu untuk demo)
 

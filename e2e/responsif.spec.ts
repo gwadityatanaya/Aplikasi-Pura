@@ -70,6 +70,24 @@ test("Back Office pas dengan lebar layar", async ({ page }) => {
   await signInUi(page, "admin@contoh.id");
   await checkPage(page, "/app/admin", "back-office");
   await checkPage(page, "/app/admin?tab=bantuan", "back-office-bantuan");
+  await checkPage(page, "/app/admin?tab=pengajuan", "back-office-pengajuan");
+  await checkPage(page, "/app/admin?tab=angka", "back-office-angka");
+  // Verification notes dialog (and the registration form inside the Back Office) on a small phone.
+  await page.setViewportSize({ width: 320, height: 640 });
+  await page.goto("/app/admin");
+  await page.locator("li", { hasText: "Pura Dalem Kahyangan" }).first().getByRole("button", { name: "Verifikasi" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth), "dialog verifikasi @320").toBeLessThanOrEqual(320);
+  const dialogBox = await page.getByRole("dialog").boundingBox();
+  expect(dialogBox!.x + dialogBox!.width).toBeLessThanOrEqual(321);
+});
+
+test("Punia Saya dan bukti pencatatan punia pas dengan lebar layar", async ({ page }) => {
+  test.setTimeout(180_000);
+  await signInUi(page, "ayu@contoh.id");
+  await checkPage(page, "/umat/punia", "punia-saya");
+  const { json } = await page.evaluate(async () => ({ json: await (await fetch("/api/umat")).json() }));
+  await checkPage(page, `/umat/punia/${json.punia[0].id}`, "bukti-punia");
 });
 
 test("menu HP: panel penuh setinggi layar, latar solid, halaman terkunci, bisa ditutup", async ({ page }) => {
