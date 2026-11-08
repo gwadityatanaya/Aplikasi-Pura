@@ -11,6 +11,9 @@ import { PURPOSE_CATEGORY } from "@/lib/categories";
 import { PURPOSE_LABEL } from "@/lib/permissions";
 import { rupiah, uid } from "@/lib/format";
 import { campaignPhase } from "@/lib/campaign";
+import { personalDataIn } from "@/lib/personal-data";
+import { queuePuniaEmail } from "./email-queue";
+import { originOf } from "./auth";
 import type { Campaign } from "@/lib/types";
 
 const purpose = z.enum(["umum", "odalan", "pembangunan", "lainnya"]);
@@ -106,6 +109,8 @@ async function verifyOne(ctx: Ctx, tx: Tx, donationId: string, templeId: string)
   await tx.update(T.donations).set({ status: "verified", transactionId: row.id, verifiedAt: new Date(), verifiedBy: ctx.user.id, rejectedReason: null }).where(eq(T.donations.id, d.id));
   await tx.update(T.notifications).set({ read: true }).where(and(eq(T.notifications.templeId, templeId), eq(T.notifications.kind, "donation_pending"), sql`${T.notifications.href} like ${"%" + d.id + "%"}`));
   await log(ctx, tx, { action: "Memverifikasi punia", entity: "donation", entityId: d.id, detail: `${donorLabel(d)} — ${rupiah(d.amount)}. Tercatat sebagai ${row.number}.`, templeId });
+  // Email to the sender is only QUEUED here (same transaction); sending happens afterwards.
+  await queuePuniaEmail(tx, "punia_verified", d, { number: row.number, origin: originOf(ctx.req) });
   return { ok: true, number: row.number };
 }
 
@@ -176,7 +181,7 @@ export const puniaCommands: Record<string, Handler> = {
       const evidence = i.evidence?.startsWith("data:") ? await persistImage(i.evidence, { templeId: d.templeId, isPublic: false, userId: ctx.user.id }, tx) : d.evidence;
       await tx
         .update(T.donations)
-        .set({ status: "pending", amount: i.amount, transferDate: i.transferDate, referenceNo: i.referenceNo, evidence, evidenceHash: newHash, rejectedReason: null })
+        .set({ status: "pending", amount: i.amount, transferDate: i.transferDate, referenceNo: i.referenceNo, evidence, evidenceHash: newHash, rejectedReason: null, donorSeen: true })
         .where(eq(T.donations.id, d.id));
       await notify(tx, { templeId: d.templeId, kind: "donation_pending", title: "Punia dikirim ulang", body: `${rupiah(i.amount)}${d.privacy === "public" ? "" : " (anonim)"} menunggu verifikasi.`, href: `/app/punia?id=${d.id}` });
       await log(ctx, tx, { action: "Mengirim ulang punia", entity: "donation", entityId: d.id, detail: `${rupiah(i.amount)} (sebelumnya ditolak: ${d.rejectedReason ?? "-"})`, templeId: null });
@@ -247,12 +252,16 @@ export const puniaCommands: Record<string, Handler> = {
     const templeId = requireTemple(ctx);
     await requirePerm(ctx, "donation.manage", "menolak punia");
     const { id: did, reason } = z.object({ id, reason: text(300).min(5, "Tuliskan alasan penolakan (min. 5 huruf)") }).parse(p);
+    // The reason is emailed to the sender: it must not carry anyone's email, phone or account number.
+    const personal = personalDataIn(reason);
+    if (personal) throw new ApiError(400, `Alasan penolakan dikirim ke pengirim punia dan sepertinya memuat ${personal}. Hapus data pribadi itu terlebih dahulu.`);
     return db.transaction(async (tx) => {
       const d = await one(tx.select().from(T.donations).where(and(eq(T.donations.id, did), eq(T.donations.templeId, templeId))).for("update"), "Punia tidak ditemukan.");
       if (d.status !== "pending") throw new ApiError(409, "Hanya punia yang menunggu yang dapat ditolak.");
       if (isSelf(ctx, d)) throw new ApiError(409, "Punia yang Anda kirim sendiri harus ditinjau pengurus lain.");
       await tx.update(T.donations).set({ status: "rejected", rejectedReason: reason }).where(eq(T.donations.id, did));
       await log(ctx, tx, { action: "Menolak punia", entity: "donation", entityId: did, detail: `${donorLabel(d)} — ${rupiah(d.amount)}: ${reason}`, templeId });
+      await queuePuniaEmail(tx, "punia_rejected", d, { reason, origin: originOf(ctx.req) });
       return null;
     });
   },

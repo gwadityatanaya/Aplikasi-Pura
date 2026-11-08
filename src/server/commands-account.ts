@@ -38,6 +38,12 @@ export const accountCommands: Record<string, Handler> = {
     return null;
   },
 
+  /** The umat opened "Punia Saya": the decisions there are no longer "baru". */
+  async markMyPuniaSeen(ctx) {
+    await db.update(T.donations).set({ donorSeen: true }).where(and(eq(T.donations.submittedBy, ctx.user.id), eq(T.donations.donorSeen, false)));
+    return null;
+  },
+
   /** Closes the one-sentence in-app message (e.g. "foto profil dihapus"). */
   async dismissNotice(ctx) {
     await db.update(T.users).set({ notice: null }).where(eq(T.users.id, ctx.user.id));

@@ -20,7 +20,7 @@ function transport() {
   return transporter;
 }
 
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+export const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 /** Simple, readable email layout (large text, one clear button). */
 export function layout(o: { title: string; intro: string; button?: { label: string; url: string }; footer?: string; bodyHtml?: string }) {
@@ -37,7 +37,24 @@ ${o.bodyHtml ?? ""}${btn}
 </div></body></html>`;
 }
 
+/**
+ * Development and automated tests only (never in production): punia emails are "sent" without a
+ * real email server, so the queue can be checked. An address containing "gagal" fails on purpose.
+ */
+export function testOutbox() {
+  return process.env.NODE_ENV !== "production" && process.env.EMAIL_TEST_OUTBOX === "1";
+}
+
+/** Confirmation emails about punia are queued only when emails can actually go out. */
+export function puniaEmailEnabled() {
+  return emailConfigured() || testOutbox();
+}
+
 export async function sendEmail(to: string, subject: string, html: string, textBody: string) {
+  if (!emailConfigured() && testOutbox()) {
+    if (/gagal/i.test(to)) throw new Error("Pengiriman uji gagal (sengaja)");
+    return;
+  }
   if (!emailConfigured()) throw new Error("EMAIL_NOT_CONFIGURED");
   await transport().sendMail({ from: process.env.EMAIL_FROM, to, subject, html, text: textBody });
 }
@@ -51,5 +68,5 @@ export function signInOptions() {
   const google = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
   const smtp = emailConfigured();
   const devLinks = !smtp && process.env.NODE_ENV !== "production" && process.env.DEV_EMAIL_LINKS !== "false";
-  return { google, email: smtp || devLinks, emailDev: devLinks, digest: smtp };
+  return { google, email: smtp || devLinks, emailDev: devLinks, digest: smtp, puniaEmail: puniaEmailEnabled() };
 }

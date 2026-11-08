@@ -8,6 +8,8 @@ export interface SignInOptions {
   emailDev: boolean;
   /** Daily digest emails can be sent (SMTP is set up) */
   digest: boolean;
+  /** Confirmation emails about one's own punia can be sent */
+  puniaEmail?: boolean;
 }
 
 /** What the server has set up (Google and email are both optional). null while loading. */

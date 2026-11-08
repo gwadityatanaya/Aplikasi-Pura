@@ -32,6 +32,18 @@ const sections: { title: string; body: React.ReactNode }[] = [
     ),
   },
   {
+    title: "Email konfirmasi punia",
+    body: (
+      <ul className="list-disc space-y-1 pl-5">
+        <li>Saat punia yang <b>Anda kirim lewat aplikasi</b> disahkan atau ditolak pengurus, kami mengirim email ke alamat akun Anda sendiri (jika layanan email aplikasi aktif). Punia yang dicatat pengurus secara manual tidak mengirim email.</li>
+        <li>Isinya hanya data punia Anda sendiri: nama pura, nominal, tanggal transfer, penggalangan/kegiatan terkait, status, nomor catatan, dan tanggal pengesahan — atau alasan penolakan beserta cara memperbaikinya. <b>Tidak</b> memuat nama pengurus yang mengesahkan, nomor rekening lengkap, atau foto bukti.</li>
+        <li>Email ini adalah konfirmasi <b>pencatatan</b>, bukan kuitansi dan bukan bukti transaksi bank.</li>
+        <li>Email dikirim bertahap lewat antrean sesuai kuota harian layanan email; jika kuota habis, email dikirim hari berikutnya. Isi email antrean disimpan di server agar bisa dikirim ulang bila gagal.</li>
+        <li>Anda bisa mematikan email ini di <b>Akun saya → Email konfirmasi punia</b>. Status punia tetap terlihat di <b>Punia Saya</b>.</li>
+      </ul>
+    ),
+  },
+  {
     title: "Pusat bantuan",
     body: (
       <ul className="list-disc space-y-1 pl-5">

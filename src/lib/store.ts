@@ -239,8 +239,9 @@ export const useStore = create<StoreState & Actions>()(
         setCampaignStatus: (id, status) => command("setCampaignStatus", { id, status }),
         addCampaignUpdate: (campaignId, u) => command("addCampaignUpdate", { campaignId, u }),
         addManualPunia: (input) => command("addManualPunia", input),
-        verifyPunia: (ids) => command("verifyPunia", { ids }),
-        rejectPunia: (id, reason) => command("rejectPunia", { id, reason }),
+        // Confirmation emails are sent in the background afterwards; the screen does not wait.
+        verifyPunia: (ids) => command<{ verified: number; skipped: { id: string; reason: string }[] }>("verifyPunia", { ids }).then((r) => (kickEmailQueue(), r)),
+        rejectPunia: (id, reason) => command<undefined>("rejectPunia", { id, reason }).then((r) => (kickEmailQueue(), r)),
         publishReport: (input) => command("publishReport", input),
         unpublishReport: (id) => command("unpublishReport", { id }),
         markNotificationRead: (id) => void command("markNotificationRead", { id }),
@@ -288,6 +289,12 @@ export function useMembership() {
 
 export function useRole(): Role | undefined {
   return useStore((s) => s.serverRole);
+}
+
+/** Asks the server to send waiting punia emails, without waiting for the answer. */
+function kickEmailQueue() {
+  if (typeof window === "undefined") return;
+  fetch("/api/email-queue", { method: "POST", credentials: "same-origin" }).catch(() => {});
 }
 
 export function useAccess() {

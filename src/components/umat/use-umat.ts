@@ -6,6 +6,8 @@ import type { Donation } from "@/lib/types";
 
 export interface MyPunia extends Donation {
   temple?: { id: string; name: string; slug: string };
+  /** Disahkan/ditolak since the umat last opened Punia Saya (in-app confirmation) */
+  isNew?: boolean;
 }
 
 /** Sends visitors who are not signed in to the login page, then back here. */

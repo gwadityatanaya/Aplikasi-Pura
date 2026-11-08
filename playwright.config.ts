@@ -32,7 +32,8 @@ export default defineConfig({
       timeout: 180_000,
       reuseExistingServer: false,
       // Tests run against fictional demo data, so the server runs as a DEMO site (noindex, banner).
-      env: { DATABASE_URL: DB, ADMIN_EMAIL: "admin@contoh.id", SMTP_HOST: "", APP_TIMEZONE: "Asia/Makassar", NEXT_PUBLIC_DEMO_MODE: "true" },
+      // EMAIL_TEST_OUTBOX: punia emails are queued and "sent" without a real email server (tests only).
+      env: { DATABASE_URL: DB, ADMIN_EMAIL: "admin@contoh.id", SMTP_HOST: "", APP_TIMEZONE: "Asia/Makassar", NEXT_PUBLIC_DEMO_MODE: "true", EMAIL_TEST_OUTBOX: "1" },
     },
     {
       command: `npx next dev -p ${SETUP_PORT}`,

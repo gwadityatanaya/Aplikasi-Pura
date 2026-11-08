@@ -25,6 +25,8 @@ export const users = pgTable("users", {
   isSuperAdmin: boolean("is_super_admin").notNull().default(false),
   status: text("status").notNull().default("active"), // active | disabled | deleted
   emailDigest: boolean("email_digest").notNull().default(true),
+  /** Email when one's own punia is disahkan or ditolak (can be switched off) */
+  emailPunia: boolean("email_punia").notNull().default(true),
   lastDigestAt: ts("last_digest_at"),
   deletedAt: ts("deleted_at"),
   resetRequestedAt: ts("reset_requested_at"),
@@ -283,6 +285,8 @@ export const donations = pgTable("donations", {
   templeId: text("temple_id").notNull().references(() => temples.id),
   /** The bank account the umat says they paid into (chosen when there is more than one) */
   accountId: text("account_id"),
+  /** false = a decision (disahkan/ditolak) the umat has not seen yet in "Punia Saya" */
+  donorSeen: boolean("donor_seen").notNull().default(true),
   campaignId: text("campaign_id").references(() => campaigns.id),
   activityId: text("activity_id"),
   purpose: text("purpose").notNull().default("umum"), // umum | odalan | pembangunan | lainnya
@@ -397,6 +401,29 @@ export const helpReplies = pgTable("help_replies", {
   message: text("message").notNull(),
   createdAt: ts("created_at").notNull().defaultNow(),
 }, (t) => [index("help_replies_ticket").on(t.ticketId, t.createdAt)]);
+
+/**
+ * Outgoing emails about punia (disahkan / ditolak). Queued in the same database transaction as the
+ * decision, sent afterwards in small batches within the daily quota of the email service — so a
+ * mass verification is never slowed down or undone by email trouble.
+ */
+export const emailQueue = pgTable("email_queue", {
+  id: text("id").primaryKey(),
+  kind: text("kind").notNull(), // punia_verified | punia_rejected
+  userId: text("user_id").notNull(),
+  donationId: text("donation_id"),
+  toEmail: text("to_email").notNull(),
+  subject: text("subject").notNull(),
+  html: text("html").notNull(),
+  textBody: text("text_body").notNull(),
+  /** waiting | sent | failed (gave up after 5 tries) | cancelled (person switched emails off) */
+  status: text("status").notNull().default("waiting"),
+  attempts: integer("attempts").notNull().default(0),
+  notBefore: ts("not_before").notNull().defaultNow(),
+  lastError: text("last_error"),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  sentAt: ts("sent_at"),
+}, (t) => [index("email_queue_waiting").on(t.status, t.notBefore), index("email_queue_sent").on(t.sentAt)]);
 
 export const rateLimits = pgTable("rate_limits", {
   id: bigserial("id", { mode: "number" }).primaryKey(),

@@ -134,6 +134,13 @@
       "when": 1794104393077,
       "tag": "0018_multi_account",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794105431386,
+      "tag": "0019_punia_email",
+      "breakpoints": true
     }
   ]
 }

@@ -34,6 +34,8 @@ export interface User {
   status?: "active" | "disabled" | "deleted";
   /** Daily "punia menunggu" email for pengurus */
   emailDigest?: boolean;
+  /** Email when one's own punia is disahkan or ditolak */
+  emailPunia?: boolean;
   resetRequestedAt?: string;
   lastLoginAt?: string;
   createdAt: string;

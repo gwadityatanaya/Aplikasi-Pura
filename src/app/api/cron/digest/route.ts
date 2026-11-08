@@ -2,7 +2,8 @@ import { and, eq, isNull, lt, or } from "drizzle-orm";
 import { db, schema } from "@/server/db";
 import { templeAccess } from "@/server/context";
 import { pendingCounts } from "@/server/commands-punia";
-import { emailConfigured, layout, sendEmail } from "@/server/email";
+import { emailConfigured, layout, puniaEmailEnabled, sendEmail } from "@/server/email";
+import { processEmailQueue } from "@/server/email-queue";
 import { originOf } from "@/server/auth";
 import { json, route } from "@/server/http";
 import { logActivity } from "@/server/log";
@@ -16,6 +17,9 @@ export const maxDuration = 60;
  * Pengurus Banjar are told about temples that have no Pengurus Pura yet.
  */
 export const GET = route(async (req: Request) => {
+  const secret0 = process.env.CRON_SECRET;
+  // Punia confirmation emails waiting in the queue (within the daily quota).
+  if (secret0 && req.headers.get("authorization") === `Bearer ${secret0}` && puniaEmailEnabled()) await processEmailQueue(100).catch(() => {});
   // Email is optional: without SMTP the digest is simply off (the badge in the dashboard stays).
   if (!emailConfigured()) return json({ ok: true, sent: 0, note: "Email belum diatur — ringkasan harian nonaktif." });
   const secret = process.env.CRON_SECRET;

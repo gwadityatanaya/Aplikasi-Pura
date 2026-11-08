@@ -276,7 +276,7 @@ function CampaignAdmin() {
           </div>
         }
       >
-        <Field label="Alasan penolakan" htmlFor="rej" hint="Mis. dana tidak ditemukan di mutasi rekening.">
+        <Field label="Alasan penolakan" htmlFor="rej" hint="Mis. dana tidak ditemukan di mutasi rekening. Alasan dikirim ke pengirim punia — jangan menulis nama, nomor HP, atau nomor rekening orang lain.">
           <Textarea id="rej" rows={3} value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} />
         </Field>
       </Dialog>

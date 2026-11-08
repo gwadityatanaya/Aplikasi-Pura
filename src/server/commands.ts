@@ -517,7 +517,8 @@ export const coreCommands: Record<string, Handler> = {
   },
 
   async updateUser(ctx, p) {
-    const i = z.object({ name: text(120).min(3), callName: text(60).min(2), phone: optText(20), emailDigest: z.boolean() }).partial().parse(p);
+    const i = z.object({ name: text(120).min(3), callName: text(60).min(2), phone: optText(20), emailDigest: z.boolean(), emailPunia: z.boolean() }).partial().parse(p);
+    if (i.emailPunia === false) await (await import("./email-queue")).cancelPuniaEmails(ctx.user.id);
     await db.transaction(async (tx) => {
       await tx.update(T.users).set(i).where(eq(T.users.id, ctx.user.id));
       await log(ctx, tx, { action: "Mengubah profil sendiri", entity: "user", entityId: ctx.user.id, detail: ctx.user.name, changes: diff(ctx.user, i, Object.keys(i)), templeId: null });
@@ -618,4 +619,6 @@ export async function housekeeping() {
   await db.delete(T.loginAttempts).where(sql`${T.loginAttempts.at} < now() - interval '30 days'`);
   await db.delete(T.passwordTokens).where(and(gt(sql`now()`, T.passwordTokens.expiresAt)));
   await (await import("./commands-help")).cleanupHelpAttachments();
+  // Waiting punia emails (e.g. postponed yesterday because of the daily quota).
+  if ((await import("./email")).puniaEmailEnabled()) await (await import("./email-queue")).processEmailQueue(10);
 }

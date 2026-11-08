@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, HandHeart, Inbox, RotateCcw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,12 @@ export default function MyPuniaPage() {
   const { ready } = useRequireLogin();
   const { punia, error, reload } = useMyPunia(ready);
   const [fix, setFix] = useState<MyPunia>();
+  const run = useStore((s) => s.run);
+  // Opening this page counts as having seen the new decisions (the "Baru" marks stay this visit).
+  const hasNew = !!punia?.some((d) => d.isNew);
+  useEffect(() => {
+    if (hasNew) run("markMyPuniaSeen", {});
+  }, [hasNew, run]);
 
   return (
     <div className="container max-w-3xl py-8">
@@ -43,7 +49,10 @@ export default function MyPuniaPage() {
                   <p className="text-xl font-extrabold">{rupiah(d.amount)}</p>
                   <p className="text-[15px] font-semibold">{d.temple?.name ?? "Pura"}</p>
                 </div>
-                <Badge tone={d.correctedAt ? "red" : s.tone} className="text-sm">{d.correctedAt ? "Dikoreksi" : s.label}</Badge>
+                <span className="flex flex-wrap gap-1.5">
+                  {d.isNew && <Badge tone="emerald" className="text-sm">Baru</Badge>}
+                  <Badge tone={d.correctedAt ? "red" : s.tone} className="text-sm">{d.correctedAt ? "Dikoreksi" : s.label}</Badge>
+                </span>
               </div>
               <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                 <dt className="text-muted">Tanggal transfer</dt><dd>{formatDate(d.transferDate ?? d.date)}</dd>

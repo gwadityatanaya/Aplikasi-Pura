@@ -22,6 +22,7 @@ export default function UmatHome() {
 
   const pending = punia?.filter((d) => d.status === "pending").length ?? 0;
   const rejected = punia?.filter((d) => d.status === "rejected").length ?? 0;
+  const fresh = punia?.filter((d) => d.isNew && d.status === "verified").length ?? 0;
 
   return (
     <div className="container max-w-3xl py-8">
@@ -34,6 +35,11 @@ export default function UmatHome() {
         </Link>
       )}
 
+      {fresh > 0 && (
+        <Link href="/umat/punia" className="mt-4 flex items-center gap-3 rounded-2xl bg-mint p-4 font-semibold text-emerald-900" role="status">
+          {fresh} punia Anda baru disahkan pengurus — lihat <ChevronRight className="ml-auto h-5 w-5" />
+        </Link>
+      )}
       {rejected > 0 && (
         <Link href="/umat/punia" className="mt-4 flex items-center gap-3 rounded-2xl bg-red-50 p-4 font-semibold text-red-800">
           {rejected} punia ditolak — lihat alasan dan kirim ulang <ChevronRight className="ml-auto h-5 w-5" />

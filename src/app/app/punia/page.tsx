@@ -272,7 +272,7 @@ function RejectDialog({ d, onClose }: { d: Donation; onClose: () => void }) {
             <button key={r} type="button" onClick={() => setReason(r)} className={cn("press rounded-full border px-3 py-1.5 text-sm", reason === r ? "border-emerald-500 bg-mint" : "border-line bg-white")}>{r}</button>
           ))}
         </div>
-        <Field label="Alasan (dilihat oleh umat)" htmlFor="rj-reason"><Textarea id="rj-reason" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} /></Field>
+        <Field label="Alasan (dilihat oleh umat)" htmlFor="rj-reason" hint="Alasan ini dilihat dan dikirim lewat email ke pengirim punia. Jangan menulis nama, nomor HP, atau nomor rekening orang lain."><Textarea id="rj-reason" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} /></Field>
       </div>
     </Dialog>
   );

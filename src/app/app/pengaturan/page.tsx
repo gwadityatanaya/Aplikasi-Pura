@@ -28,6 +28,7 @@ import { useSignInOptions } from "@/lib/sign-in-options";
 import type { Result } from "@/lib/store";
 import { LogoutEverywhere } from "@/components/shared/logout-everywhere";
 import { AvatarEditor } from "@/components/shared/avatar-editor";
+import { PuniaEmailSwitch } from "@/components/shared/punia-email-switch";
 
 /** Shows the right toast for a save result; returns true on success. */
 function done(r: Result<unknown>, msg: string) {
@@ -275,6 +276,7 @@ function NotifPrefs() {
           description={opts?.digest === false ? "Tidak aktif: layanan email belum diatur oleh pengelola. Lencana jumlah punia menunggu di dashboard tetap ada." : "Dikirim hanya jika ada punia yang menunggu disahkan."}
         />
         <Switch checked={n.donationPending} onChange={(v) => set("donationPending", v)} label="Punia baru menunggu verifikasi (di aplikasi)" />
+        <PuniaEmailSwitch />
         <Switch checked={n.campaignTarget} onChange={(v) => set("campaignTarget", v)} label="Target penggalangan tercapai" />
         <Switch checked={n.approvals} onChange={(v) => set("approvals", v)} label="Transaksi menunggu persetujuan" />
         <Switch checked={n.reportReady} onChange={(v) => set("reportReady", v)} label="Laporan dipublikasikan" />

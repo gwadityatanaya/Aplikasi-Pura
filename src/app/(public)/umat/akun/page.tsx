@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useRequireLogin } from "@/components/umat/use-umat";
 import { LogoutEverywhere } from "@/components/shared/logout-everywhere";
 import { AvatarEditor } from "@/components/shared/avatar-editor";
+import { PuniaEmailSwitch } from "@/components/shared/punia-email-switch";
 import { useStore } from "@/lib/store";
 
 export default function MyAccountPage() {
@@ -69,6 +70,10 @@ export default function MyAccountPage() {
         <Field label="Nama panggilan" htmlFor="ak-call"><Input id="ak-call" value={callName} onChange={(e) => setCallName(e.target.value)} /></Field>
         <Field label="No. HP (opsional)" htmlFor="ak-phone"><Input id="ak-phone" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} /></Field>
         <Button size="lg" className="w-full" loading={saving} onClick={save}>Simpan</Button>
+      </Card>
+
+      <Card className="mt-4 px-5 py-2">
+        <PuniaEmailSwitch />
       </Card>
 
       <Card className="mt-4 p-5">
