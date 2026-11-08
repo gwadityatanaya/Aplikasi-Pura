@@ -43,6 +43,43 @@ Daftar ini berisi pilihan yang **tidak bisa saya putuskan sendiri** karena menya
 8. **Laporan "penyalahgunaan atau pura mencurigakan"** hanya masuk ke Admin Utama, **tidak** ke Pengurus Banjar (karena bisa jadi yang dilaporkan justru pengurus setempat). *Saran: tetap begitu.*
 9. **Isi pesan bantuan** disimpan selama aplikasi dipakai; saat akun dihapus, pesan tetap ada dengan nama "Akun dihapus" tetapi gambar lampirannya ikut dihapus. Perlu pesan juga dihapus bersama akun?
 
+## Phase 3.3 — perlu keputusan Anda
+
+Semua sudah berjalan dengan pilihan "saran" di bawah. Jawab hanya yang ingin diubah.
+
+**Kegiatan & penggalangan dana**
+
+1. **Tanggal berakhir penggalangan ikut opsional.** Agar benar-benar "hanya judul yang wajib", tanggal berakhir boleh kosong; penggalangan tanpa tanggal berakhir berjalan sampai ditutup. *Saran: biarkan.* Jika ingin tanggal berakhir tetap wajib, beri tahu saya.
+2. **"Cerita" dan "Tujuan" tetap satu isian** ("Cerita & tujuan", opsional), terpisah dari "Dana akan digunakan untuk". Perlu dipecah menjadi dua isian?
+3. **Penggalangan yang sudah ditutup tidak bisa dibuka lagi** (alasan penutupan juga tidak bisa diubah). Jika perlu, buat penggalangan baru. *Saran: biarkan.*
+4. **Kegiatan kosong boleh dihapus oleh Pengurus Banjar** juga (sesuai permintaan). Kegiatan "Operasional Pura" yang dibuat otomatis juga bisa dihapus jika kosong. *Saran: biarkan.*
+5. **Pemeriksaan data pribadi** pada alasan penutupan dan alasan penolakan hanya mengenali **email, nomor HP, dan nomor rekening**. Nama orang tidak bisa dikenali otomatis — hanya peringatan di form. Cukup?
+
+**Rekening & QRIS**
+
+6. **Rekening tanpa centang "Tampil untuk umat"** tetap tercatat di buku kas tetapi tidak bisa dipilih umat (mis. rekening tabungan internal). *Saran: biarkan.*
+7. **Input punia manual** belum menanyakan rekening tujuan; punia manual "transfer" dicatat ke rekening utama (atau rekening penggalangan). Perlu pilihan rekening di input manual juga?
+8. **QRIS hanya satu per pura.** Perlu QRIS per rekening?
+
+**Email konfirmasi**
+
+9. **Kuota harian:** 250 email konfirmasi per hari (Brevo Free 300, sisa 50 untuk tautan masuk dan ringkasan harian). *Saran: biarkan untuk pilot.*
+10. **Email gagal dicoba sampai 5 kali** (jeda makin lama), lalu berhenti dengan status gagal di database (tidak ada layar khusus). Perlu daftar "email gagal" di Back Office?
+11. **Isi email antrean disimpan di database** (agar bisa dikirim ulang). Perlu dihapus otomatis setelah terkirim, mis. 90 hari? *Saran: ya, 90 hari — belum saya buat.*
+12. Email penolakan juga memuat kalimat "bukan kuitansi" (seragam dengan email pengesahan). *Saran: biarkan.*
+
+**Migrasi dari buku**
+
+13. **Saksi saldo awal berupa nama yang diketik** (dengan saran nama pengurus pura). Haruskah wajib dipilih dari daftar pengurus berakun saja? *Saran: biarkan diketik* — saksi kadang pengurus banjar yang belum punya akun.
+14. **Transaksi sebelum tanggal mulai ditolak** (bukan sekadar peringatan), termasuk pengesahan punia yang ditransfer sebelum tanggal mulai (karena uangnya sudah masuk saldo awal). *Saran: biarkan.*
+15. **Pencocokan bulanan diisi Pengurus Pura** (izin pengaturan). Perlu Pengurus Banjar juga bisa mengisi?
+16. **Tanggal mulai tidak boleh setelah transaksi pertama yang sudah tercatat** (untuk pura demo/pilot yang sudah berjalan). Pura yang sudah punya transaksi lama sebaiknya memilih tanggal mulai sama dengan atau sebelum transaksi pertamanya.
+
+**Lanjutan**
+
+17. ⏳ **Skrip ganti email Admin Utama** → Phase 3.4 (sesuai keputusan Anda).
+18. ⏳ **Batas nominal pengesahan pengeluaran** → menunggu angka dari pengurus banjar.
+
 ## Bahan pilot (dijawab sebelum pilot, tidak perlu untuk demo)
 
 Bagian A–D di bawah: pengurus tiap pura, rekening, tanggal mulai dan saldo awal, serta pemegang cadangan.

@@ -52,6 +52,16 @@ test("dashboard pengurus pas dengan lebar layar", async ({ page }) => {
   await checkPage(page, "/app/laporan", "laporan");
   await checkPage(page, "/app/pengaturan?tab=profil-admin", "profil-saya");
   await checkPage(page, "/bantuan", "bantuan");
+  await checkPage(page, "/app/kegiatan", "kegiatan");
+  await checkPage(page, "/app/campaign/baru", "form-penggalangan");
+  await checkPage(page, "/app/pengaturan?tab=rekening", "kas-saldo-awal");
+});
+
+test("halaman berpunia umat pas dengan lebar layar (pilihan rekening)", async ({ page }) => {
+  test.setTimeout(120_000);
+  const slug = (await publicData(page.request)).temples.find((t) => t.name.includes("Dalem Kahyangan"))!.slug;
+  await signInUi(page, "ayu@contoh.id");
+  await checkPage(page, `/pura/${slug}/punia`, "berpunia");
 });
 
 test("Back Office pas dengan lebar layar", async ({ page }) => {
