@@ -13,6 +13,7 @@
     "backup": "tsx scripts/backup.ts",
     "restore": "tsx scripts/restore.ts",
     "admin:reset": "tsx scripts/admin-reset.ts",
+    "admin:ganti-email": "tsx scripts/admin-email.ts",
     "db:seed-demo": "tsx --require ./scripts/allow-server-only.cjs scripts/seed-demo.ts",
     "test:e2e": "playwright test",
     "db:reset-demo": "tsx scripts/reset-demo.ts",

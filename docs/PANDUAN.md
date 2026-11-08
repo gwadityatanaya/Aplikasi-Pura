@@ -267,6 +267,10 @@ Banjar yang ingin memakai PURA mengisi formulir publik **Ajukan pendaftaran** (a
 - Setelah yakin, tekan **Jadikan banjar & pura**: pilih banjar yang sudah ada atau buat banjar baru, periksa nama pura, lalu **Ya, buat**. Wilayah terisi otomatis. Pura dibuat dengan status **menunggu** (belum tampil di publik), dan **tidak ada akun atau peran yang dibuat** — lanjutkan seperti biasa: isi rekening, daftarkan pengurus, lalu aktifkan pura lewat **Ubah data**.
 - Log Aktivitas hanya mencatat nama banjar dan pura, bukan data pribadi pemohon.
 
+### Dasbor angka
+
+**Back Office → Angka**: jumlah banjar dan pura aktif, jumlah pengguna dan pengurus, jumlah dan nominal punia yang disahkan per bulan (12 bulan terakhir), dan per banjar — **hanya angka**, tanpa nama donatur, pesan, atau bukti. Hanya Admin Utama.
+
 ### Catatan verifikasi per pura (internal)
 
 Pada kartu pura di **Back Office → Pura** tekan **Verifikasi**. Isinya checklist bertanggal: **pemberi referensi sudah dihubungi**, **panggilan video** dengan pengurus, **rekening resmi sudah dicek** (atas nama pura, banjar, atau lainnya), **masa percobaan** (mulai dan selesai), dan **catatan bebas**. Kartu pura menampilkan **Verifikasi n/4** dan **Percobaan s.d. …** (merah jika sudah lewat). Hanya Admin Utama yang bisa melihat dan mengubahnya; setiap perubahan tercatat di Log Aktivitas.
@@ -424,7 +428,7 @@ Data keuangan sengaja **tidak disimpan di HP**; aplikasi butuh internet untuk me
 
 ## Cadangan data mingguan
 
-Buat cadangan **setiap minggu** (mis. setiap Minggu sore) dan **sebelum upacara besar**.
+Buat cadangan **setiap minggu** (mis. setiap Minggu sore) dan **sebelum upacara besar**. **Pengingat:** Back Office menampilkan peringatan merah jika cadangan terakhir (dari aplikasi atau `npm run backup`) **lebih dari 7 hari** lalu atau **belum pernah** dibuat.
 
 ### Cara 1 — Dari aplikasi (disarankan)
 1. Masuk sebagai Admin Utama → **Back Office → Cadangan data → Unduh cadangan (.json)**.
@@ -517,7 +521,13 @@ Setiap perubahan yang di-*push* ke GitHub (cabang `main`) otomatis dibangun ulan
 ## Keamanan: kebiasaan baik
 
 - 🔒 Jangan membagikan Environment Variables, file `.env`, atau file cadangan.
-- 🔐 Aktifkan **verifikasi 2 langkah** di akun Google `wiraaditya452@gmail.com` — akun ini sekarang adalah kunci Admin Utama.
+- 🔐 Aktifkan **verifikasi 2 langkah** di akun Google Admin Utama — akun ini adalah kunci Admin Utama.
+- 📧 **Akses email Admin Utama hilang?** Orang yang memegang `DATABASE_URL` (di laptop, file `.env`) menjalankan:
+  ```bash
+  npm run admin:ganti-email -- --email-baru=alamat.baru@gmail.com      # lihat dulu apa yang akan diubah
+  npm run admin:ganti-email -- --email-baru=alamat.baru@gmail.com --ya # ganti
+  ```
+  Akun, peran, dan seluruh riwayat Admin Utama tetap sama; hanya alamat masuknya yang berganti. Semua sesi Admin Utama keluar, akun Google lama **tidak bisa** masuk lagi sebagai Admin Utama, dan penggantian tercatat di Log Aktivitas. Email yang sudah dipakai akun lain ditolak. Setelah itu masuk dengan Google memakai alamat baru (atau `npm run admin:reset` untuk tautan masuk sekali pakai).
 - 👤 Satu orang, satu akun. Jangan memakai akun bersama.
 - 🚪 Segera cabut peran pengurus yang sudah tidak menjabat.
 - 👥 Usahakan tiap pura punya **minimal 2 pengurus**.

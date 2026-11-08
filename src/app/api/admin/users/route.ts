@@ -24,6 +24,8 @@ export const GET = route(async (req: Request) => {
   ]);
   const pending = await pendingCounts(temples.map((t) => t.id));
   const failedEmails = await failedEmailCount();
+  // Backup reminder: the last backup made in the app or with "npm run backup".
+  const [lastBackup] = await db.select({ at: schema.activityLog.at }).from(schema.activityLog).where(eq(schema.activityLog.entity, "backup")).orderBy(desc(schema.activityLog.at)).limit(1);
   return json({
     ok: true,
     users: users.filter((u) => u.status !== "deleted").map(m.toUser),
@@ -41,5 +43,6 @@ export const GET = route(async (req: Request) => {
     banjars: banjars.map(m.toBanjar),
     banjarMembers: banjarMembers.map(m.toBanjarMember),
     failedEmails,
+    lastBackupAt: lastBackup?.at.toISOString() ?? null,
   });
 });

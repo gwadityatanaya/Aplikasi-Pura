@@ -2,6 +2,7 @@
 import { WilayahPicker, emptyAddress, type AddressValue } from "@/components/app/wilayah-picker";
 import { ARCHIVE_COMMAND, ArchiveDialog, type ArchiveTarget } from "@/components/app/archive-dialog";
 import { HelpInbox } from "@/components/app/help-inbox";
+import { StatsPanel } from "@/components/app/stats-panel";
 import { RegistrationInbox } from "@/components/app/registration-inbox";
 import { BankAccountsDialog } from "@/components/app/bank-accounts-dialog";
 import { VerificationDialog, trialLabel, verificationProgress, type Verification } from "@/components/app/verification-dialog";
@@ -36,6 +37,8 @@ interface AdminData {
   banjarMembers: BanjarMember[];
   /** Punia emails given up after every retry */
   failedEmails?: number;
+  /** When the last backup was made (null = never) */
+  lastBackupAt?: string | null;
 }
 
 const pickAddress = (x: AddressValue): AddressValue => ({
@@ -53,12 +56,12 @@ export default function BackOfficePage() {
   const me = useStore((s) => s.session?.userId);
   const run = useStore((s) => s.run);
   const refreshState = useStore((s) => s.refresh);
-  const [tab, setTab] = useState<"pura" | "banjar" | "akun" | "pengajuan" | "bantuan" | "cadangan">("pura");
+  const [tab, setTab] = useState<"pura" | "banjar" | "akun" | "angka" | "pengajuan" | "bantuan" | "cadangan">("pura");
   const [newRegs, setNewRegs] = useState(0);
   // Links such as /app/admin?tab=bantuan (from the help email) open that part directly.
   useEffect(() => {
     const t = new URLSearchParams(window.location.search).get("tab");
-    if (t === "bantuan" || t === "banjar" || t === "akun" || t === "cadangan" || t === "pengajuan") setTab(t);
+    if (t === "bantuan" || t === "banjar" || t === "akun" || t === "cadangan" || t === "pengajuan" || t === "angka") setTab(t);
   }, []);
   const [data, setData] = useState<AdminData | null>(null);
   const [q, setQ] = useState("");
@@ -102,6 +105,8 @@ export default function BackOfficePage() {
   const users = useMemo(() => (data?.users ?? []).filter((u) => !q || `${u.name} ${u.email}`.toLowerCase().includes(q.toLowerCase())), [data, q]);
 
   if (!isAdmin) return <NoAccess what="Back Office" />;
+  const backupDays = data?.lastBackupAt ? Math.floor((Date.now() - new Date(data.lastBackupAt).getTime()) / 86_400_000) : null;
+  const backupDue = !!data && (backupDays === null || backupDays > 7);
 
   async function done<T>(p: Promise<Result<T>>, msg: string) {
     setBusy(true);
@@ -125,6 +130,13 @@ export default function BackOfficePage() {
     <div>
       <PageHeader title="Back Office" description="Kelola banjar, pura, rekening, dan pengurus. Setiap perubahan tercatat di Log Aktivitas." actions={<Link href="/app/log-aktivitas" className={buttonClass("outline")}>Buka Log Aktivitas</Link>} />
 
+      {backupDue && (
+        <Card className="mb-4 border-red-200 bg-red-50/60 p-4" role="alert">
+          <p className="flex items-center gap-2 font-bold text-red-900"><DatabaseBackup className="h-5 w-5" /> {backupDays === null ? "Belum pernah membuat cadangan data" : `Cadangan terakhir ${backupDays} hari lalu`}</p>
+          <p className="mt-1 text-[15px] text-red-900">Buat cadangan setidaknya seminggu sekali: tab <b>Cadangan data</b> → unduh, lalu simpan di tempat aman (mis. Google Drive pribadi Admin Utama). Lihat PANDUAN → Cadangan data mingguan.</p>
+          <Button size="sm" className="mt-2" onClick={() => setTab("cadangan")}>Buka Cadangan data</Button>
+        </Card>
+      )}
       {data && (warnings.noPengurus.length > 0 || warnings.single.length > 0 || warnings.noBank.length > 0 || !!data.failedEmails) && (
         <Card className="mb-5 border-amber-200 bg-amber-50/50 p-4">
           <p className="flex items-center gap-2 font-bold text-amber-900"><AlertTriangle className="h-5 w-5" /> Perlu perhatian</p>
@@ -138,7 +150,7 @@ export default function BackOfficePage() {
       )}
 
       <div className="no-scrollbar -mx-4 overflow-x-auto px-4">
-        <Segmented value={tab} onChange={setTab} ariaLabel="Bagian Back Office" options={[{ value: "pura", label: "Pura" }, { value: "banjar", label: "Banjar" }, { value: "akun", label: "Akun" }, { value: "pengajuan", label: newRegs ? `Pengajuan (${newRegs})` : "Pengajuan" }, { value: "bantuan", label: access.help.inbox ? `Bantuan (${access.help.inbox})` : "Bantuan" }, { value: "cadangan", label: "Cadangan data" }]} />
+        <Segmented value={tab} onChange={setTab} ariaLabel="Bagian Back Office" options={[{ value: "pura", label: "Pura" }, { value: "banjar", label: "Banjar" }, { value: "akun", label: "Akun" }, { value: "angka", label: "Angka" }, { value: "pengajuan", label: newRegs ? `Pengajuan (${newRegs})` : "Pengajuan" }, { value: "bantuan", label: access.help.inbox ? `Bantuan (${access.help.inbox})` : "Bantuan" }, { value: "cadangan", label: "Cadangan data" }]} />
       </div>
       {!data && <div className="mt-4 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20" />)}</div>}
 
@@ -278,6 +290,7 @@ export default function BackOfficePage() {
       )}
 
       {tab === "bantuan" && <HelpInbox />}
+      {tab === "angka" && <StatsPanel />}
       {data && tab === "pengajuan" && <RegistrationInbox banjars={data.banjars} onChanged={load} onCount={setNewRegs} />}
 
       {data && tab === "cadangan" && (
