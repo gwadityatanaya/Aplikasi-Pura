@@ -47,7 +47,7 @@ export default function MyPuniaPage() {
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="text-xl font-extrabold">{rupiah(d.amount)}</p>
-                  <p className="text-[15px] font-semibold">{d.temple?.name ?? "Pura"}</p>
+                  <p className="text-[0.9375rem] font-semibold">{d.temple?.name ?? "Pura"}</p>
                 </div>
                 <span className="flex flex-wrap gap-1.5">
                   {d.isNew && <Badge tone="emerald" className="text-sm">Baru</Badge>}
@@ -62,9 +62,9 @@ export default function MyPuniaPage() {
                 {d.channel !== "transfer" && (<><dt className="text-muted">Dicatat</dt><dd>oleh pengurus ({d.channel})</dd></>)}
               </dl>
               <p className="mt-2 text-sm text-muted">{d.correctedAt ? "Pengurus membatalkan catatan ini dengan entri koreksi, sehingga tidak dihitung." : s.desc}</p>
-              {d.correctedAt && d.correctionReason && <p className="mt-1 rounded-xl bg-amber-50 p-3 text-[15px] text-amber-900"><b>Alasan koreksi:</b> {d.correctionReason}</p>}
+              {d.correctedAt && d.correctionReason && <p className="mt-1 rounded-xl bg-amber-50 p-3 text-[0.9375rem] text-amber-900"><b>Alasan koreksi:</b> {d.correctionReason}</p>}
               {d.status === "rejected" && (
-                <div className="mt-3 rounded-xl bg-red-50 p-3 text-[15px] text-red-900">
+                <div className="mt-3 rounded-xl bg-red-50 p-3 text-[0.9375rem] text-red-900">
                   <p><b>Alasan ditolak:</b> {d.rejectedReason || "-"}</p>
                   {d.submittedBy && (
                     <Button className="mt-3" onClick={() => setFix(d)}><RotateCcw className="h-4 w-4" /> Perbaiki & kirim ulang</Button>

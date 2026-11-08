@@ -17,7 +17,7 @@ export function Switch({
   return (
     <label className={cn("flex cursor-pointer items-start justify-between gap-4 py-3", disabled && "cursor-not-allowed opacity-60")}>
       <span className="min-w-0">
-        <span className="block text-[15px] font-semibold text-charcoal">{label}</span>
+        <span className="block text-[0.9375rem] font-semibold text-charcoal">{label}</span>
         {description && <span className="mt-0.5 block text-sm text-muted">{description}</span>}
       </span>
       <button

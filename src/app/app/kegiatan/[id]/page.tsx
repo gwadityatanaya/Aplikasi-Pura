@@ -45,7 +45,7 @@ export default function ActivityDetailPage() {
         }
       />
       {a.archivedAt && (
-        <p className="mb-4 flex items-start gap-2 rounded-2xl bg-stone-100 p-3 text-[15px] text-stone-800" role="status">
+        <p className="mb-4 flex items-start gap-2 rounded-2xl bg-stone-100 p-3 text-[0.9375rem] text-stone-800" role="status">
           <Archive className="mt-0.5 h-5 w-5 shrink-0" />
           <span>Kegiatan ini <b>diarsipkan</b> sejak {formatDate(a.archivedAt)}{a.archiveReason ? ` — alasan: ${a.archiveReason}` : ""}. Tidak bisa dipilih untuk catatan baru; data dan laporannya tetap ada.</span>
         </p>
@@ -53,7 +53,7 @@ export default function ActivityDetailPage() {
       <div className="mb-4 flex flex-wrap gap-2">
         {a.fundType === "restricted" ? <Badge tone="gold"><Lock className="h-3 w-3" /> Dana khusus — hanya untuk kegiatan ini</Badge> : <Badge tone="gray">Dana umum</Badge>}
       </div>
-      {a.description && <p className="mb-5 max-w-3xl text-[15px] leading-relaxed text-charcoal/80">{a.description}</p>}
+      {a.description && <p className="mb-5 max-w-3xl text-[0.9375rem] leading-relaxed text-charcoal/80">{a.description}</p>}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[
           ["Pemasukan", rupiah(s.income), "text-income"],

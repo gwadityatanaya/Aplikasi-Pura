@@ -24,6 +24,7 @@ Waktu yang dibutuhkan: sekitar **60 menit** untuk pertama kali (termasuk mengatu
 13. [Admin Utama: mode lihat dan mode darurat](#admin-utama-mode-lihat-dan-mode-darurat)
     - [Mengarsipkan atau menghapus pura dan banjar](#mengarsipkan-atau-menghapus-pura-dan-banjar)
     - [Foto profil](#foto-profil)
+    - [Ukuran huruf](#ukuran-huruf)
     - [Pusat bantuan](#pusat-bantuan)
 14. [Memasang aplikasi di HP](#memasang-aplikasi-di-hp)
 15. [Cadangan data mingguan](#cadangan-data-mingguan)
@@ -401,6 +402,12 @@ Aturan "pura yang sudah punya data tidak boleh dihapus" dan "banjar yang masih m
 - **Siapa yang bisa melihat:** pemiliknya, Pengurus Pura dan Pengurus Banjar yang bekerja bersama di pura/banjar yang sama, dan Admin Utama. **Tidak** terlihat oleh Pemeriksa, umat lain, atau pengunjung, dan **tidak pernah** tampil di halaman publik, laporan, atau di samping punia (termasuk punia ANONIM).
 - **Hapus foto** kapan saja dari tempat yang sama. Saat akun dihapus, fotonya ikut terhapus dari server.
 - Admin Utama dapat menghapus foto yang tidak pantas: **Back Office → Akun → Hapus foto** (alasan wajib, tercatat di Log Aktivitas). Pemiliknya mendapat **satu kalimat pemberitahuan** di aplikasi saat membuka aplikasi berikutnya (tanpa alasan rinci), yang bisa ditutup.
+
+### Ukuran huruf
+
+- Tiga pilihan: **Normal**, **Besar**, dan **Sangat besar**. Pengurus: **Pengaturan → Tampilan**. Umat: **Punia Saya → Akun saya**.
+- Pilihan **disimpan di akun**, jadi ikut terbawa saat masuk dari HP atau laptop lain. Sebelum masuk, pilihan disimpan di perangkat saja.
+- Semua halaman tetap pas di layar HP, tablet, dan laptop — **tidak perlu menggeser ke samping**, juga pada ukuran Sangat besar. Tulisan tombol yang panjang akan turun ke baris berikutnya.
 
 ### Pusat bantuan
 

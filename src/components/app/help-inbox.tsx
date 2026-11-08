@@ -44,7 +44,7 @@ export function HelpInbox() {
   return (
     <div className="mt-4">
       <div className="no-scrollbar -mx-4 overflow-x-auto px-4">
-        <Segmented
+        <Segmented className="max-w-none"
           value={filter}
           onChange={setFilter}
           ariaLabel="Saring status pesan"
@@ -67,7 +67,7 @@ export function HelpInbox() {
                 <span className="font-semibold">{HELP_CATEGORY_LABEL[t.category]}</span>
                 {t.unreadByAdmin && <Badge tone="red">Belum dibaca</Badge>}
                 <span className="ml-auto text-sm text-muted">{formatDateTime(t.updatedAt)}</span>
-                <span className="w-full truncate text-[15px] text-muted">{t.user?.name} — {t.message}</span>
+                <span className="w-full truncate text-[0.9375rem] text-muted">{t.user?.name} — {t.message}</span>
               </button>
               {openId === t.id && <div className="mt-4 border-t border-line pt-4"><HelpThread t={t} admin onChanged={changed} /></div>}
             </Card>

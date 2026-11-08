@@ -97,7 +97,7 @@ export function HelpForm({ open, onClose, page, unread }: { open: boolean; onClo
       footer={<Button size="lg" className="w-full" loading={busy} disabled={message.trim().length < 10} onClick={send}>Kirim pesan</Button>}
     >
       <div className="space-y-4">
-        <p className="flex items-start gap-2 rounded-xl bg-red-50 p-3 text-[15px] font-semibold text-red-900" role="note">
+        <p className="flex items-start gap-2 rounded-xl bg-red-50 p-3 text-[0.9375rem] font-semibold text-red-900" role="note">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" /> Jangan menulis kata sandi, PIN, kode OTP, atau kode rahasia apa pun di pesan ini.
         </p>
         <Field label="Jenis pesan" htmlFor="help-cat">

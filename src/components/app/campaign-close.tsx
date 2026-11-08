@@ -47,11 +47,11 @@ export function CampaignCloseActions({ campaign, mode }: { campaign: Campaign; m
       >
         <div className="space-y-3">
           {close && (
-            <p className="rounded-xl bg-ivory p-3 text-[15px]">
+            <p className="rounded-xl bg-ivory p-3 text-[0.9375rem]">
               Penggalangan tetap tampil di halaman publik dengan tanda <b>Ditutup</b>, tanggal, dan alasannya, tetapi <b>tidak menerima punia baru</b>. Punia yang masih menunggu tetap bisa disahkan atau ditolak. Penutupan tidak bisa dibatalkan, dan <b>alasan tidak bisa diubah</b> setelah disimpan — koreksi lewat catatan tambahan.
             </p>
           )}
-          <p className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-[15px] font-semibold text-amber-900" role="note">
+          <p className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-[0.9375rem] font-semibold text-amber-900" role="note">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" /> {PUBLIC_WARNING}
           </p>
           <Field label={close ? "Alasan penutupan (wajib)" : "Catatan tambahan"} hint="Minimal 5 huruf. Tercatat di Log Aktivitas." htmlFor="close-text">

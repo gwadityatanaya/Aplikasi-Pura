@@ -9,15 +9,19 @@ import { NoticeBar } from "@/components/shared/notice-bar";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const prefs = useStore((s) => s.prefs);
+  // The account's choice wins over the device's (so it follows the person to another HP).
+  const accountSize = useStore((s) => s.me?.textSize);
 
   useEffect(() => {
     useStore.persist.rehydrate();
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.toggle("text-large", prefs.textSize === "large");
+    const size = accountSize ?? prefs.textSize;
+    document.documentElement.classList.toggle("text-besar", size === "besar");
+    document.documentElement.classList.toggle("text-sangat-besar", size === "sangat_besar");
     document.documentElement.classList.toggle("reduce-motion", prefs.reduceMotion);
-  }, [prefs.textSize, prefs.reduceMotion]);
+  }, [accountSize, prefs.textSize, prefs.reduceMotion]);
 
   return (
     <MotionConfig reducedMotion={prefs.reduceMotion ? "always" : "user"}>

@@ -55,7 +55,7 @@ const STEPS: Record<Platform, { title: string; body: React.ReactNode; art: React
       art: (
         <Phone caption="Pilih Instal aplikasi">
           <Page />
-          <div className="absolute right-2 top-9 w-[75%] space-y-2 rounded-xl bg-white p-3 text-[11px] shadow-lift ring-1 ring-black/5">
+          <div className="absolute right-2 top-9 w-[75%] space-y-2 rounded-xl bg-white p-3 text-[0.6875rem] shadow-lift ring-1 ring-black/5">
             <Bar className="w-2/3" /><Bar className="w-1/2" />
             <div className="flex items-center gap-1.5 rounded-lg bg-mint p-1.5 font-bold text-emerald-900"><Download className="h-3.5 w-3.5" /> Instal aplikasi</div>
             <Bar className="w-3/5" />
@@ -80,7 +80,7 @@ const STEPS: Record<Platform, { title: string; body: React.ReactNode; art: React
       body: "Lalu ketuk \"Tambah\" di kanan atas. Ikon PURA muncul di layar HP Anda.",
       art: (
         <Phone caption="Tambah ke Layar Utama">
-          <div className="absolute inset-x-0 bottom-0 space-y-2 rounded-t-2xl bg-stone-50 p-3 text-[11px] shadow-lift">
+          <div className="absolute inset-x-0 bottom-0 space-y-2 rounded-t-2xl bg-stone-50 p-3 text-[0.6875rem] shadow-lift">
             <Bar className="w-1/2" /><Bar className="w-2/3" />
             <div className="flex items-center gap-1.5 rounded-lg bg-mint p-1.5 font-bold text-emerald-900"><PlusSquare className="h-3.5 w-3.5" /> Tambah ke Layar Utama</div>
             <Bar className="w-1/2" />
@@ -137,14 +137,14 @@ export default function InstallGuide() {
           <li key={s.title} className="grid items-center gap-4 sm:grid-cols-[1fr_220px]">
             <div>
               <p className="flex items-center gap-3 text-xl font-bold"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-emerald-600 text-white">{i + 1}</span>{s.title}</p>
-              <p className="mt-2 pl-12 text-[17px] text-muted">{s.body}</p>
+              <p className="mt-2 pl-12 text-[1.0625rem] text-muted">{s.body}</p>
             </div>
             {s.art}
           </li>
         ))}
       </ol>
 
-      <Card className="mt-10 p-5 text-[15px]">
+      <Card className="mt-10 p-5 text-[0.9375rem]">
         <p className="font-bold">Tips untuk HP sederhana</p>
         <ul className="mt-2 list-disc space-y-1 pl-5 text-muted">
           <li>Tampilan aplikasi (ikon, huruf, kode) disimpan di HP, jadi berikutnya terbuka lebih cepat dan hemat kuota.</li>

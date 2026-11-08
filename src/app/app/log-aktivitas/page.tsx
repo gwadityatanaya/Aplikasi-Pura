@@ -118,7 +118,7 @@ export default function ActivityLogPage() {
         <div className="grid gap-3 md:grid-cols-[1.4fr_1fr_1fr]">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" />
-            <input aria-label="Cari log" value={filters.q} onChange={(e) => setFilters({ ...filters, q: e.target.value })} placeholder="Cari nama, email, atau keterangan…" className="h-12 w-full rounded-xl border border-line bg-white pl-12 pr-4 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/15" />
+            <input aria-label="Cari log" value={filters.q} onChange={(e) => setFilters({ ...filters, q: e.target.value })} placeholder="Cari nama, email, atau keterangan…" className="h-12 w-full rounded-xl border border-line bg-white pl-12 pr-4 text-[1rem] focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/15" />
           </div>
           <Select aria-label="Jenis aktivitas" value={filters.kind} onChange={(e) => setFilters({ ...filters, kind: e.target.value })}>
             {KINDS.map((k) => <option key={k.value} value={k.value}>{k.label}</option>)}
@@ -152,7 +152,7 @@ export default function ActivityLogPage() {
                         <span className="font-bold">{e.action}</span>
                         {temple && <Badge tone="gray">{temple.name}</Badge>}
                       </span>
-                      <span className="mt-0.5 block text-[15px] text-charcoal/80">{e.detail}</span>
+                      <span className="mt-0.5 block text-[0.9375rem] text-charcoal/80">{e.detail}</span>
                       <span className="mt-1 block text-sm text-muted">
                         {e.actorName}{e.actorEmail ? ` · ${e.actorEmail}` : ""} · {formatDateTime(e.at)}
                       </span>

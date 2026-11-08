@@ -13,6 +13,7 @@ import { useRequireLogin } from "@/components/umat/use-umat";
 import { LogoutEverywhere } from "@/components/shared/logout-everywhere";
 import { AvatarEditor } from "@/components/shared/avatar-editor";
 import { PuniaEmailSwitch } from "@/components/shared/punia-email-switch";
+import { TextSizePicker } from "@/components/shared/text-size-picker";
 import { useStore } from "@/lib/store";
 
 export default function MyAccountPage() {
@@ -77,8 +78,12 @@ export default function MyAccountPage() {
       </Card>
 
       <Card className="mt-4 p-5">
+        <TextSizePicker />
+      </Card>
+
+      <Card className="mt-4 p-5">
         <p className="flex items-center gap-2 font-bold"><ShieldCheck className="h-5 w-5 text-emerald-700" /> Privasi</p>
-        <p className="mt-1 text-[15px] text-muted">Baca bagaimana data Anda disimpan dan siapa yang dapat melihatnya.</p>
+        <p className="mt-1 text-[0.9375rem] text-muted">Baca bagaimana data Anda disimpan dan siapa yang dapat melihatnya.</p>
         <Link href="/kebijakan-privasi" className="mt-2 inline-block font-semibold text-emerald-800 underline">Kebijakan privasi</Link>
       </Card>
 
@@ -91,10 +96,10 @@ export default function MyAccountPage() {
       <Card className="mt-8 border-red-200 p-5">
         <p className="font-bold text-red-800">Hapus akun</p>
         {isStaff ? (
-          <p className="mt-1 text-[15px] text-muted">Akun Anda terdaftar sebagai pengurus. Minta Admin Utama mencabut peran pengurus terlebih dahulu sebelum menghapus akun.</p>
+          <p className="mt-1 text-[0.9375rem] text-muted">Akun Anda terdaftar sebagai pengurus. Minta Admin Utama mencabut peran pengurus terlebih dahulu sebelum menghapus akun.</p>
         ) : (
           <>
-            <p className="mt-1 text-[15px] text-muted">
+            <p className="mt-1 text-[0.9375rem] text-muted">
               Akun dan data pribadi Anda dihapus. Punia yang sudah disahkan tetap tersimpan sebagai arsip keuangan pura, tetapi nama Anda diganti menjadi &quot;Anonim&quot;.
             </p>
             <Button variant="danger" className="mt-3" onClick={() => setAskDelete(true)}><Trash2 className="h-4 w-4" /> Hapus akun saya</Button>

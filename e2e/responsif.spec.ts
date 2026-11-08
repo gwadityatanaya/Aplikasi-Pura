@@ -88,3 +88,17 @@ test("menu HP: panel penuh setinggi layar, latar solid, halaman terkunci, bisa d
   await expect(menu).toHaveCount(0);
   expect(await page.evaluate(() => document.body.style.overflow)).toBe("");
 });
+
+test("ukuran huruf Sangat besar: tetap tanpa gulir ke samping (HP, tablet, laptop)", async ({ page }) => {
+  test.setTimeout(420_000);
+  await signInUi(page, "made@contoh.id");
+  expect((await (await page.request.post("/api/commands", { data: { name: "updateUser", payload: { textSize: "sangat_besar" } }, headers: { origin: "http://localhost:3100" } })).json()).ok).toBe(true);
+  await page.goto("/app");
+  await expect(page.locator("html")).toHaveClass(/text-sangat-besar/);
+  try {
+    for (const [path, name] of [["/app", "besar-dashboard"], ["/app/punia", "besar-punia"], ["/app/laporan", "besar-laporan"], ["/app/kegiatan", "besar-kegiatan"], ["/app/pengaturan?tab=rekening", "besar-kas"], ["/umat/akun", "besar-akun"], ["/bantuan", "besar-bantuan"]] as const)
+      await checkPage(page, path, name);
+  } finally {
+    await page.request.post("/api/commands", { data: { name: "updateUser", payload: { textSize: "normal" } }, headers: { origin: "http://localhost:3100" } });
+  }
+});

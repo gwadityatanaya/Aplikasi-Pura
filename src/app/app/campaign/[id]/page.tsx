@@ -128,7 +128,7 @@ function CampaignAdmin() {
       </div>
 
       <div className="no-scrollbar -mx-4 mt-6 overflow-x-auto px-4">
-        <Segmented
+        <Segmented className="max-w-none"
           value={tab}
           onChange={setTab}
           ariaLabel="Bagian campaign"
@@ -144,7 +144,7 @@ function CampaignAdmin() {
       <div className="mt-4">
         {tab === "ringkasan" && (
           <Card>
-            <CardBody className="space-y-4 text-[15px]">
+            <CardBody className="space-y-4 text-[0.9375rem]">
               <CampaignEndNotice campaign={c} />
               {phase === "closed" && can("campaign.manage") && <CampaignCloseActions campaign={c} mode="note" />}
               {c.description ? <p className="whitespace-pre-line leading-relaxed text-charcoal/80">{c.description}</p> : <p className="text-muted">Belum ada cerita.</p>}
@@ -195,7 +195,7 @@ function CampaignAdmin() {
         {tab === "donasi" && (
           <Card className="overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-left text-[15px]">
+              <table className="w-full min-w-[640px] text-left text-[0.9375rem]">
                 <thead className="bg-ivory text-sm text-muted">
                   <tr><th className="px-4 py-3 font-semibold">Donatur</th><th className="px-4 py-3 font-semibold">Tanggal</th><th className="px-4 py-3 font-semibold">Privasi</th><th className="px-4 py-3 font-semibold">Status</th><th className="px-4 py-3 text-right font-semibold">Nominal</th></tr>
                 </thead>

@@ -36,7 +36,7 @@ function Directory() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Cari nama pura, desa, atau kecamatan…"
-            className="h-12 w-full rounded-xl border border-line bg-white pl-12 pr-4 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/15"
+            className="h-12 w-full rounded-xl border border-line bg-white pl-12 pr-4 text-[1rem] focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/15"
           />
         </div>
         <Select value={regency} onChange={(e) => setRegency(e.target.value)} aria-label="Filter lokasi">

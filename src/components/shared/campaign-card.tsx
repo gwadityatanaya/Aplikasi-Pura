@@ -101,7 +101,7 @@ export function CampaignEndNotice({ campaign, className }: { campaign: Campaign;
   const phase = campaignPhase(campaign, todayISO());
   if (phase !== "closed" && phase !== "ended") return null;
   return (
-    <div role="status" className={cn("rounded-2xl border border-stone-300 bg-stone-50 p-4 text-[15px] text-stone-800", className)}>
+    <div role="status" className={cn("rounded-2xl border border-stone-300 bg-stone-50 p-4 text-[0.9375rem] text-stone-800", className)}>
       {phase === "closed" ? (
         <>
           <p className="font-bold">Penggalangan ini ditutup{campaign.closedAt ? ` pada ${formatDate(campaign.closedAt)}` : ""} dan tidak lagi menerima punia baru.</p>

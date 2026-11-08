@@ -38,7 +38,7 @@ export default function RegisterPage() {
         <CheckCircle2 className="mx-auto h-16 w-16 text-emerald-600" />
         <h1 className="mt-4 text-2xl font-extrabold text-forest">Pengajuan terkirim</h1>
         <p className="mt-2 text-lg text-muted">Suksma. Admin Utama akan <b>memverifikasi secara manual</b> — termasuk menghubungi pemberi referensi — sehingga bisa memakan waktu beberapa hari sampai beberapa minggu. Kami akan menghubungi Anda lewat WhatsApp atau email yang Anda tulis.</p>
-        <p className="mt-3 text-[15px] text-muted">Pengajuan ini <b>belum</b> memberi akses apa pun ke aplikasi.</p>
+        <p className="mt-3 text-[0.9375rem] text-muted">Pengajuan ini <b>belum</b> memberi akses apa pun ke aplikasi.</p>
         <Link href="/" className={buttonClass("outline", "lg", "mt-6")}>Kembali ke beranda</Link>
       </div>
     );
@@ -46,7 +46,7 @@ export default function RegisterPage() {
   return (
     <div className="container max-w-2xl py-8">
       <h1 className="text-3xl font-extrabold text-forest">Ajukan pendaftaran</h1>
-      <p className="mt-1 text-[17px] text-muted">Untuk banjar yang ingin memakai PURA bagi kas dan punia puranya.</p>
+      <p className="mt-1 text-[1.0625rem] text-muted">Untuk banjar yang ingin memakai PURA bagi kas dan punia puranya.</p>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         {[
@@ -66,7 +66,7 @@ export default function RegisterPage() {
         <p className="font-bold">Banjar & pura</p>
         <Field label="Nama banjar" htmlFor="rg-banjar" required><Input id="rg-banjar" value={f.banjarName} onChange={(e) => set("banjarName", e.target.value)} placeholder="Banjar Adat …" /></Field>
         <fieldset className="space-y-3 rounded-2xl border border-line p-4">
-          <legend className="px-1 text-[15px] font-bold">Wilayah banjar</legend>
+          <legend className="px-1 text-[0.9375rem] font-bold">Wilayah banjar</legend>
           <WilayahPicker idPrefix="rg" value={addr} onChange={setAddr} />
         </fieldset>
         <Field label="Nama pura" htmlFor="rg-pura" required><Input id="rg-pura" value={f.templeName} onChange={(e) => set("templeName", e.target.value)} placeholder="Pura …" /></Field>
@@ -94,7 +94,7 @@ export default function RegisterPage() {
         <Field label="Alasan mendaftar" htmlFor="rg-reason" required><Textarea id="rg-reason" rows={3} maxLength={1000} value={f.reason} onChange={(e) => set("reason", e.target.value)} /></Field>
         {/* Honeypot for bots — invisible and skipped by keyboard and screen readers. */}
         <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="absolute -left-[9999px] h-0 w-0 opacity-0" value={f.website} onChange={(e) => set("website", e.target.value)} />
-        <label className="flex items-start gap-2 text-[15px]">
+        <label className="flex items-start gap-2 text-[0.9375rem]">
           <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-emerald-600" checked={f.consent} onChange={(e) => set("consent", e.target.checked)} />
           <span>Saya setuju data di formulir ini disimpan dan dipakai <b>hanya oleh Admin Utama PURA</b> untuk memverifikasi pendaftaran, termasuk menghubungi saya dan pemberi referensi. Data tidak ditampilkan di halaman publik. Lihat <Link href="/kebijakan-privasi" className="font-semibold text-emerald-800 underline">kebijakan privasi</Link>.</span>
         </label>

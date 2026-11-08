@@ -170,7 +170,7 @@ export default function TemplePage() {
               <h2 className="flex items-center gap-2 text-lg font-bold"><HandHeart className="h-5 w-5 text-emerald-700" /> Berpunia ke pura ini</h2>
               {temple.acceptsPunia ? (
                 <>
-                  <p className="mt-1 text-[15px] text-muted">Transfer lewat m-banking ke rekening resmi berikut, lalu unggah bukti transfer.</p>
+                  <p className="mt-1 text-[0.9375rem] text-muted">Transfer lewat m-banking ke rekening resmi berikut, lalu unggah bukti transfer.</p>
                   <div className="mt-4 rounded-2xl bg-gradient-to-br from-emerald-600 to-forest p-4 text-white">
                     <p className="flex items-center gap-2 text-sm text-white/80"><Landmark className="h-4 w-4" /> {temple.bankName}</p>
                     <p className="tabular mt-2 text-2xl font-bold tracking-wider">{temple.bankAccountNumber}</p>
@@ -184,14 +184,14 @@ export default function TemplePage() {
                   <p className="mt-2 text-xs text-muted">Pastikan nama pemilik rekening sesuai sebelum mentransfer. Aplikasi PURA tidak memegang uang.</p>
                 </>
               ) : (
-                <p className="mt-2 rounded-xl bg-amber-50 p-3 text-[15px] text-amber-900">Info rekening pura ini belum tersedia, jadi punia belum bisa dikirim lewat aplikasi. Hubungi pengurus pura.</p>
+                <p className="mt-2 rounded-xl bg-amber-50 p-3 text-[0.9375rem] text-amber-900">Info rekening pura ini belum tersedia, jadi punia belum bisa dikirim lewat aplikasi. Hubungi pengurus pura.</p>
               )}
             </div>
           </Card>
           {(temple.address || temple.phone) && (
             <Card>
               <CardHeader title="Kontak" />
-              <CardBody className="space-y-3 text-[15px]">
+              <CardBody className="space-y-3 text-[0.9375rem]">
                 {temple.address && <p className="flex gap-3"><MapPin className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" /> {temple.address}</p>}
                 {temple.phone && <a href={`tel:${temple.phone.replace(/[^\d+]/g, "")}`} className="flex gap-3 hover:text-emerald-700"><Phone className="h-5 w-5 shrink-0 text-emerald-700" /> {temple.phone}</a>}
               </CardBody>

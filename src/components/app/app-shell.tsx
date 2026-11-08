@@ -159,13 +159,13 @@ function Sidebar() {
             if (!items.length) return null;
             return (
               <div key={g.key}>
-                <p className="px-3 text-[11px] font-bold uppercase tracking-[0.14em] text-white/45">{g.label}</p>
+                <p className="px-3 text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-white/45">{g.label}</p>
                 <ul className="mt-1.5 space-y-0.5">
                   {items.map((n) => {
                     const active = isActive(pathname, n.href);
                     return (
                       <li key={n.href}>
-                        <Link href={n.href} className={cn("relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-semibold transition-colors", active ? "text-forest" : "text-white/80 hover:bg-white/10 hover:text-white")} aria-current={active ? "page" : undefined}>
+                        <Link href={n.href} className={cn("relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[0.9375rem] font-semibold transition-colors", active ? "text-forest" : "text-white/80 hover:bg-white/10 hover:text-white")} aria-current={active ? "page" : undefined}>
                           {active && <motion.span layoutId="side-active" className="absolute inset-0 rounded-xl bg-ivory" transition={{ type: "spring", bounce: 0.15, duration: 0.45 }} />}
                           <n.icon className="relative h-5 w-5" aria-hidden />
                           <span className="relative">{n.label}</span>
@@ -211,7 +211,7 @@ function TopBar() {
       <div className="flex h-16 items-center gap-3 px-4 md:px-6 lg:px-8">
         <Link href="/app" className="lg:hidden" aria-label="Beranda"><Logo compact /></Link>
         <div className="min-w-0 flex-1 lg:hidden">
-          <p className="truncate text-[15px] font-bold leading-tight text-forest">{temple?.name ?? "Dashboard"}</p>
+          <p className="truncate text-[0.9375rem] font-bold leading-tight text-forest">{temple?.name ?? "Dashboard"}</p>
           <p className="truncate text-xs text-muted">{temple ? templeLocation(temple) : ""}</p>
         </div>
         <div className="hidden flex-1 lg:block" />
@@ -221,7 +221,7 @@ function TopBar() {
         <Link href="/app/notifikasi" className="press relative grid h-11 w-11 place-items-center rounded-xl hover:bg-black/5" aria-label={`Notifikasi, ${unread} belum dibaca`}>
           <Bell className="h-6 w-6 text-charcoal" />
           {unread > 0 && (
-            <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute right-1.5 top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-expense px-1 text-[11px] font-bold text-white ring-2 ring-ivory">
+            <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute right-1.5 top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-expense px-1 text-[0.6875rem] font-bold text-white ring-2 ring-ivory">
               {unread}
             </motion.span>
           )}
@@ -242,7 +242,7 @@ function ArchivedBar({ reason }: { reason?: string }) {
   return (
     <div role="status" className="mb-4 flex items-start gap-3 rounded-2xl bg-charcoal p-4 text-white">
       <Archive className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
-      <div className="text-[15px]">
+      <div className="text-[0.9375rem]">
         <p className="font-bold">Pura ini diarsipkan — hanya bisa dilihat</p>
         <p className="text-white/80">Tidak tampil di publik dan tidak menerima punia atau transaksi baru. Data dan laporan tetap bisa dibuka.{reason ? ` Alasan: ${reason}` : ""}</p>
       </div>
@@ -268,7 +268,7 @@ export function QuickActions({ open, onClose }: { open: boolean; onClose: () => 
           <button key={a.href} onClick={() => { onClose(); router.push(a.href); }} className="press flex items-center gap-4 rounded-2xl border border-line bg-white p-4 text-left hover:border-emerald-300 hover:shadow-soft">
             <span className={cn("grid h-12 w-12 place-items-center rounded-2xl", a.tone)}><a.icon className="h-6 w-6" /></span>
             <span>
-              <span className="block text-[17px] font-bold">{a.label}</span>
+              <span className="block text-[1.0625rem] font-bold">{a.label}</span>
               <span className="block text-sm text-muted">{a.desc}</span>
             </span>
           </button>
@@ -293,8 +293,8 @@ function MoreSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
           <Link key={n.href} href={n.href} onClick={onClose} className="press relative flex flex-col items-center gap-2 rounded-2xl border border-line bg-white px-2 py-4 text-center text-sm font-semibold hover:bg-ivory">
             <n.icon className="h-6 w-6 text-emerald-700" />
             {n.label}
-            {n.href === "/app/notifikasi" && unread > 0 && <span className="absolute right-2 top-2 rounded-full bg-expense px-1.5 text-[11px] font-bold text-white">{unread}</span>}
-            {n.href === "/app/admin" && helpInbox > 0 && <span className="absolute right-2 top-2 rounded-full bg-expense px-1.5 text-[11px] font-bold text-white" aria-label={`${helpInbox} pesan bantuan baru`}>{helpInbox}</span>}
+            {n.href === "/app/notifikasi" && unread > 0 && <span className="absolute right-2 top-2 rounded-full bg-expense px-1.5 text-[0.6875rem] font-bold text-white">{unread}</span>}
+            {n.href === "/app/admin" && helpInbox > 0 && <span className="absolute right-2 top-2 rounded-full bg-expense px-1.5 text-[0.6875rem] font-bold text-white" aria-label={`${helpInbox} pesan bantuan baru`}>{helpInbox}</span>}
           </Link>
         ))}
         <Link href="/umat" onClick={onClose} className="press flex flex-col items-center gap-2 rounded-2xl border border-line bg-white px-2 py-4 text-center text-sm font-semibold hover:bg-ivory">
@@ -319,12 +319,12 @@ function BottomNav() {
   const item = (href: string, label: string, Icon: typeof Home, badge = 0) => {
     const active = isActive(pathname, href);
     return (
-      <Link href={href} className={cn("relative flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-semibold", active ? "text-emerald-700" : "text-muted")} aria-current={active ? "page" : undefined}>
+      <Link href={href} className={cn("relative flex flex-1 flex-col items-center gap-1 py-2 text-[0.6875rem] font-semibold", active ? "text-emerald-700" : "text-muted")} aria-current={active ? "page" : undefined}>
         <span className={cn("grid h-8 w-14 place-items-center rounded-full transition-colors", active && "bg-mint")}>
           <Icon className="h-[22px] w-[22px]" />
         </span>
         {label}
-        {badge > 0 && <span className="absolute right-2 top-1 rounded-full bg-expense px-1.5 text-[11px] font-bold text-white">{badge}</span>}
+        {badge > 0 && <span className="absolute right-2 top-1 rounded-full bg-expense px-1.5 text-[0.6875rem] font-bold text-white">{badge}</span>}
       </Link>
     );
   };
@@ -344,9 +344,9 @@ function BottomNav() {
             )}
           </div>
           {item("/app/transaksi", "Kas", ReceiptText)}
-          <button onClick={() => setMore(true)} className="relative flex flex-1 flex-col items-center gap-1 py-2 text-[11px] font-semibold text-muted" aria-label="Menu lainnya">
+          <button onClick={() => setMore(true)} className="relative flex flex-1 flex-col items-center gap-1 py-2 text-[0.6875rem] font-semibold text-muted" aria-label="Menu lainnya">
             <span className="grid h-8 w-14 place-items-center rounded-full"><Menu className="h-[22px] w-[22px]" /></span>
-            {helpInbox > 0 && <span className="absolute right-2 top-1 rounded-full bg-expense px-1.5 text-[11px] font-bold text-white">{helpInbox}</span>}
+            {helpInbox > 0 && <span className="absolute right-2 top-1 rounded-full bg-expense px-1.5 text-[0.6875rem] font-bold text-white">{helpInbox}</span>}
             Lainnya
           </button>
         </div>

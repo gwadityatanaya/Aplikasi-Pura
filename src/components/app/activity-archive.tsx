@@ -53,7 +53,7 @@ export function ActivityArchiveActions({ a }: { a: Activity }) {
         footer={<Button size="lg" className="w-full" loading={busy} disabled={reason.trim().length < 5} onClick={() => go("archiveActivity", { id: a.id, reason }, "Kegiatan diarsipkan", () => setArchiveOpen(false))}><Archive className="h-5 w-5" /> Arsipkan kegiatan</Button>}
       >
         <div className="space-y-3">
-          <p className="rounded-xl bg-amber-50 p-3 text-[15px] text-amber-900">
+          <p className="rounded-xl bg-amber-50 p-3 text-[0.9375rem] text-amber-900">
             Kegiatan disembunyikan dari pilihan baru. Semua transaksi, punia, penggalangan dana, dan laporannya <b>tetap ada</b>. Bisa diaktifkan kembali kapan saja.
           </p>
           <Field label="Alasan (wajib)" hint="Dicatat di Log Aktivitas dan Riwayat Audit Pura." htmlFor="act-arsip-alasan">

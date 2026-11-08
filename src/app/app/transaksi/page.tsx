@@ -104,14 +104,14 @@ function TransactionsList() {
         <div className="relative">
           <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" aria-hidden />
           <label htmlFor="cari" className="sr-only">Cari transaksi</label>
-          <input id="cari" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari keterangan, nomor, atau nominal…" className="h-12 w-full rounded-xl border border-line bg-white pl-12 pr-4 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/15" />
+          <input id="cari" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari keterangan, nomor, atau nominal…" className="h-12 w-full rounded-xl border border-line bg-white pl-12 pr-4 text-[1rem] focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/15" />
         </div>
         <Button variant="outline" size="lg" onClick={() => { setDraft(filters); setOpen(true); }} className="h-12">
           <SlidersHorizontal className="h-5 w-5" /> Filter & urutkan {activeCount > 0 && <span className="rounded-full bg-emerald-600 px-2 text-xs text-white">{activeCount}</span>}
         </Button>
       </div>
       <div className="no-scrollbar -mx-4 mt-3 overflow-x-auto px-4">
-        <Segmented
+        <Segmented className="max-w-none"
           value={type}
           onChange={setType}
           ariaLabel="Jenis transaksi"

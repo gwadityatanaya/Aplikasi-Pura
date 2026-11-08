@@ -65,7 +65,7 @@ export default function TransactionDetailPage() {
       <Card className="overflow-hidden">
         <div className="flex flex-col items-center bg-ivory/80 px-5 py-8 text-center">
           <CategoryIcon tx={tx} category={cat} size="lg" />
-          <p className="mt-3 text-[15px] font-semibold text-charcoal">{tx.description}</p>
+          <p className="mt-3 text-[0.9375rem] font-semibold text-charcoal">{tx.description}</p>
           <TxAmount tx={tx} className="mt-1 text-4xl" />
           <div className="mt-3 flex flex-wrap justify-center gap-1.5">
             {tx.status === "confirmed" && !tx.reversedBy && !tx.reversalOf && <Badge tone="green" dot>Terkonfirmasi</Badge>}
@@ -75,7 +75,7 @@ export default function TransactionDetailPage() {
         </div>
         <dl className="divide-y divide-line px-5">
           {rows.map(([k, v]) => (
-            <div key={k} className="flex gap-4 py-3 text-[15px]">
+            <div key={k} className="flex gap-4 py-3 text-[0.9375rem]">
               <dt className="w-32 shrink-0 text-muted">{k}</dt>
               <dd className="min-w-0 flex-1 font-medium">{v}</dd>
             </div>

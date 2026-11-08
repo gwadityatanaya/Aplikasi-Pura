@@ -78,7 +78,7 @@ export function TxRow({ tx, category, accountName, activityName }: { tx: Transac
       <CategoryIcon tx={tx} category={category} />
       <div className="min-w-0 flex-1">
         <p className={cn("line-clamp-2 break-words font-semibold leading-snug text-charcoal sm:line-clamp-1", tx.reversedBy && "text-muted line-through decoration-stone-300")}>{tx.description}</p>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] text-muted">
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[0.8125rem] text-muted">
           <span>{formatDateShort(tx.date)}</span>
           <span aria-hidden>·</span>
           <span className="truncate">{tx.type === "transfer" ? "Pindah dana" : category?.name ?? "Tanpa kategori"}</span>

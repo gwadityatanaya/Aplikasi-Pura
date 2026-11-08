@@ -25,7 +25,7 @@ function UseLink() {
       <div className="text-center">
         <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-red-50 text-expense"><LinkIcon className="h-8 w-8" /></div>
         <h1 className="mt-5 text-2xl font-extrabold text-forest">Tautan tidak berlaku</h1>
-        <p className="mt-2 text-[17px] text-muted">{error}</p>
+        <p className="mt-2 text-[1.0625rem] text-muted">{error}</p>
         <Link href="/masuk" className={buttonClass("primary", "xl", "mt-7 w-full")}>Minta tautan baru</Link>
       </div>
     );
@@ -34,7 +34,7 @@ function UseLink() {
     <div className="text-center">
       <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-mint text-emerald-700"><LogIn className="h-8 w-8" /></div>
       <h1 className="mt-5 text-2xl font-extrabold text-forest">Masuk ke PURA</h1>
-      <p className="mt-2 text-[17px] text-muted">Ketuk tombol di bawah untuk melanjutkan.</p>
+      <p className="mt-2 text-[1.0625rem] text-muted">Ketuk tombol di bawah untuk melanjutkan.</p>
       <Button
         size="xl"
         className="mt-7 w-full"

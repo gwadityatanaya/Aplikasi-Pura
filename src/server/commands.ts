@@ -519,7 +519,7 @@ export const coreCommands: Record<string, Handler> = {
   },
 
   async updateUser(ctx, p) {
-    const i = z.object({ name: text(120).min(3), callName: text(60).min(2), phone: optText(20), emailDigest: z.boolean(), emailPunia: z.boolean() }).partial().parse(p);
+    const i = z.object({ name: text(120).min(3), callName: text(60).min(2), phone: optText(20), emailDigest: z.boolean(), emailPunia: z.boolean(), textSize: z.enum(["normal", "besar", "sangat_besar"]) }).partial().parse(p);
     if (i.emailPunia === false) await (await import("./email-queue")).cancelPuniaEmails(ctx.user.id);
     await db.transaction(async (tx) => {
       await tx.update(T.users).set(i).where(eq(T.users.id, ctx.user.id));

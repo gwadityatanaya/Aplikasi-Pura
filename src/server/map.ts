@@ -21,6 +21,7 @@ export const toUser = (r: Row<typeof schema.users>): User => ({
   status: r.status as User["status"],
   emailDigest: r.emailDigest,
   emailPunia: r.emailPunia,
+  textSize: r.textSize as User["textSize"],
   resetRequestedAt: iso(r.resetRequestedAt),
   lastLoginAt: iso(r.lastLoginAt),
   createdAt: r.createdAt.toISOString(),

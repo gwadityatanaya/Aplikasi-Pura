@@ -100,10 +100,10 @@ function PuniaQueue() {
       />
 
       {pending.length > 0 && (
-        <p className="mb-4 rounded-2xl bg-amber-50 p-4 text-[15px] font-semibold text-amber-900">{pending.length} punia menunggu verifikasi</p>
+        <p className="mb-4 rounded-2xl bg-amber-50 p-4 text-[0.9375rem] font-semibold text-amber-900">{pending.length} punia menunggu verifikasi</p>
       )}
       {ws.temple && (ws.temple.pengurusCount ?? 0) === 0 && (
-        <p className="mb-4 flex gap-2 rounded-2xl bg-sky-50 p-4 text-[15px] text-sky-900"><AlertTriangle className="h-5 w-5 shrink-0" /> Pengurus pura belum terdaftar — punia di pura ini diverifikasi oleh Pengurus Banjar.</p>
+        <p className="mb-4 flex gap-2 rounded-2xl bg-sky-50 p-4 text-[0.9375rem] text-sky-900"><AlertTriangle className="h-5 w-5 shrink-0" /> Pengurus pura belum terdaftar — punia di pura ini diverifikasi oleh Pengurus Banjar.</p>
       )}
 
       <Card className="mb-4 space-y-3 p-4">
@@ -188,7 +188,7 @@ function PuniaQueue() {
           footer={
             canAct && open.status === "pending" ? (
               isOwn(open) ? (
-                <p className="w-full rounded-xl bg-violet-50 p-3 text-center text-[15px] text-violet-900">Ini punia Anda sendiri — harus disahkan pengurus lain.</p>
+                <p className="w-full rounded-xl bg-violet-50 p-3 text-center text-[0.9375rem] text-violet-900">Ini punia Anda sendiri — harus disahkan pengurus lain.</p>
               ) : (
                 <div className="grid w-full grid-cols-2 gap-2">
                   <Button variant="outline" size="lg" onClick={() => { setRejecting(open); setOpen(undefined); }}><X className="h-5 w-5" /> Tolak</Button>
@@ -197,7 +197,7 @@ function PuniaQueue() {
               )
             ) : open.status === "verified" && !open.correctedAt && can("donation.correct") ? (
               isOwn(open) ? (
-                <p className="w-full rounded-xl bg-violet-50 p-3 text-center text-[15px] text-violet-900">Ini punia Anda sendiri — koreksi harus dilakukan pengurus lain.</p>
+                <p className="w-full rounded-xl bg-violet-50 p-3 text-center text-[0.9375rem] text-violet-900">Ini punia Anda sendiri — koreksi harus dilakukan pengurus lain.</p>
               ) : (
               <Button variant="outline" size="lg" className="w-full" onClick={() => { setCorrecting(open); setOpen(undefined); }}><Undo2 className="h-5 w-5" /> Koreksi punia ini</Button>
               )
@@ -233,9 +233,9 @@ function DonationDetail({ d, campaign }: { d: Donation; campaign?: string }) {
   return (
     <div className="space-y-4">
       {d.possibleDuplicate && d.status === "pending" && (
-        <p className="flex gap-2 rounded-xl bg-red-50 p-3 text-[15px] text-red-800"><AlertTriangle className="h-5 w-5 shrink-0" /> Ada punia lain dengan nominal dan tanggal yang sama. Periksa apakah ini dobel.</p>
+        <p className="flex gap-2 rounded-xl bg-red-50 p-3 text-[0.9375rem] text-red-800"><AlertTriangle className="h-5 w-5 shrink-0" /> Ada punia lain dengan nominal dan tanggal yang sama. Periksa apakah ini dobel.</p>
       )}
-      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[15px]">
+      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[0.9375rem]">
         {rows.map(([k, v]) => (<Fragment key={k}><dt className="text-muted">{k}</dt><dd className="break-words font-medium">{v}</dd></Fragment>))}
       </dl>
       {d.evidence ? (
@@ -295,7 +295,7 @@ function CorrectDialog({ d, onClose }: { d: Donation; onClose: () => void }) {
   }
   return (
     <Dialog open onClose={onClose} title="Koreksi punia" description={`${rupiah(d.amount)} — ${d.donorName}`} footer={<Button variant="danger" size="lg" className="w-full" loading={busy} onClick={submit}>Batalkan dengan entri koreksi</Button>}>
-      <div className="space-y-3 text-[15px]">
+      <div className="space-y-3 text-[0.9375rem]">
         <p className="rounded-xl bg-amber-50 p-3 text-amber-900">Catatan punia ini <b>tidak diubah</b>. Aplikasi membuat <b>entri koreksi</b> yang membatalkan pemasukannya, sehingga punia ini tidak lagi dihitung. Keduanya tetap terlihat di riwayat. Jika nominalnya yang salah, catat ulang punia yang benar setelah ini.</p>
         <Field label="Alasan koreksi" htmlFor="kr-reason"><Textarea id="kr-reason" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Mis. nominal salah ketik, seharusnya Rp150.000" /></Field>
       </div>

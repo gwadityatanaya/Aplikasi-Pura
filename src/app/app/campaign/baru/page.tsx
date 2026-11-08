@@ -105,7 +105,7 @@ function Wizard() {
           <PartyPopper className="h-12 w-12" />
         </motion.div>
         <h1 className="mt-6 text-2xl font-extrabold text-forest">{published.status === "active" ? "Campaign sudah tayang!" : "Draf tersimpan"}</h1>
-        <p className="mt-2 text-[17px] text-muted">{published.status === "active" ? "Halaman donasi kini tampil di portal publik dan siap dibagikan ke krama." : "Anda dapat menerbitkannya kapan saja."}</p>
+        <p className="mt-2 text-[1.0625rem] text-muted">{published.status === "active" ? "Halaman donasi kini tampil di portal publik dan siap dibagikan ke krama." : "Anda dapat menerbitkannya kapan saja."}</p>
         <div className="mt-8 grid gap-2">
           {published.status === "active" && <Link href={`/donasi/${published.slug}`} target="_blank" className={buttonClass("primary", "xl")}><Eye className="h-5 w-5" /> Lihat halaman publik</Link>}
           <Link href={`/app/campaign/${published.id}`} className={buttonClass("outline", "xl")}>Kelola campaign</Link>
@@ -171,7 +171,7 @@ function Wizard() {
                 </Field>
                 {newAct && (
                   <fieldset className="rounded-2xl border border-emerald-200 bg-mint/30 p-4">
-                    <legend className="px-1 text-[15px] font-bold">Kegiatan baru</legend>
+                    <legend className="px-1 text-[0.9375rem] font-bold">Kegiatan baru</legend>
                     <p className="mb-3 text-sm text-muted">Kegiatan ini ikut tersimpan dan langsung tertaut saat penggalangan disimpan.</p>
                     <ActivityFields value={newAct} onChange={(v) => { setNewAct(v); setActErrors({}); }} errors={actErrors} />
                   </fieldset>
@@ -225,7 +225,7 @@ function Wizard() {
                   <div className="p-5">
                     <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">{ws.temple?.name}</p>
                     <h2 className="mt-1 text-xl font-bold">{f.title || "Judul campaign"}</h2>
-                    {f.description && <p className="mt-2 line-clamp-3 text-[15px] text-charcoal/80">{f.description}</p>}
+                    {f.description && <p className="mt-2 line-clamp-3 text-[0.9375rem] text-charcoal/80">{f.description}</p>}
                     <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                       <div className="rounded-xl bg-ivory p-3"><p className="text-muted">Target</p><p className="tabular font-bold">{f.target > 0 ? rupiah(f.target) : "Tanpa target"}</p></div>
                       <div className="rounded-xl bg-ivory p-3"><p className="text-muted">Periode</p><p className="font-bold">{f.startDate ? formatDate(f.startDate) : "—"} – {f.endDate ? formatDate(f.endDate) : "tanpa batas"}</p></div>

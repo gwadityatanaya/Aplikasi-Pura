@@ -61,7 +61,7 @@ export default function NotificationsPage() {
                     <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl", k.tone)}><k.icon className="h-5 w-5" /></span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-start justify-between gap-3">
-                        <span className={cn("text-[15px]", n.read ? "font-semibold" : "font-bold")}>{n.title}</span>
+                        <span className={cn("text-[0.9375rem]", n.read ? "font-semibold" : "font-bold")}>{n.title}</span>
                         <span className="shrink-0 text-xs text-muted">{relativeTime(n.date)}</span>
                       </span>
                       <span className="mt-0.5 block text-sm leading-relaxed text-muted">{n.body}</span>

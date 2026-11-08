@@ -53,7 +53,7 @@ export function InstallAppButton({ className }: { className?: string }) {
         <Download className="h-4 w-4" /> Pasang aplikasi
       </Button>
       <Dialog open={help} onClose={() => setHelp(false)} title="Cara memasang PURA di HP">
-        <div className="space-y-4 pb-2 text-[15px]">
+        <div className="space-y-4 pb-2 text-[0.9375rem]">
           <div className="rounded-2xl bg-ivory p-4">
             <p className="flex items-center gap-2 font-bold"><Smartphone className="h-5 w-5 text-emerald-700" /> Android (Chrome)</p>
             <ol className="mt-2 list-decimal space-y-1 pl-5 text-charcoal/80">

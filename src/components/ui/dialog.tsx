@@ -121,7 +121,7 @@ export function Dialog({
                       {title}
                     </h2>
                   )}
-                  {description && <p className="mt-1 text-[15px] text-muted">{description}</p>}
+                  {description && <p className="mt-1 text-[0.9375rem] text-muted">{description}</p>}
                 </div>
                 {!hideClose && (
                   <button

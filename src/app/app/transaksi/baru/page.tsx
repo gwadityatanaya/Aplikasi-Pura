@@ -160,7 +160,7 @@ function TxForm() {
           <CheckCircle2 className="h-12 w-12" />
         </motion.div>
         <h1 className="mt-6 text-2xl font-extrabold text-forest">Berhasil disimpan!</h1>
-        <p className="mt-2 text-[17px] text-muted">
+        <p className="mt-2 text-[1.0625rem] text-muted">
           {meta.verb} <strong className="tabular text-charcoal">{rupiah(f.amount)}</strong> sudah masuk ke buku kas pura.
         </p>
         <div className="mt-8 grid gap-2">
@@ -292,7 +292,7 @@ function TxForm() {
                 <div className="mt-3 rounded-3xl bg-ivory p-5">
                   <p className="text-sm text-muted">{meta.verb}</p>
                   <p className={cn("tabular text-4xl font-extrabold", type === "income" ? "text-income" : type === "expense" ? "text-expense" : "text-sky-800")}>{rupiah(f.amount)}</p>
-                  <dl className="mt-4 divide-y divide-line text-[15px]">
+                  <dl className="mt-4 divide-y divide-line text-[0.9375rem]">
                     <Row label="Tanggal" value={formatDateLong(f.date)} onEdit={() => setStep(0)} />
                     {type !== "transfer" && <Row label="Jenis" value={cat?.name ?? "—"} onEdit={() => setStep(1)} />}
                     <Row label="Keterangan" value={f.description || "—"} onEdit={() => setStep(1)} />

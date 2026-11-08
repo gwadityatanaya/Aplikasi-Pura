@@ -96,7 +96,7 @@ export function ReportSignOptions({ ws, value, onChange, missing }: { ws: WS; va
         </Field>
       </div>
       {missing.length > 0 && (
-        <div className="mt-3 rounded-xl bg-amber-50 p-3 text-[15px] text-amber-900" role="alert">
+        <div className="mt-3 rounded-xl bg-amber-50 p-3 text-[0.9375rem] text-amber-900" role="alert">
           <p className="flex items-start gap-2 font-semibold"><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" /> Jabatan {missing.join(", ")} belum diisi.</p>
           <p className="mt-1 text-sm">Admin Utama dapat mengisinya di Back Office → Pura → Pengurus. Atau cetak dengan garis kosong untuk diisi tangan.</p>
           <label className="mt-2 flex items-center gap-2 font-semibold">

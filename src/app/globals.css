@@ -10,8 +10,13 @@
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
   }
-  html.text-large {
+  /* Reading size (per account). All font sizes are in rem, so everything grows together;
+     layouts use flexible widths, so there is still no sideways scrolling. */
+  html.text-besar {
     font-size: 112.5%;
+  }
+  html.text-sangat-besar {
+    font-size: 125%;
   }
   body {
     @apply bg-ivory text-charcoal antialiased;

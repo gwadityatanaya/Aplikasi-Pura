@@ -35,7 +35,7 @@ export default function SetupPage() {
       <div className="text-center">
         <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-mint text-emerald-700"><CheckCircle2 className="h-8 w-8" /></div>
         <h1 className="mt-5 text-2xl font-extrabold text-forest">Setup sudah selesai</h1>
-        <p className="mt-2 text-[17px] text-muted">Akun Admin Utama sudah ada. Halaman ini terkunci permanen.</p>
+        <p className="mt-2 text-[1.0625rem] text-muted">Akun Admin Utama sudah ada. Halaman ini terkunci permanen.</p>
         <Link href="/masuk" className={buttonClass("primary", "xl", "mt-7 w-full")}>Ke halaman masuk</Link>
       </div>
     );
@@ -44,7 +44,7 @@ export default function SetupPage() {
       <div>
         <div className="grid h-14 w-14 place-items-center rounded-2xl bg-gold-light text-gold-dark"><Settings2 className="h-7 w-7" /></div>
         <h1 className="mt-5 text-2xl font-extrabold text-forest">Setup belum dikonfigurasi</h1>
-        <p className="mt-2 text-[17px] text-muted">
+        <p className="mt-2 text-[1.0625rem] text-muted">
           Isi <code className="rounded bg-stone-100 px-1.5">SETUP_TOKEN</code> (minimal 16 karakter acak) dan <code className="rounded bg-stone-100 px-1.5">ADMIN_EMAIL</code> di file <code>.env</code> atau di pengaturan Environment Variables Vercel, lalu muat ulang halaman ini. Lihat panduan di <code>docs/PANDUAN.md</code>.
         </p>
       </div>
@@ -54,7 +54,7 @@ export default function SetupPage() {
     <div>
       <div className="grid h-14 w-14 place-items-center rounded-2xl bg-charcoal text-gold-light"><Crown className="h-7 w-7" /></div>
       <h1 className="mt-5 text-3xl font-extrabold text-forest">Buat Akun Admin Utama</h1>
-      <p className="mt-2 text-[17px] text-muted">Langkah ini hanya bisa dilakukan <strong>satu kali</strong>. Masukkan kode setup dari pengaturan server (SETUP_TOKEN) dan email yang sama dengan ADMIN_EMAIL. Email dicocokkan tanpa membedakan huruf besar-kecil.</p>
+      <p className="mt-2 text-[1.0625rem] text-muted">Langkah ini hanya bisa dilakukan <strong>satu kali</strong>. Masukkan kode setup dari pengaturan server (SETUP_TOKEN) dan email yang sama dengan ADMIN_EMAIL. Email dicocokkan tanpa membedakan huruf besar-kecil.</p>
       <form
         className="mt-7 space-y-4"
         noValidate

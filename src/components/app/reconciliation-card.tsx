@@ -95,7 +95,7 @@ export function ReconciliationCard({ canEdit }: { canEdit: boolean }) {
               {history.map((r) => {
                 const a = ws.accounts.find((x) => x.id === r.accountId);
                 return (
-                  <li key={r.id} className="flex flex-wrap items-center gap-2 p-3 text-[15px]">
+                  <li key={r.id} className="flex flex-wrap items-center gap-2 p-3 text-[0.9375rem]">
                     <span className="min-w-0 flex-1">
                       <b>{monthLabel(r.month)}</b> · {a ? a.label || a.name : "—"}
                       <span className="block text-sm text-muted">Aplikasi {rupiah(r.appBalance)} · mutasi/hitungan {rupiah(r.statementBalance)}{r.note ? ` · ${r.note}` : ""} · {r.createdByName ?? ""} {formatDateTime(r.createdAt)}</span>

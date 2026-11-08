@@ -161,7 +161,7 @@ function Reports() {
 
       {canSign && <ReportSignOptions ws={ws} value={sign} onChange={setSign} missing={signed.missing} />}
       {hasRecon && (
-        <label className="mt-3 flex items-center gap-2 text-[15px] font-semibold">
+        <label className="mt-3 flex items-center gap-2 text-[0.9375rem] font-semibold">
           <input type="checkbox" className="h-5 w-5 accent-emerald-600" checked={withRecon} onChange={(e) => setWithRecon(e.target.checked)} />
           Sertakan hasil pencocokan saldo bulanan di laporan
         </label>
@@ -172,7 +172,7 @@ function Reports() {
           <Button onClick={() => run("pdf")} loading={busy === "pdf"} disabled={invalid || blockedBySign}><FileText className="h-4 w-4" /> PDF</Button>
           <Button variant="outline" onClick={() => run("xlsx")} loading={busy === "xlsx"} disabled={invalid || blockedBySign}><FileSpreadsheet className="h-4 w-4" /> Excel</Button>
           <Button variant="outline" onClick={() => run("csv")} loading={busy === "csv"} disabled={invalid}><Table2 className="h-4 w-4" /> CSV</Button>
-          <button onClick={() => { setWaText(whatsappSummary(ws, f)); setWa(true); }} disabled={invalid} className="press inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-[#1FAF55] px-4 text-[15px] font-semibold text-white hover:bg-[#199a4a] disabled:opacity-50">
+          <button onClick={() => { setWaText(whatsappSummary(ws, f)); setWa(true); }} disabled={invalid} className="press inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-[#1FAF55] px-4 text-[0.9375rem] font-semibold text-white hover:bg-[#199a4a] disabled:opacity-50">
             <WhatsAppIcon className="h-5 w-5" /> WhatsApp
           </button>
           {can("report.publish") && <Button variant="gold" onClick={() => setPub({ open: true, title: `Laporan Keuangan ${formatDateShort(f.from)} – ${formatDateShort(f.to)}`, note: "" })} disabled={invalid}><Globe className="h-4 w-4" /> Publikasikan</Button>}

@@ -51,7 +51,7 @@ export function PublicHeader({ transparent }: { transparent?: boolean }) {
         </Link>
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Navigasi utama">
           {links.map((l) => (
-            <Link key={l.href} href={l.href} className={cn("rounded-lg px-3 py-2 text-[15px] font-semibold text-charcoal/80 hover:bg-black/5 hover:text-charcoal", pathname === l.href && "text-emerald-700")}>
+            <Link key={l.href} href={l.href} className={cn("rounded-lg px-3 py-2 text-[0.9375rem] font-semibold text-charcoal/80 hover:bg-black/5 hover:text-charcoal", pathname === l.href && "text-emerald-700")}>
               {l.label}
             </Link>
           ))}

@@ -77,7 +77,7 @@ export default function DashboardPage() {
         <h1 className="mt-0.5 text-2xl font-extrabold tracking-tight text-forest md:text-3xl">
           {greeting()}, {user?.callName}!
         </h1>
-        <p className="text-[15px] text-muted">{ws.temple?.name}</p>
+        <p className="text-[0.9375rem] text-muted">{ws.temple?.name}</p>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[1.35fr_1fr]">
@@ -142,7 +142,7 @@ export default function DashboardPage() {
               <motion.div key={q.href} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 * i }}>
                 <Link href={q.href} className="press flex h-full flex-col gap-3 rounded-2xl border border-line bg-white p-4 shadow-soft hover:border-emerald-300 hover:shadow-lift">
                   <span className={cn("grid h-12 w-12 place-items-center rounded-2xl", q.tone)}><q.icon className="h-6 w-6" /></span>
-                  <span className="text-[15px] font-bold leading-tight">{q.label}</span>
+                  <span className="text-[0.9375rem] font-bold leading-tight">{q.label}</span>
                 </Link>
               </motion.div>
             ))}

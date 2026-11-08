@@ -159,7 +159,7 @@ export function MutasiImport({ open, onClose, pending: allPending, isOwn, accoun
               {pending.map((d) => {
                 const m = matches.find((x) => x.d.id === d.id);
                 return (
-                  <li key={d.id} className="flex items-center gap-3 p-3 text-[15px]">
+                  <li key={d.id} className="flex items-center gap-3 p-3 text-[0.9375rem]">
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold">{rupiah(d.amount)} · {d.donorName}</p>
                       <p className="truncate text-sm text-muted">{formatDate(d.transferDate ?? d.date)}{m ? ` ↔ mutasi ${formatDate(m.credit.date)}` : ""}</p>

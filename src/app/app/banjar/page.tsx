@@ -41,7 +41,7 @@ export default function BanjarOverview() {
         <Card className="p-4"><p className="text-sm text-muted">Pura tanpa pengurus</p><p className="text-3xl font-extrabold text-sky-800">{noPengurus.length}</p></Card>
       </div>
       {noPengurus.length > 0 && (
-        <p className="mb-5 flex gap-2 rounded-2xl bg-sky-50 p-4 text-[15px] text-sky-900">
+        <p className="mb-5 flex gap-2 rounded-2xl bg-sky-50 p-4 text-[0.9375rem] text-sky-900">
           <AlertTriangle className="h-5 w-5 shrink-0" /> Punia untuk pura yang belum punya pengurus diverifikasi oleh Pengurus Banjar.
         </p>
       )}

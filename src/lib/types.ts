@@ -36,6 +36,8 @@ export interface User {
   emailDigest?: boolean;
   /** Email when one's own punia is disahkan or ditolak */
   emailPunia?: boolean;
+  /** Reading size saved with the account */
+  textSize?: TextSize;
   resetRequestedAt?: string;
   lastLoginAt?: string;
   createdAt: string;
@@ -448,8 +450,11 @@ export interface PasswordResetRequest {
   createdAt: string;
 }
 
+export type TextSize = "normal" | "besar" | "sangat_besar";
+
 export interface Preferences {
-  textSize: "normal" | "large";
+  /** Kept on the device until signed in; then the account's choice wins */
+  textSize: TextSize;
   reduceMotion: boolean;
   notifications: NotificationPrefs;
 }

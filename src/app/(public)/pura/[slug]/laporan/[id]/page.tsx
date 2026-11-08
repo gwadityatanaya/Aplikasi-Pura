@@ -47,7 +47,7 @@ export default function PublicReportPage() {
           </Card>
         ))}
       </div>
-      {s.note && <p className="mt-4 rounded-2xl bg-mint/60 p-4 text-[15px] text-emerald-900">{s.note}</p>}
+      {s.note && <p className="mt-4 rounded-2xl bg-mint/60 p-4 text-[0.9375rem] text-emerald-900">{s.note}</p>}
       <div className="mt-6 grid gap-5 md:grid-cols-2">
         <Card><CardHeader title="Pemasukan per kategori" /><CardBody><CategoryBars rows={s.incomeByCategory} /></CardBody></Card>
         <Card><CardHeader title="Pengeluaran per kategori" /><CardBody><CategoryBars rows={s.expenseByCategory} tone="expense" /></CardBody></Card>

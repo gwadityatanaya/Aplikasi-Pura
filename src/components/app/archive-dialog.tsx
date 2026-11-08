@@ -106,7 +106,7 @@ export function ArchiveDialog({ target, busy, onClose, onConfirm }: { target: Ar
     >
       {target && t && (
         <div className="space-y-4">
-          <div className={danger ? "rounded-xl bg-red-50 p-3 text-[15px] text-red-900" : "rounded-xl bg-amber-50 p-3 text-[15px] text-amber-900"}>
+          <div className={danger ? "rounded-xl bg-red-50 p-3 text-[0.9375rem] text-red-900" : "rounded-xl bg-amber-50 p-3 text-[0.9375rem] text-amber-900"}>
             <p className="flex items-center gap-2 font-bold"><AlertTriangle className="h-5 w-5 shrink-0" /> Yang akan terjadi</p>
             <ul className="mt-1.5 list-disc space-y-1 pl-5">{t.points.map((p) => <li key={p}>{p}</li>)}</ul>
             {target.action === "archive" && !!target.pending && (

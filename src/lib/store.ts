@@ -12,7 +12,7 @@ import type {
 import type { PublicData } from "@/server/public";
 
 export const STORAGE_KEY = "pura-state";
-const STORAGE_VERSION = 5;
+const STORAGE_VERSION = 6;
 
 export interface TxInput {
   type: Transaction["type"];
@@ -262,7 +262,11 @@ export const useStore = create<StoreState & Actions>()(
       // Data from the server is never stored on the device — only display preferences.
       partialize: (s) => ({ prefs: s.prefs }) as unknown as StoreState & Actions,
       skipHydration: true,
-      migrate: (persisted) => ({ prefs: (persisted as Partial<StoreState>)?.prefs ?? defaultPrefs }) as unknown as StoreState & Actions,
+      // v6: text size "large" became "besar" (with a new "sangat_besar").
+      migrate: (persisted) => {
+        const prefs = (persisted as Partial<StoreState>)?.prefs ?? defaultPrefs;
+        return { prefs: { ...prefs, textSize: (prefs.textSize as string) === "large" ? "besar" : prefs.textSize } } as unknown as StoreState & Actions;
+      },
       onRehydrateStorage: () => () => {
         useStore.getState().boot();
       },

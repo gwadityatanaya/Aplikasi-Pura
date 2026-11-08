@@ -75,7 +75,7 @@ export function EmergencyBar() {
         description="Gunakan hanya jika pengurus pura dan Pengurus Banjar tidak bisa menangani."
         footer={<Button variant="danger" size="lg" className="w-full" loading={busy} onClick={start}>Aktifkan selama 60 menit</Button>}
       >
-        <div className="space-y-3 text-[15px]">
+        <div className="space-y-3 text-[0.9375rem]">
           <ul className="list-disc space-y-1 pl-5 text-muted">
             <li>Berlaku hanya untuk pura ini, selama 60 menit atau sampai Anda mengakhirinya / pindah pura.</li>
             <li>Alasan dan setiap tindakan tercatat di Log Aktivitas dan di Riwayat Audit Pura (terlihat oleh pengurus pura).</li>

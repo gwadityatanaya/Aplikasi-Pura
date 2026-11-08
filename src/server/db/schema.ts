@@ -27,6 +27,8 @@ export const users = pgTable("users", {
   emailDigest: boolean("email_digest").notNull().default(true),
   /** Email when one's own punia is disahkan or ditolak (can be switched off) */
   emailPunia: boolean("email_punia").notNull().default(true),
+  /** Reading size, saved with the account: normal | besar | sangat_besar */
+  textSize: text("text_size").notNull().default("normal"),
   lastDigestAt: ts("last_digest_at"),
   deletedAt: ts("deleted_at"),
   resetRequestedAt: ts("reset_requested_at"),

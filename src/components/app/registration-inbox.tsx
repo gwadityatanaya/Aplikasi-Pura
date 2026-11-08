@@ -39,7 +39,7 @@ export function RegistrationInbox({ banjars, onChanged, onCount }: { banjars: Ba
     <div className="mt-4">
       <p className="mb-3 rounded-xl bg-ivory p-3 text-sm text-muted">Pengajuan dari halaman publik <b>/ajukan-pendaftaran</b>. Hanya Admin Utama yang bisa melihatnya. Pengajuan tidak memberi akses apa pun; akun pengurus tetap didaftarkan manual setelah disetujui.</p>
       <div className="no-scrollbar -mx-4 overflow-x-auto px-4">
-        <Segmented value={filter} onChange={setFilter} ariaLabel="Saring pengajuan" options={[{ value: "aktif", label: "Perlu diproses" }, { value: "disetujui", label: "Disetujui" }, { value: "ditolak", label: "Ditolak" }]} />
+        <Segmented className="max-w-none" value={filter} onChange={setFilter} ariaLabel="Saring pengajuan" options={[{ value: "aktif", label: "Perlu diproses" }, { value: "disetujui", label: "Disetujui" }, { value: "ditolak", label: "Ditolak" }]} />
       </div>
       {!list && <Skeleton className="mt-4 h-40" />}
       {list && !shown.length && <Card className="mt-4"><EmptyState icon={ClipboardList} title="Tidak ada pengajuan" description="Pengajuan baru dari formulir publik akan muncul di sini." /></Card>}
@@ -82,7 +82,7 @@ function Detail({ r, banjars, run, onDone }: { r: RegistrationRequest; banjars: 
   }
 
   return (
-    <div className="mt-4 space-y-4 border-t border-line pt-4 text-[15px]">
+    <div className="mt-4 space-y-4 border-t border-line pt-4 text-[0.9375rem]">
       <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1">
         <dt className="text-muted">Wilayah</dt><dd>{place}</dd>
         <dt className="text-muted">Pemohon</dt><dd>{r.applicantName} ({r.applicantPosition})</dd>

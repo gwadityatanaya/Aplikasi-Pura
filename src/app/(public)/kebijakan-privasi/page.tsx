@@ -88,7 +88,7 @@ export default function PrivacyPage() {
     <div className="container max-w-2xl py-10">
       <h1 className="text-3xl font-extrabold text-forest">Kebijakan Privasi</h1>
       <p className="mt-2 text-lg text-muted">Ringkas dan apa adanya: bagaimana PURA menjaga data umat.</p>
-      <div className="mt-8 space-y-6 text-[17px] leading-relaxed">
+      <div className="mt-8 space-y-6 text-[1.0625rem] leading-relaxed">
         {sections.map((s) => (
           <section key={s.title}>
             <h2 className="text-xl font-bold text-charcoal">{s.title}</h2>

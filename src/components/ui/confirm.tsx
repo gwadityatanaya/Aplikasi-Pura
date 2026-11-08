@@ -63,7 +63,7 @@ export function ConfirmDialog({
           {tone === "danger" ? <AlertTriangle className="h-7 w-7" /> : <ShieldCheck className="h-7 w-7" />}
         </div>
         <h2 className="text-xl font-bold text-charcoal">{title}</h2>
-        {description && <div className="mt-2 text-[15px] leading-relaxed text-muted">{description}</div>}
+        {description && <div className="mt-2 text-[0.9375rem] leading-relaxed text-muted">{description}</div>}
         {children && <div className="mt-4 w-full text-left">{children}</div>}
       </div>
     </Dialog>

@@ -122,8 +122,8 @@ function LevelField({
   if (blocked) {
     return (
       <div>
-        <span className="mb-1.5 block text-[15px] font-semibold text-charcoal">{label} <span className="font-normal text-muted">(opsional)</span></span>
-        <p className="rounded-xl border border-dashed border-line px-4 py-3 text-[15px] text-muted">Pilih {parentWhat} terlebih dahulu.</p>
+        <span className="mb-1.5 block text-[0.9375rem] font-semibold text-charcoal">{label} <span className="font-normal text-muted">(opsional)</span></span>
+        <p className="rounded-xl border border-dashed border-line px-4 py-3 text-[0.9375rem] text-muted">Pilih {parentWhat} terlebih dahulu.</p>
       </div>
     );
   }
@@ -131,7 +131,7 @@ function LevelField({
   if (isManual) {
     return (
       <div>
-        <label htmlFor={id} className="mb-1.5 block text-[15px] font-semibold text-charcoal">{label} <span className="font-normal text-muted">(opsional, ketik manual)</span></label>
+        <label htmlFor={id} className="mb-1.5 block text-[0.9375rem] font-semibold text-charcoal">{label} <span className="font-normal text-muted">(opsional, ketik manual)</span></label>
         <Input id={id} value={name} maxLength={100} onChange={(e) => onManual(e.target.value)} placeholder={`Ketik nama ${what}`} autoComplete="off" />
         {forcedManual ? (
           <p className="mt-1 text-sm text-muted">Diisi manual karena {parentWhat} di atas diisi manual.</p>
@@ -217,7 +217,7 @@ function ComboBox({
 
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-[15px] font-semibold text-charcoal">
+      <label htmlFor={id} className="mb-1.5 block text-[0.9375rem] font-semibold text-charcoal">
         {label} <span className="font-normal text-muted">(opsional)</span>
       </label>
       <div className="relative">
@@ -258,8 +258,8 @@ function ComboBox({
       {open && (
         // Options keep the focus in the text box (pointerdown is cancelled), so typing never jumps.
         <ul id={listId} role="listbox" aria-label={label} className="mt-1 max-h-64 overflow-y-auto rounded-xl border border-line bg-white shadow-soft">
-          {items === null && <li className="px-4 py-3 text-[15px] text-muted">Memuat daftar…</li>}
-          {items !== null && shown.length === 0 && <li className="px-4 py-3 text-[15px] text-muted">Tidak ditemukan &quot;{query}&quot;.</li>}
+          {items === null && <li className="px-4 py-3 text-[0.9375rem] text-muted">Memuat daftar…</li>}
+          {items !== null && shown.length === 0 && <li className="px-4 py-3 text-[0.9375rem] text-muted">Tidak ditemukan &quot;{query}&quot;.</li>}
           {shown.map((it, i) => (
             <li
               key={it[0]}
@@ -270,7 +270,7 @@ function ComboBox({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => pick(it)}
               onMouseEnter={() => setActive(i)}
-              className={cn("flex cursor-pointer items-center justify-between px-4 py-3 text-[16px]", i === active && "bg-mint", it[0] === code && "font-semibold")}
+              className={cn("flex cursor-pointer items-center justify-between px-4 py-3 text-[1rem]", i === active && "bg-mint", it[0] === code && "font-semibold")}
             >
               {it[1]}
               {it[0] === code && <Check className="h-4 w-4 text-emerald-600" aria-hidden />}
@@ -286,7 +286,7 @@ function ComboBox({
               onMouseDown={(e) => e.preventDefault()}
               onClick={chooseManual}
               onMouseEnter={() => setActive(shown.length)}
-              className={cn("flex cursor-pointer items-center gap-2 border-t border-line px-4 py-3 text-[15px] font-semibold text-emerald-800", active === shown.length && "bg-mint")}
+              className={cn("flex cursor-pointer items-center gap-2 border-t border-line px-4 py-3 text-[0.9375rem] font-semibold text-emerald-800", active === shown.length && "bg-mint")}
             >
               <PencilLine className="h-4 w-4" /> Tidak ada di daftar — ketik manual
             </li>

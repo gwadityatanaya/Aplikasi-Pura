@@ -50,7 +50,7 @@ export function StartBooks({ canEdit }: { canEdit: boolean }) {
     return (
       <div className="rounded-2xl border border-emerald-200 bg-mint/40 p-4" role="status">
         <p className="flex items-center gap-2 font-bold"><CalendarCheck2 className="h-5 w-5 text-emerald-700" /> Pembukuan di aplikasi dimulai {formatDate(t.booksStartDate)}</p>
-        <p className="mt-1 text-[15px]">Saldo awal dihitung bersama dan disaksikan oleh <b>{t.booksWitnesses}</b>. Transaksi bertanggal sebelum {formatDate(t.booksStartDate)} termasuk buku lama dan ditolak aplikasi.</p>
+        <p className="mt-1 text-[0.9375rem]">Saldo awal dihitung bersama dan disaksikan oleh <b>{t.booksWitnesses}</b>. Transaksi bertanggal sebelum {formatDate(t.booksStartDate)} termasuk buku lama dan ditolak aplikasi.</p>
         <p className="mt-1 text-sm text-muted">Saldo awal terkunci. Jika ternyata keliru, gunakan <b>Koreksi saldo awal</b> pada kas/rekening di bawah (alasan dan dua saksi, tercatat).</p>
       </div>
     );
@@ -67,7 +67,7 @@ export function StartBooks({ canEdit }: { canEdit: boolean }) {
   return (
     <div className="rounded-2xl border-2 border-dashed border-gold bg-gold-light/40 p-4">
       <p className="flex items-center gap-2 font-bold"><CalendarCheck2 className="h-5 w-5 text-gold-dark" /> Belum ada tanggal mulai pembukuan</p>
-      <p className="mt-1 text-[15px]">Tentukan tanggal mulai memakai aplikasi, lalu isi saldo awal setiap kas dan rekening pada tanggal itu — dihitung bersama oleh dua pengurus. Lihat <b>Checklist hari mulai</b> di panduan.</p>
+      <p className="mt-1 text-[0.9375rem]">Tentukan tanggal mulai memakai aplikasi, lalu isi saldo awal setiap kas dan rekening pada tanggal itu — dihitung bersama oleh dua pengurus. Lihat <b>Checklist hari mulai</b> di panduan.</p>
       {canEdit && <Button className="mt-3" onClick={() => { setAmounts(Object.fromEntries(accounts.map((a) => [a.id, a.openingBase ?? a.openingBalance]))); setOpen(true); }}>Mulai pembukuan</Button>}
       <Dialog
         open={open}
@@ -81,7 +81,7 @@ export function StartBooks({ canEdit }: { canEdit: boolean }) {
             <Input id="bk-start" type="date" max={firstTx && firstTx < todayISO() ? firstTx : todayISO()} value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
           <fieldset className="space-y-3 rounded-2xl border border-line p-4">
-            <legend className="px-1 text-[15px] font-bold">Saldo awal pada tanggal itu</legend>
+            <legend className="px-1 text-[0.9375rem] font-bold">Saldo awal pada tanggal itu</legend>
             {accounts.map((a) => (
               <Field key={a.id} label={`${a.label || a.name}${a.type === "cash" ? " (hitung uang tunai)" : " (saldo di mutasi bank)"}`}>
                 <MoneyInput value={amounts[a.id] ?? 0} onChange={(v) => setAmounts({ ...amounts, [a.id]: v })} />
@@ -89,7 +89,7 @@ export function StartBooks({ canEdit }: { canEdit: boolean }) {
             ))}
           </fieldset>
           <Witnesses value={w} onChange={setW} />
-          <label className="flex items-start gap-2 text-[15px] font-semibold">
+          <label className="flex items-start gap-2 text-[0.9375rem] font-semibold">
             <input type="checkbox" className="mt-0.5 h-5 w-5 accent-emerald-600" checked={counted} onChange={(e) => setCounted(e.target.checked)} />
             Kami berdua sudah menghitung uang tunai dan mencocokkan saldo rekening bersama-sama.
           </label>
@@ -162,7 +162,7 @@ export function OpeningActions({ a, canEdit }: { a: Account; canEdit: boolean })
         <div className="space-y-4">
           {mode === "correct" ? (
             <>
-              <p className="rounded-xl bg-amber-50 p-3 text-[15px] text-amber-900">Saldo awal yang lama <b>tidak dihapus</b>. Koreksi dicatat terpisah (tidak bisa diubah atau dihapus) dan ikut dihitung di saldo.</p>
+              <p className="rounded-xl bg-amber-50 p-3 text-[0.9375rem] text-amber-900">Saldo awal yang lama <b>tidak dihapus</b>. Koreksi dicatat terpisah (tidak bisa diubah atau dihapus) dan ikut dihitung di saldo.</p>
               <Field label="Arah koreksi" htmlFor="oc-dir">
                 <Select id="oc-dir" value={dir} onChange={(e) => setDir(e.target.value as "plus" | "minus")}>
                   <option value="plus">Tambah (saldo awal ternyata lebih besar)</option>

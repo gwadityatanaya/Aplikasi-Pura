@@ -29,6 +29,7 @@ import type { Result } from "@/lib/store";
 import { LogoutEverywhere } from "@/components/shared/logout-everywhere";
 import { AvatarEditor } from "@/components/shared/avatar-editor";
 import { PuniaEmailSwitch } from "@/components/shared/punia-email-switch";
+import { TextSizePicker } from "@/components/shared/text-size-picker";
 import { OpeningActions, StartBooks } from "@/components/app/books-setup";
 
 /** Shows the right toast for a save result; returns true on success. */
@@ -69,7 +70,7 @@ function Settings() {
         <nav className={cn("lg:block", tab ? "hidden" : "block")} aria-label="Bagian pengaturan">
           <Card className="overflow-hidden p-1.5">
             {TABS.map((t) => (
-              <button key={t.key} onClick={() => go(t.key)} className={cn("flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[15px] font-semibold", active === t.key ? "lg:bg-mint lg:text-emerald-900" : "hover:bg-ivory")}>
+              <button key={t.key} onClick={() => go(t.key)} className={cn("flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[0.9375rem] font-semibold", active === t.key ? "lg:bg-mint lg:text-emerald-900" : "hover:bg-ivory")}>
                 <t.icon className="h-5 w-5 text-emerald-700" /> <span className="flex-1">{t.label}</span> <ChevronRight className="h-4 w-4 text-muted lg:hidden" />
               </button>
             ))}
@@ -110,7 +111,7 @@ function TempleProfile() {
       <CardHeader title="Profil pura" description="Tampil di halaman pura untuk umat." />
       <CardBody className="space-y-4">
         {ro && <ReadOnlyNote />}
-        <div className="rounded-2xl bg-ivory p-4 text-[15px]">
+        <div className="rounded-2xl bg-ivory p-4 text-[0.9375rem]">
           <p className="font-bold">{temple!.name}</p>
           {(temple!.address || templeLocation(temple!)) && <p className="text-muted">{[temple!.address, templeLocation(temple!)].filter(Boolean).join(" · ")}</p>}
           <p className="mt-1 text-muted">Banjar Pengempon: {banjars.filter((b) => temple!.banjarIds?.includes(b.id)).map((b) => b.name).join(", ") || "—"}</p>
@@ -218,15 +219,15 @@ function Accounts() {
         <div className="rounded-2xl border border-emerald-200 bg-mint/40 p-4">
           <p className="flex items-center gap-2 font-bold"><Landmark className="h-5 w-5 text-emerald-700" /> Rekening resmi untuk punia</p>
           {ws.accounts.some((a) => a.type === "bank" && !a.archived && a.accountNumber) ? (
-            <ul className="mt-1 space-y-0.5 text-[15px]">
+            <ul className="mt-1 space-y-0.5 text-[0.9375rem]">
               {ws.accounts.filter((a) => a.type === "bank" && !a.archived && a.accountNumber).map((a) => (
                 <li key={a.id}><b>{a.label || a.name}</b>{a.isPrimary ? " (utama)" : ""}: {a.bankName} · <span className="tabular font-semibold">{a.accountNumber}</span> · a.n. {a.accountHolder}</li>
               ))}
             </ul>
           ) : (
-            <p className="mt-1 text-[15px] text-amber-800">Belum diisi — umat belum bisa berpunia lewat aplikasi.</p>
+            <p className="mt-1 text-[0.9375rem] text-amber-800">Belum diisi — umat belum bisa berpunia lewat aplikasi.</p>
           )}
-          {t.qrisImage && <p className="mt-1 text-[15px]">QRIS tersedia.</p>}
+          {t.qrisImage && <p className="mt-1 text-[0.9375rem]">QRIS tersedia.</p>}
           <p className="mt-1 text-sm text-muted">Hanya Admin Utama yang dapat menambah, mengubah, atau menonaktifkan rekening dan QRIS (tercatat di Log Aktivitas). Pengurus mengisi saldo awal tiap rekening di bawah.</p>
         </div>
         {ws.accounts.map((a) => (
@@ -389,10 +390,7 @@ function Appearance() {
     <Card>
       <CardHeader title="Tampilan" description="Sesuaikan agar nyaman dibaca." />
       <CardBody className="space-y-5">
-        <div>
-          <p className="mb-2 font-semibold">Ukuran huruf</p>
-          <Segmented value={prefs.textSize} onChange={(v) => setPrefs({ textSize: v })} options={[{ value: "normal", label: "Normal" }, { value: "large", label: "Besar" }]} ariaLabel="Ukuran huruf" />
-        </div>
+        <TextSizePicker />
         <Switch checked={prefs.reduceMotion} onChange={(v) => setPrefs({ reduceMotion: v })} label="Kurangi animasi" description="Matikan sebagian besar animasi dan transisi." />
         <div className="rounded-2xl border border-line p-4">
           <p className="font-semibold">Pasang aplikasi di HP</p>

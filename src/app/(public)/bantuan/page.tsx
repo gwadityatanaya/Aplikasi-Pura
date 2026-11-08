@@ -48,7 +48,7 @@ export default function HelpPage() {
       <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-3xl font-extrabold text-forest">Bantuan</h1>
-          <p className="text-[15px] text-muted">Pesan Anda kepada Admin Utama dan balasannya.</p>
+          <p className="text-[0.9375rem] text-muted">Pesan Anda kepada Admin Utama dan balasannya.</p>
         </div>
         <Button onClick={() => setNewOpen(true)}><MessageSquarePlus className="h-5 w-5" /> Kirim pesan baru</Button>
       </div>
@@ -64,7 +64,7 @@ export default function HelpPage() {
                 <span className="font-semibold">{HELP_CATEGORY_LABEL[t.category]}</span>
                 {t.unreadByUser && <Badge tone="emerald">Balasan baru</Badge>}
                 <span className="ml-auto text-sm text-muted">{formatDateTime(t.updatedAt)}</span>
-                <span className="w-full truncate text-[15px] text-muted">{t.message}</span>
+                <span className="w-full truncate text-[0.9375rem] text-muted">{t.message}</span>
               </button>
               {openId === t.id && <div className="mt-4 border-t border-line pt-4"><HelpThread t={t} onChanged={load} /></div>}
             </Card>

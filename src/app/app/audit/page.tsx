@@ -37,7 +37,7 @@ export default function AuditPage() {
       <div className="grid gap-3 sm:grid-cols-[1fr_220px]">
         <div className="relative">
           <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" />
-          <input aria-label="Cari riwayat" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari tindakan, nama, atau keterangan…" className="h-12 w-full rounded-xl border border-line bg-white pl-12 pr-4 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/15" />
+          <input aria-label="Cari riwayat" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari tindakan, nama, atau keterangan…" className="h-12 w-full rounded-xl border border-line bg-white pl-12 pr-4 text-[1rem] focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/15" />
         </div>
         <Select aria-label="Jenis" value={entity} onChange={(e) => setEntity(e.target.value)}>
           <option value="">Semua jenis</option>
@@ -54,7 +54,7 @@ export default function AuditPage() {
                   <span className="font-bold">{a.action}</span>
                   <Badge tone={ENTITY[a.entity]?.tone ?? "gray"}>{ENTITY[a.entity]?.label ?? a.entity}</Badge>
                 </div>
-                <p className="mt-0.5 text-[15px] text-charcoal/80">
+                <p className="mt-0.5 text-[0.9375rem] text-charcoal/80">
                   {a.entity === "transaction" && a.entityId ? <Link className="hover:text-emerald-700 hover:underline" href={`/app/transaksi/${a.entityId}`}>{a.detail}</Link> : a.detail}
                 </p>
                 <p className="mt-1 text-sm text-muted">{a.actorName} · {formatDateTime(a.at)}</p>

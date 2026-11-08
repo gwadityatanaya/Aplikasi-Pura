@@ -55,14 +55,14 @@ export function BankChoice({
         <div className="space-y-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={temple.qrisImage} alt={`QRIS ${temple.name}`} className="mx-auto max-h-80 w-auto rounded-2xl border border-line bg-white p-2" />
-          <p className="rounded-xl bg-amber-50 p-3 text-[15px] font-semibold text-amber-900" role="note">
+          <p className="rounded-xl bg-amber-50 p-3 text-[0.9375rem] font-semibold text-amber-900" role="note">
             Pastikan <b>nama merchant</b> yang muncul di aplikasi pembayaran Anda sesuai nama pura: <b>{temple.name}</b>. Dana masuk ke rekening {qris.label} ({qris.bankName}).
           </p>
           <p className="flex items-start gap-2 text-sm text-muted"><Info className="mt-0.5 h-4 w-4 shrink-0" /> Aplikasi PURA hanya <b>mencatat</b> punia; pembayaran diproses oleh bank atau aplikasi pembayaran Anda, bukan oleh aplikasi ini.</p>
         </div>
       ) : many && onChange ? (
         <fieldset>
-          <legend className="mb-2 text-[15px] font-semibold">Pilih rekening yang Anda transfer</legend>
+          <legend className="mb-2 text-[0.9375rem] font-semibold">Pilih rekening yang Anda transfer</legend>
           <div className="grid gap-2" role="radiogroup" aria-label="Rekening tujuan">
             {banks.map((a) => (
               <button
@@ -76,8 +76,8 @@ export function BankChoice({
                 <Landmark className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
                 <span className="min-w-0 flex-1">
                   <span className="block font-bold">{a.label}{a.isPrimary && <span className="ml-2 text-xs font-semibold text-muted">(utama)</span>}</span>
-                  <span className="block text-[15px]">{a.bankName}</span>
-                  <span className="tabular block whitespace-nowrap text-[17px] font-semibold tracking-wide">{a.accountNumber}</span>
+                  <span className="block text-[0.9375rem]">{a.bankName}</span>
+                  <span className="tabular block whitespace-nowrap text-[1.0625rem] font-semibold tracking-wide">{a.accountNumber}</span>
                   <span className="block text-sm text-muted">a.n. {a.accountHolder}</span>
                 </span>
                 {value === a.id && <Check className="h-5 w-5 shrink-0 text-emerald-700" />}

@@ -16,10 +16,10 @@ const variants: Record<Variant, string> = {
   light: "bg-white/15 text-white hover:bg-white/25 backdrop-blur",
 };
 const sizes: Record<Size, string> = {
-  sm: "h-9 px-3 text-sm rounded-xl gap-1.5",
-  md: "h-11 px-4 text-[15px] rounded-xl gap-2",
-  lg: "h-12 px-5 text-base rounded-2xl gap-2",
-  xl: "h-14 px-6 text-base rounded-2xl gap-2.5",
+  sm: "min-h-9 py-1 px-3 text-sm rounded-xl gap-1.5",
+  md: "min-h-11 py-1.5 px-4 text-[0.9375rem] rounded-xl gap-2",
+  lg: "min-h-12 py-2 px-5 text-base rounded-2xl gap-2",
+  xl: "min-h-14 py-2 px-6 text-base rounded-2xl gap-2.5",
   icon: "h-11 w-11 rounded-xl",
 };
 
@@ -38,7 +38,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
       ref={ref}
       disabled={disabled || loading}
       className={cn(
-        "press inline-flex select-none items-center justify-center whitespace-nowrap font-semibold transition-colors",
+        "press inline-flex max-w-full select-none items-center justify-center text-center font-semibold leading-tight transition-colors sm:whitespace-nowrap",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
         "disabled:pointer-events-none disabled:opacity-50",
         variants[variant],
@@ -55,7 +55,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
 
 export function buttonClass(variant: Variant = "primary", size: Size = "md", className?: string) {
   return cn(
-    "press inline-flex select-none items-center justify-center whitespace-nowrap font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
+    "press inline-flex max-w-full select-none items-center justify-center text-center font-semibold leading-tight transition-colors sm:whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
     variants[variant],
     sizes[size],
     className

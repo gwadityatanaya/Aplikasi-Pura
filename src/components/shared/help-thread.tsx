@@ -35,7 +35,7 @@ export function HelpThread({ t, admin, onChanged }: { t: HelpTicket; admin?: boo
         <span className="text-sm text-muted">· {formatDateTime(t.createdAt)}</span>
       </div>
       {admin && t.user && <p className="text-sm"><b>{t.user.name}</b> · {t.user.email}</p>}
-      <p className="whitespace-pre-wrap break-words text-[15px]">{t.message}</p>
+      <p className="whitespace-pre-wrap break-words text-[0.9375rem]">{t.message}</p>
       <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 rounded-xl bg-ivory p-3 text-sm text-muted">
         <dt>Halaman</dt><dd className="break-all">{t.context.page}</dd>
         <dt>Peran</dt><dd>{t.context.role}</dd>
@@ -54,7 +54,7 @@ export function HelpThread({ t, admin, onChanged }: { t: HelpTicket; admin?: boo
       {t.replies.length > 0 && (
         <ul className="space-y-2">
           {t.replies.map((r) => (
-            <li key={r.id} className={cn("rounded-2xl p-3 text-[15px]", r.fromAdmin ? "mr-6 bg-mint/70" : "ml-6 bg-stone-100")}>
+            <li key={r.id} className={cn("rounded-2xl p-3 text-[0.9375rem]", r.fromAdmin ? "mr-6 bg-mint/70" : "ml-6 bg-stone-100")}>
               <p className="text-sm font-semibold">{r.authorName} <span className="font-normal text-muted">· {formatDateTime(r.createdAt)}</span></p>
               <p className="whitespace-pre-wrap break-words">{r.message}</p>
             </li>

@@ -73,7 +73,7 @@ export default function CampaignPage() {
             </Link>
             <h1 className="mt-2 text-balance text-3xl font-extrabold leading-tight text-forest md:text-4xl">{campaign.title}</h1>
             <CampaignEndNotice campaign={campaign} className="mt-4" />
-            {campaign.description && <p className="mt-4 whitespace-pre-line text-[17px] leading-relaxed text-charcoal/80">{campaign.description}</p>}
+            {campaign.description && <p className="mt-4 whitespace-pre-line text-[1.0625rem] leading-relaxed text-charcoal/80">{campaign.description}</p>}
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
               {facts.map((f) => <Info key={f.label} icon={f.icon} label={f.label} value={f.value} />)}
             </div>
@@ -134,7 +134,7 @@ export default function CampaignPage() {
             {showBank && open && (
               <div className="border-t border-line bg-ivory/70 p-6">
                 <h2 className="font-bold">Cara berpunia</h2>
-                {campaign.instructions && <p className="mt-1 text-[15px] leading-relaxed text-charcoal/80">{campaign.instructions}</p>}
+                {campaign.instructions && <p className="mt-1 text-[0.9375rem] leading-relaxed text-charcoal/80">{campaign.instructions}</p>}
                 <div className="mt-3"><BankChoice temple={temple} /></div>
               </div>
             )}

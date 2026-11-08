@@ -33,10 +33,10 @@ export default function PengurusPage() {
         actions={access.isSuperAdmin && <Link href="/app/admin" className={buttonClass("primary")}>Atur di Back Office</Link>}
       />
       {pengurusCount === 0 && (
-        <p className="mb-4 flex items-start gap-2 rounded-2xl bg-amber-50 p-4 text-[15px] text-amber-900"><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" /> Pengurus pura belum terdaftar. Punia di pura ini diverifikasi oleh Pengurus Banjar.</p>
+        <p className="mb-4 flex items-start gap-2 rounded-2xl bg-amber-50 p-4 text-[0.9375rem] text-amber-900"><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" /> Pengurus pura belum terdaftar. Punia di pura ini diverifikasi oleh Pengurus Banjar.</p>
       )}
       {pengurusCount === 1 && (
-        <p className="mb-4 flex items-start gap-2 rounded-2xl bg-amber-50 p-4 text-[15px] text-amber-900"><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" /> Pura ini hanya punya satu pengurus. Punia yang dikirim pengurus itu sendiri harus disetujui Pengurus Banjar.</p>
+        <p className="mb-4 flex items-start gap-2 rounded-2xl bg-amber-50 p-4 text-[0.9375rem] text-amber-900"><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" /> Pura ini hanya punya satu pengurus. Punia yang dikirim pengurus itu sendiri harus disetujui Pengurus Banjar.</p>
       )}
       <Card>
         <ul className="divide-y divide-line">

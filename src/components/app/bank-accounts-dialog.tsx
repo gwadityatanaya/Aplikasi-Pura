@@ -93,12 +93,12 @@ export function BankAccountsDialog({
           )}
 
           <fieldset className="space-y-3 rounded-2xl border border-line p-4">
-            <legend className="px-1 text-[15px] font-bold">{f.id ? "Ubah rekening" : accounts.length ? "Tambah rekening" : "Rekening pertama"}</legend>
+            <legend className="px-1 text-[0.9375rem] font-bold">{f.id ? "Ubah rekening" : accounts.length ? "Tambah rekening" : "Rekening pertama"}</legend>
             <Field label="Label singkat" htmlFor="bk-label" hint='Mis. "Kas Umum" atau "Pembangunan". Tampil ke umat.'><Input id="bk-label" value={f.label} onChange={(e) => setF({ ...f, label: e.target.value })} maxLength={40} /></Field>
             <Field label="Nama bank" htmlFor="bk-name"><Input id="bk-name" value={f.bankName} onChange={(e) => setF({ ...f, bankName: e.target.value })} placeholder="BPD Bali, BRI, …" /></Field>
             <Field label="Nomor rekening" htmlFor="bk-no"><Input id="bk-no" inputMode="numeric" value={f.accountNumber} onChange={(e) => setF({ ...f, accountNumber: e.target.value })} /></Field>
             <Field label="Nama pemilik rekening (atas nama)" htmlFor="bk-holder" hint="Ditampilkan ke umat, misalnya &quot;Pengurus Pura Dalem …&quot;."><Input id="bk-holder" value={f.accountHolder} onChange={(e) => setF({ ...f, accountHolder: e.target.value })} /></Field>
-            <label className="flex items-center gap-2 text-[15px] font-semibold">
+            <label className="flex items-center gap-2 text-[0.9375rem] font-semibold">
               <input type="checkbox" className="h-5 w-5 accent-emerald-600" checked={f.isPublic} onChange={(e) => setF({ ...f, isPublic: e.target.checked })} />
               Tampil untuk umat (bisa dipilih saat berpunia)
             </label>
@@ -109,7 +109,7 @@ export function BankAccountsDialog({
           </fieldset>
 
           <fieldset className="space-y-3 rounded-2xl border border-line p-4">
-            <legend className="flex items-center gap-1.5 px-1 text-[15px] font-bold"><QrCode className="h-4 w-4" /> QRIS (opsional)</legend>
+            <legend className="flex items-center gap-1.5 px-1 text-[0.9375rem] font-bold"><QrCode className="h-4 w-4" /> QRIS (opsional)</legend>
             <p className="text-sm text-muted">Gambar QRIS pura dan rekening tujuannya. Pengurus tidak bisa menggantinya. Umat diingatkan memeriksa nama merchant.</p>
             {qris.image ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -158,7 +158,7 @@ export function BankAccountsDialog({
       >
         {deactivate && (
           <div className="space-y-3">
-            <p className="rounded-xl bg-amber-50 p-3 text-[15px] text-amber-900">Rekening tidak lagi tampil ke umat dan tidak bisa dipilih untuk catatan baru. <b>Transaksi lama dan saldonya tetap ada.</b> QRIS yang tertaut ke rekening ini ikut dinonaktifkan.</p>
+            <p className="rounded-xl bg-amber-50 p-3 text-[0.9375rem] text-amber-900">Rekening tidak lagi tampil ke umat dan tidak bisa dipilih untuk catatan baru. <b>Transaksi lama dan saldonya tetap ada.</b> QRIS yang tertaut ke rekening ini ikut dinonaktifkan.</p>
             <Field label="Alasan (wajib)" htmlFor="bk-off-reason"><Textarea id="bk-off-reason" rows={2} value={deactivate.reason} onChange={(e) => setDeactivate({ ...deactivate, reason: e.target.value })} /></Field>
           </div>
         )}

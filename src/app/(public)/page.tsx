@@ -71,7 +71,7 @@ export default function HomePage() {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Cari nama pura atau kabupaten…"
-                className="h-11 min-w-0 flex-1 bg-transparent text-[16px] focus:outline-none"
+                className="h-11 min-w-0 flex-1 bg-transparent text-[1rem] focus:outline-none"
               />
               <button className={buttonClass("primary", "md")} type="submit">Cari</button>
             </form>

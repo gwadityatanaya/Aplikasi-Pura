@@ -133,14 +133,14 @@ export default function BackOfficePage() {
       {backupDue && (
         <Card className="mb-4 border-red-200 bg-red-50/60 p-4" role="alert">
           <p className="flex items-center gap-2 font-bold text-red-900"><DatabaseBackup className="h-5 w-5" /> {backupDays === null ? "Belum pernah membuat cadangan data" : `Cadangan terakhir ${backupDays} hari lalu`}</p>
-          <p className="mt-1 text-[15px] text-red-900">Buat cadangan setidaknya seminggu sekali: tab <b>Cadangan data</b> → unduh, lalu simpan di tempat aman (mis. Google Drive pribadi Admin Utama). Lihat PANDUAN → Cadangan data mingguan.</p>
+          <p className="mt-1 text-[0.9375rem] text-red-900">Buat cadangan setidaknya seminggu sekali: tab <b>Cadangan data</b> → unduh, lalu simpan di tempat aman (mis. Google Drive pribadi Admin Utama). Lihat PANDUAN → Cadangan data mingguan.</p>
           <Button size="sm" className="mt-2" onClick={() => setTab("cadangan")}>Buka Cadangan data</Button>
         </Card>
       )}
       {data && (warnings.noPengurus.length > 0 || warnings.single.length > 0 || warnings.noBank.length > 0 || !!data.failedEmails) && (
         <Card className="mb-5 border-amber-200 bg-amber-50/50 p-4">
           <p className="flex items-center gap-2 font-bold text-amber-900"><AlertTriangle className="h-5 w-5" /> Perlu perhatian</p>
-          <ul className="mt-2 space-y-1.5 text-[15px] text-amber-900">
+          <ul className="mt-2 space-y-1.5 text-[0.9375rem] text-amber-900">
             {warnings.noPengurus.length > 0 && <li>• <strong>{warnings.noPengurus.length} pura</strong> belum punya Pengurus Pura — punianya diverifikasi oleh Pengurus Banjar: {warnings.noPengurus.map((t) => t.name).join(", ")}.</li>}
             {warnings.single.length > 0 && <li>• <strong>{warnings.single.length} pura</strong> hanya punya satu pengurus. Punia yang dikirim pengurus itu sendiri harus disetujui Pengurus Banjar: {warnings.single.map((t) => t.name).join(", ")}.</li>}
             {!!data.failedEmails && <li>• <strong>{data.failedEmails} email konfirmasi punia</strong> gagal terkirim setelah 5 kali dicoba. Periksa pengaturan email (SMTP) di Vercel; statusnya tetap terlihat umat di Punia Saya.</li>}
@@ -150,7 +150,7 @@ export default function BackOfficePage() {
       )}
 
       <div className="no-scrollbar -mx-4 overflow-x-auto px-4">
-        <Segmented value={tab} onChange={setTab} ariaLabel="Bagian Back Office" options={[{ value: "pura", label: "Pura" }, { value: "banjar", label: "Banjar" }, { value: "akun", label: "Akun" }, { value: "angka", label: "Angka" }, { value: "pengajuan", label: newRegs ? `Pengajuan (${newRegs})` : "Pengajuan" }, { value: "bantuan", label: access.help.inbox ? `Bantuan (${access.help.inbox})` : "Bantuan" }, { value: "cadangan", label: "Cadangan data" }]} />
+        <Segmented className="max-w-none" value={tab} onChange={setTab} ariaLabel="Bagian Back Office" options={[{ value: "pura", label: "Pura" }, { value: "banjar", label: "Banjar" }, { value: "akun", label: "Akun" }, { value: "angka", label: "Angka" }, { value: "pengajuan", label: newRegs ? `Pengajuan (${newRegs})` : "Pengajuan" }, { value: "bantuan", label: access.help.inbox ? `Bantuan (${access.help.inbox})` : "Bantuan" }, { value: "cadangan", label: "Cadangan data" }]} />
       </div>
       {!data && <div className="mt-4 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20" />)}</div>}
 
@@ -166,7 +166,7 @@ export default function BackOfficePage() {
                   <div className="flex flex-wrap items-start gap-3">
                     <Building2 className="mt-1 h-6 w-6 text-emerald-700" />
                     <div className="min-w-0 flex-1">
-                      <Link href={`/pura/${t.slug}`} target="_blank" className="text-[17px] font-bold hover:text-emerald-700">{t.name}</Link>
+                      <Link href={`/pura/${t.slug}`} target="_blank" className="text-[1.0625rem] font-bold hover:text-emerald-700">{t.name}</Link>
                       <p className="text-sm text-muted">Banjar Pengempon: {t.banjarIds.map(banjarName).join(", ") || "—"}</p>
                       {templeLocation(t) && <p className="flex items-center gap-1 text-sm text-muted"><MapPin className="h-3.5 w-3.5" /> {templeLocation(t)}</p>}
                       <div className="mt-2 flex flex-wrap gap-1.5">
@@ -248,7 +248,7 @@ export default function BackOfficePage() {
         <div className="mt-4">
           <div className="relative mb-3">
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" />
-            <input aria-label="Cari akun" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari nama atau email…" className="h-12 w-full rounded-xl border border-line bg-white pl-12 pr-4 text-[16px] focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/15" />
+            <input aria-label="Cari akun" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari nama atau email…" className="h-12 w-full rounded-xl border border-line bg-white pl-12 pr-4 text-[1rem] focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/15" />
           </div>
           <Card>
             <ul className="divide-y divide-line">
@@ -304,7 +304,7 @@ export default function BackOfficePage() {
           </Card>
           <Card>
             <CardHeader title="Cadangan lengkap & pemulihan" />
-            <CardBody className="space-y-2 text-[15px] text-charcoal/80">
+            <CardBody className="space-y-2 text-[0.9375rem] text-charcoal/80">
               <p className="flex gap-2"><DatabaseBackup className="h-5 w-5 shrink-0 text-emerald-700" /> Database Neon (paket gratis) hanya menyimpan riwayat 6 jam terakhir, jadi cadangan mingguan tetap penting.</p>
               <p>Cadangan lengkap beserta foto bukti: jalankan <code className="rounded bg-stone-100 px-1.5">npm run backup</code> di laptop. Lihat docs/PANDUAN.md.</p>
             </CardBody>
@@ -334,7 +334,7 @@ export default function BackOfficePage() {
               </div>
             </Field>
             <fieldset className="space-y-3 rounded-2xl border border-line p-4">
-              <legend className="px-1 text-[15px] font-bold">Lokasi pura (opsional)</legend>
+              <legend className="px-1 text-[0.9375rem] font-bold">Lokasi pura (opsional)</legend>
               <WilayahPicker idPrefix="tp" value={pickAddress(templeForm)} onChange={(a) => setTempleForm({ ...templeForm, ...a })} />
             </fieldset>
             <Field label="Alamat detail (opsional)" hint="Jalan, nomor, gang, dusun/banjar dinas, patokan." htmlFor="tp-addr"><Input id="tp-addr" value={templeForm.address} onChange={(e) => setTempleForm({ ...templeForm, address: e.target.value })} /></Field>
@@ -361,7 +361,7 @@ export default function BackOfficePage() {
           <div className="space-y-4">
             <Field label="Nama banjar" htmlFor="bj-name"><Input id="bj-name" value={banjarForm.name} onChange={(e) => setBanjarForm({ ...banjarForm, name: e.target.value })} placeholder="Banjar Adat …" /></Field>
             <fieldset className="space-y-3 rounded-2xl border border-line p-4">
-              <legend className="px-1 text-[15px] font-bold">Wilayah banjar (opsional)</legend>
+              <legend className="px-1 text-[0.9375rem] font-bold">Wilayah banjar (opsional)</legend>
               <p className="text-sm text-muted">Kode wilayah dipakai nanti untuk ringkasan per desa/kecamatan/kabupaten.</p>
               <WilayahPicker idPrefix="bj" value={pickAddress(banjarForm)} onChange={(a) => setBanjarForm({ ...banjarForm, ...a })} />
             </fieldset>
@@ -471,7 +471,7 @@ export default function BackOfficePage() {
           }}>Ganti email</Button>
         }
       >
-        <div className="space-y-3 text-[15px]">
+        <div className="space-y-3 text-[0.9375rem]">
           <Field label="Email baru" htmlFor="ce-email"><Input id="ce-email" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="nama@gmail.com" /></Field>
           <ul className="list-disc space-y-1 pl-5 text-muted">
             <li>Akunnya tetap sama: peran, pura yang dipegang, dan riwayatnya tidak berubah.</li>

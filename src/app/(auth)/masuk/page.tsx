@@ -41,7 +41,7 @@ function LoginForm() {
       <div className="text-center">
         <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-mint text-emerald-700"><MailCheck className="h-8 w-8" /></div>
         <h1 className="mt-5 text-2xl font-extrabold text-forest">Periksa email Anda</h1>
-        <p className="mt-2 text-[17px] text-muted">Kami mengirim tautan masuk ke <strong className="text-charcoal">{sent.email}</strong>. Buka email itu lalu ketuk tombol <strong>Masuk ke PURA</strong>. Tautan berlaku 15 menit.</p>
+        <p className="mt-2 text-[1.0625rem] text-muted">Kami mengirim tautan masuk ke <strong className="text-charcoal">{sent.email}</strong>. Buka email itu lalu ketuk tombol <strong>Masuk ke PURA</strong>. Tautan berlaku 15 menit.</p>
         <p className="mt-3 text-sm text-muted">Tidak ada di Kotak Masuk? Periksa folder <strong>Spam</strong> atau <strong>Promosi</strong>.</p>
         {sent.devLink && (
           <div className="mt-6 rounded-2xl border border-dashed border-gold bg-gold-light/50 p-4 text-left text-sm text-gold-dark">
@@ -56,9 +56,9 @@ function LoginForm() {
   return (
     <div>
       <h1 className="text-3xl font-extrabold text-forest">{params.get("daftar") ? "Daftar / Masuk" : "Masuk"}</h1>
-      <p className="mt-2 text-[17px] text-muted">Untuk umat dan pengurus. Belum punya akun? Cukup masuk — akun umat dibuat otomatis.</p>
+      <p className="mt-2 text-[1.0625rem] text-muted">Untuk umat dan pengurus. Belum punya akun? Cukup masuk — akun umat dibuat otomatis.</p>
 
-      {errorCode && <p className="mt-5 rounded-2xl bg-red-50 p-3.5 text-[15px] font-medium text-red-700" role="alert">{ERRORS[errorCode] ?? errorCode}</p>}
+      {errorCode && <p className="mt-5 rounded-2xl bg-red-50 p-3.5 text-[0.9375rem] font-medium text-red-700" role="alert">{ERRORS[errorCode] ?? errorCode}</p>}
       {setupNeeded && (
         <Link href="/setup" className="mt-5 flex items-center gap-3 rounded-2xl border border-gold/50 bg-gold-light/60 p-4 text-gold-dark hover:bg-gold-light">
           <KeyRound className="h-5 w-5 shrink-0" />
@@ -72,7 +72,7 @@ function LoginForm() {
       ) : (
         <>
           {opts.google && (
-            <a href={`/api/auth/google${next ? `?next=${encodeURIComponent(next)}` : ""}`} className="press mt-7 flex h-14 w-full items-center justify-center gap-3 rounded-2xl border border-line bg-white text-[17px] font-bold text-charcoal shadow-soft hover:bg-ivory">
+            <a href={`/api/auth/google${next ? `?next=${encodeURIComponent(next)}` : ""}`} className="press mt-7 flex h-14 w-full items-center justify-center gap-3 rounded-2xl border border-line bg-white text-[1.0625rem] font-bold text-charcoal shadow-soft hover:bg-ivory">
               <GoogleIcon className="h-6 w-6" /> Masuk dengan Google
             </a>
           )}
@@ -100,7 +100,7 @@ function LoginForm() {
           </form>
           )}
           {!opts.google && !opts.email && (
-            <p className="mt-7 rounded-2xl bg-amber-50 p-4 text-[15px] text-amber-900" role="alert">Cara masuk belum diatur oleh pengelola (Google atau email). Hubungi Admin Utama.</p>
+            <p className="mt-7 rounded-2xl bg-amber-50 p-4 text-[0.9375rem] text-amber-900" role="alert">Cara masuk belum diatur oleh pengelola (Google atau email). Hubungi Admin Utama.</p>
           )}
         </>
       )}
