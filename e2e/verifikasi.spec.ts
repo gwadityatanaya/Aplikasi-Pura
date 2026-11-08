@@ -46,3 +46,52 @@ test("hanya Admin Utama: pengurus tidak bisa mengubah atau melihatnya; tidak ada
   expect(await (await wayan.get("/api/state")).text()).not.toContain(NOTE);
   expect(await (await (await pw.newContext({ baseURL: BASE })).get("/api/public")).text()).not.toContain(NOTE);
 });
+
+// Decision Phase 3.4: activating a pura before the checklist is 4/4 is allowed, with a warning and
+// a required reason that is written to the Log.
+test("mengaktifkan pura sebelum checklist 4/4: peringatan, alasan wajib, tercatat di Log", async ({ page }) => {
+  const admin = await pw.newContext({ baseURL: BASE });
+  await signInApi(admin, "admin@contoh.id");
+  const users = async () => (await (await admin.get("/api/admin/users")).json()) as { temples: { id: string; name: string; status: string }[]; banjars: { id: string; name: string }[] };
+  const banjarId = (await users()).banjars.find((b) => b.name === "CONTOH Banjar Adat Kertha Sari")!.id;
+  const make = async (name: string) => {
+    const r = await command<{ id: string }>(admin, "adminSaveTemple", { name, banjarIds: [banjarId], status: "pending" });
+    expect(r.ok, r.error).toBe(true);
+    return r.value.id;
+  };
+  const activate = (id: string, name: string, activationReason?: string) => command(admin, "adminSaveTemple", { id, name, banjarIds: [banjarId], status: "active", activationReason });
+
+  // API: without a reason → refused (checklist 0/4); with a reason → active + Log entry.
+  const early = await make("CONTOH Pura Uji Aktivasi Awal");
+  const refused = await activate(early, "CONTOH Pura Uji Aktivasi Awal");
+  expect(refused.ok).toBe(false);
+  expect(refused.error).toContain("Checklist verifikasi baru 0/4");
+  expect((await users()).temples.find((t) => t.id === early)!.status).toBe("pending");
+  const ok = await activate(early, "CONTOH Pura Uji Aktivasi Awal", "Dipakai untuk odalan minggu depan, verifikasi menyusul");
+  expect(ok.ok, ok.error).toBe(true);
+  expect((await users()).temples.find((t) => t.id === early)!.status).toBe("active");
+  const log = await (await admin.get("/api/admin/log")).text();
+  expect(log).toContain("Mengaktifkan pura sebelum verifikasi lengkap");
+  expect(log).toContain("(0/4). Alasan: Dipakai untuk odalan minggu depan");
+
+  // Checklist 4/4 → no reason needed.
+  const full = await make("CONTOH Pura Uji Aktivasi Lengkap");
+  expect((await command(admin, "adminSaveVerification", { templeId: full, referenceContactedAt: "2026-10-01", videoCallAt: "2026-10-02", accountCheckedAt: "2026-10-03", accountHolderType: "banjar", trialStart: "2026-10-04" })).ok).toBe(true);
+  expect((await activate(full, "CONTOH Pura Uji Aktivasi Lengkap")).ok).toBe(true);
+
+  // Screen: the warning and the reason field appear only when activating early.
+  const ui = await make("CONTOH Pura Uji Aktivasi Layar");
+  await signInUi(page, "admin@contoh.id");
+  await page.goto("/app/admin");
+  await page.locator("li").filter({ hasText: "CONTOH Pura Uji Aktivasi Layar" }).getByRole("button", { name: "Ubah data" }).click();
+  const dlg = page.getByRole("dialog");
+  await expect(dlg.getByText(/Checklist verifikasi pura ini baru/)).toHaveCount(0);
+  await dlg.getByLabel("Status").selectOption("active");
+  await expect(dlg.getByText("Checklist verifikasi pura ini baru 0/4")).toBeVisible();
+  await dlg.getByRole("button", { name: "Simpan" }).click();
+  await expect(page.getByText(/Tulis alasan \(minimal 5 huruf\)/)).toBeVisible(); // refused, dialog stays open
+  await dlg.getByLabel("Alasan mengaktifkan sekarang (wajib)").fill("Uji layar: rekening sudah dicek langsung");
+  await dlg.getByRole("button", { name: "Simpan" }).click();
+  await expect(page.getByText("Data pura disimpan")).toBeVisible();
+  expect((await users()).temples.find((t) => t.id === ui)!.status).toBe("active");
+});

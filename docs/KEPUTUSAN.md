@@ -86,10 +86,10 @@ Semua sudah berjalan dengan pilihan "saran" di bawah. Jawab hanya yang ingin diu
 
 **Pengajuan pendaftaran & verifikasi**
 
-1. **Pengajuan yang disetujui membuat pura berstatus belum aktif** (lencana "Nonaktif"), bukan langsung aktif. Pura baru aktif setelah Admin Utama mengubah statusnya lewat **Ubah data** (biasanya setelah checklist verifikasi selesai). Tidak ada akun pengurus atau rekening yang dibuat otomatis. *Saran: biarkan.*
+1. ✅ *(diputuskan: biarkan)* **Pengajuan yang disetujui membuat pura berstatus belum aktif** (lencana "Nonaktif"), bukan langsung aktif. Pura baru aktif setelah Admin Utama mengubah statusnya lewat **Ubah data** (biasanya setelah checklist verifikasi selesai). Tidak ada akun pengurus atau rekening yang dibuat otomatis. *Saran: biarkan.*
 2. **Batas kirim: 3 pengajuan per hari per jaringan internet**, dan WA/email yang masih punya pengajuan menunggu ditolak dengan pesan "sudah kami terima". Satu warnet atau wifi balai banjar bisa terkena batas yang sama. *Saran: biarkan.*
-3. **Data pemohon disimpan selama aplikasi dipakai**, juga yang ditolak. Perlu pengajuan berstatus **Ditolak** dihapus otomatis, misalnya setelah 6 bulan?
-4. **Checklist verifikasi tidak mengunci aktivasi pura.** Pura tetap bisa diaktifkan walau checklist belum 4/4 (checklist hanya catatan). Haruskah aktivasi menunggu 4/4?
+3. ✅ *(diputuskan, sudah dikerjakan)* Pengajuan berstatus **Ditolak dihapus otomatis 6 bulan** setelah perubahan terakhirnya; Log mencatat jumlahnya saja.
+4. ✅ *(diputuskan, sudah dikerjakan)* **Aktivasi pura tidak dikunci**, tetapi jika checklist belum 4/4 muncul peringatan dan **alasan wajib**, tercatat di Log Aktivitas. Catatan: aturan ini berlaku saat pura yang **belum aktif** diaktifkan. Pura yang **langsung ditambahkan** Admin Utama lewat **Tambah pura** dengan status Aktif tidak dimintai alasan. Perlu juga di sana?
 
 **Pemeliharaan**
 
@@ -102,7 +102,7 @@ Semua sudah berjalan dengan pilihan "saran" di bawah. Jawab hanya yang ingin diu
 8. **Ukuran huruf** satu pilihan per akun, berlaku di Dashboard maupun Tampilan Umat. Sebelum masuk, pilihan disimpan di perangkat saja. *Saran: biarkan.*
 9. **Bukti pencatatan punia** tersedia untuk semua status (menunggu, disahkan, ditolak, dikoreksi). Nomor catatan hanya ada setelah disahkan; sebelumnya tampil **kode kiriman**. *Saran: biarkan.*
 10. **Nama pada bukti punia ANONIM** disembunyikan secara bawaan ("Anonim"). Pemilik akun bisa mencentang agar namanya ikut tercetak. *Saran: biarkan.*
-11. **Pengurus dan Admin Utama tidak bisa membuka bukti punia umat** (hanya pemilik akun). Akibatnya pengurus tidak bisa mencetakkan bukti untuk umat yang datang ke pura. Punia yang dicatat manual juga tidak punya bukti digital. Perlu versi bukti yang bisa dicetak pengurus?
+11. ⏳ *(dicatat untuk Phase 3.6)* **Pengurus dan Admin Utama tidak bisa membuka bukti punia umat** (hanya pemilik akun). Akibatnya pengurus tidak bisa mencetakkan bukti untuk umat yang datang ke pura. Punia yang dicatat manual juga tidak punya bukti digital. Perlu versi bukti yang bisa dicetak pengurus?
 
 **Mode demo**
 
@@ -111,7 +111,7 @@ Semua sudah berjalan dengan pilihan "saran" di bawah. Jawab hanya yang ingin diu
 
 **Panduan**
 
-14. **PANDUAN.md masih menulis email Google Anda** di langkah pemasangan (Admin Utama, `ADMIN_EMAIL`, `/setup`). Ini bukan kunci rahasia, tetapi jika panduan akan dibagikan ke banjar lain, sebaiknya diganti dengan contoh seperti `email-admin@contoh.com`. Saya tidak mengubahnya tanpa persetujuan Anda. Ganti?
+14. ✅ *(diputuskan, sudah dikerjakan: diganti `admin@contoh.id`)* **PANDUAN.md masih menulis email Google Anda** di langkah pemasangan (Admin Utama, `ADMIN_EMAIL`, `/setup`). Ini bukan kunci rahasia, tetapi jika panduan akan dibagikan ke banjar lain, sebaiknya diganti dengan contoh seperti `email-admin@contoh.com`. Saya tidak mengubahnya tanpa persetujuan Anda. Ganti?
 
 ## Bahan pilot (dijawab sebelum pilot, tidak perlu untuk demo)
 

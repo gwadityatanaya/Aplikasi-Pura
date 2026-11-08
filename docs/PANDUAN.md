@@ -82,7 +82,7 @@ Saat masuk, aplikasi mencocokkan email (huruf besar/kecil tidak berpengaruh). Em
 ## 3. Yang perlu disiapkan
 
 - [ ] Akun **GitHub** (sudah ada; kode ada di repo `Aplikasi-Pura`).
-- [ ] Email Admin Utama: `wiraaditya452@gmail.com` (akun Google).
+- [ ] Email Admin Utama: email akun Google Anda (di panduan ini ditulis sebagai contoh `admin@contoh.id`).
 - [ ] Laptop/komputer (lebih mudah daripada HP untuk langkah awal).
 - [ ] Tempat aman untuk catatan rahasia (buku pribadi atau pengelola kata sandi).
 
@@ -199,7 +199,7 @@ Untuk uji coba, cukup **Brevo paket Free** dengan **akun Gmail khusus proyek** (
    |---|---|
    | `DATABASE_URL` | dari Langkah 1 nomor 3 (yang ada `-pooler`) |
    | `DATABASE_URL_UNPOOLED` | dari Langkah 1 nomor 4 |
-   | `ADMIN_EMAIL` | `wiraaditya452@gmail.com` |
+   | `ADMIN_EMAIL` | email Google Admin Utama, mis. `admin@contoh.id` (ganti dengan email Anda) |
    | `SETUP_TOKEN` | dari Langkah 2 |
    | `CRON_SECRET` | dari Langkah 2 |
    | `APP_TIMEZONE` | `Asia/Makassar` (WITA). `Asia/Jakarta` untuk WIB. |
@@ -250,10 +250,10 @@ Jika alamat aplikasi berubah (mis. memakai domain sendiri), ubah juga **Authoriz
 ## Langkah 6 — Akun Admin Utama (sekali saja)
 
 1. Buka `https://ALAMAT-ANDA/setup`.
-2. Isi **Kode setup** (SETUP_TOKEN), **Nama lengkap**, dan **Email** `wiraaditya452@gmail.com` (harus sama dengan `ADMIN_EMAIL`).
+2. Isi **Kode setup** (SETUP_TOKEN), **Nama lengkap**, dan **Email** `admin@contoh.id` (harus sama dengan `ADMIN_EMAIL`).
 3. Klik **Buat Admin Utama**. Anda langsung masuk ke **Back Office**.
 
-Setelah itu **halaman `/setup` terkunci selamanya**. Berikutnya Anda masuk dengan **Masuk dengan Google** (akun `wiraaditya452@gmail.com`) atau tautan email. *(Disarankan)* hapus `SETUP_TOKEN` dari Vercel lalu Redeploy.
+Setelah itu **halaman `/setup` terkunci selamanya**. Berikutnya Anda masuk dengan **Masuk dengan Google** (akun `admin@contoh.id`) atau tautan email. *(Disarankan)* hapus `SETUP_TOKEN` dari Vercel lalu Redeploy.
 
 ---
 
@@ -282,6 +282,7 @@ Banjar yang ingin memakai PURA mengisi formulir publik **Ajukan pendaftaran** (a
 - **Back Office → Pengajuan** (lencana menunjukkan pengajuan baru; hanya Admin Utama yang bisa melihat): buka pengajuan → ubah **status** (Baru, Sedang diverifikasi, Ditolak) dan tulis **catatan internal**.
 - Setelah yakin, tekan **Jadikan banjar & pura**: pilih banjar yang sudah ada atau buat banjar baru, periksa nama pura, lalu **Ya, buat**. Wilayah terisi otomatis. Pura dibuat dengan status **menunggu** (belum tampil di publik), dan **tidak ada akun atau peran yang dibuat** — lanjutkan seperti biasa: isi rekening, daftarkan pengurus, lalu aktifkan pura lewat **Ubah data**.
 - Log Aktivitas hanya mencatat nama banjar dan pura, bukan data pribadi pemohon.
+- Pengajuan berstatus **Ditolak** **dihapus otomatis 6 bulan** setelah perubahan terakhirnya (nama, WA, dan email pemohon tidak disimpan lebih lama). Log Aktivitas hanya mencatat jumlah yang dihapus. (Keputusan Phase 3.4.)
 
 ### Dasbor angka
 
@@ -290,6 +291,8 @@ Banjar yang ingin memakai PURA mengisi formulir publik **Ajukan pendaftaran** (a
 ### Catatan verifikasi per pura (internal)
 
 Pada kartu pura di **Back Office → Pura** tekan **Verifikasi**. Isinya checklist bertanggal: **pemberi referensi sudah dihubungi**, **panggilan video** dengan pengurus, **rekening resmi sudah dicek** (atas nama pura, banjar, atau lainnya), **masa percobaan** (mulai dan selesai), dan **catatan bebas**. Kartu pura menampilkan **Verifikasi n/4** dan **Percobaan s.d. …** (merah jika sudah lewat). Hanya Admin Utama yang bisa melihat dan mengubahnya; setiap perubahan tercatat di Log Aktivitas.
+
+**Mengaktifkan pura sebelum checklist 4/4:** boleh, tetapi saat status pura diubah menjadi **Aktif** lewat **Ubah data**, muncul peringatan kuning ("Checklist verifikasi pura ini baru n/4") dan **alasan wajib diisi**. Alasan itu tercatat di Log Aktivitas sebagai "Mengaktifkan pura sebelum verifikasi lengkap". Jika checklist sudah 4/4, tidak perlu alasan. (Keputusan Phase 3.4: tidak dikunci, tetapi wajib alasan.)
 
 ### Jabatan pengurus (Ketua, Sekretaris, Bendahara, Kelian Banjar)
 

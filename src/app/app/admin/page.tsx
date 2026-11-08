@@ -45,7 +45,7 @@ const pickAddress = (x: AddressValue): AddressValue => ({
   province: x.province, regency: x.regency, district: x.district, village: x.village,
   provinceCode: x.provinceCode ?? null, regencyCode: x.regencyCode ?? null, districtCode: x.districtCode ?? null, villageCode: x.villageCode ?? null,
 });
-const emptyTemple = { id: "", name: "", ...emptyAddress, address: "", description: "", phone: "", status: "active" as "active" | "pending", banjarIds: [] as string[] };
+const emptyTemple = { id: "", name: "", ...emptyAddress, address: "", description: "", phone: "", status: "active" as "active" | "pending", banjarIds: [] as string[], activationReason: "" };
 const emptyBanjar = { id: "", name: "", ...emptyAddress, address: "" };
 
 export default function BackOfficePage() {
@@ -188,7 +188,7 @@ export default function BackOfficePage() {
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 pl-9">
                     <Button size="sm" onClick={async () => { const r = await setActive(t.id); if (!r.ok) return toast.error(r.error); router.push("/app"); }}><Eye className="h-4 w-4" /> Buka dashboard</Button>
-                    <Button size="sm" variant="outline" onClick={() => setTempleForm({ id: t.id, name: t.name, ...pickAddress(t), address: t.address, description: t.description, phone: t.phone, status: t.status === "active" ? "active" : "pending", banjarIds: t.banjarIds })}><Pencil className="h-4 w-4" /> Ubah data</Button>
+                    <Button size="sm" variant="outline" onClick={() => setTempleForm({ id: t.id, name: t.name, ...pickAddress(t), address: t.address, description: t.description, phone: t.phone, status: t.status === "active" ? "active" : "pending", banjarIds: t.banjarIds, activationReason: "" })}><Pencil className="h-4 w-4" /> Ubah data</Button>
                     <Button size="sm" variant="outline" onClick={() => setBankFor(t.id)}><Landmark className="h-4 w-4" /> Rekening</Button>
                     <Button size="sm" variant="outline" onClick={() => setVerifyFor(t.id)}><ClipboardCheck className="h-4 w-4" /> Verifikasi</Button>
                     <Button size="sm" variant="outline" onClick={() => { setNewStaff({ email: "", name: "", role: "pengurus" }); setStaffFor({ kind: "temple", t }); }}><Users className="h-4 w-4" /> Pengurus</Button>
@@ -317,7 +317,7 @@ export default function BackOfficePage() {
         open={!!templeForm}
         onClose={() => setTempleForm(null)}
         title={templeForm?.id ? "Ubah data pura" : "Tambah pura"}
-        footer={<Button size="lg" className="w-full" loading={busy} onClick={async () => { if (!templeForm) return; const { id, ...rest } = templeForm; if (await done(run("adminSaveTemple", { ...rest, id: id || undefined }), id ? "Data pura disimpan" : "Pura ditambahkan")) setTempleForm(null); }}>Simpan</Button>}
+        footer={<Button size="lg" className="w-full" loading={busy} onClick={async () => { if (!templeForm) return; const { id, activationReason, ...rest } = templeForm; if (await done(run("adminSaveTemple", { ...rest, id: id || undefined, activationReason: activationReason.trim() || undefined }), id ? "Data pura disimpan" : "Pura ditambahkan")) setTempleForm(null); }}>Simpan</Button>}
       >
         {templeForm && (
           <div className="space-y-4">
@@ -346,6 +346,18 @@ export default function BackOfficePage() {
                 <option value="pending">Nonaktif — tersembunyi dari umat</option>
               </Select>
             </Field>
+            {(() => {
+              // Activating before the checklist is 4/4: allowed, with a warning and a required reason (logged).
+              const orig = templeForm.id ? data?.temples.find((t) => t.id === templeForm.id) : undefined;
+              const pr = verificationProgress(orig?.verification);
+              if (!orig || orig.status === "active" || templeForm.status !== "active" || pr.done >= pr.total) return null;
+              return (
+                <div className="space-y-3 rounded-xl border border-amber-300 bg-amber-50 p-3" role="alert">
+                  <p className="text-[0.9375rem] font-semibold text-amber-900">Checklist verifikasi pura ini baru {pr.done}/{pr.total}. Pura tetap bisa diaktifkan, tetapi alasannya wajib ditulis dan tercatat di Log Aktivitas.</p>
+                  <Field label="Alasan mengaktifkan sekarang (wajib)" htmlFor="tp-act-reason"><Textarea id="tp-act-reason" rows={2} value={templeForm.activationReason} onChange={(e) => setTempleForm({ ...templeForm, activationReason: e.target.value })} /></Field>
+                </div>
+              );
+            })()}
           </div>
         )}
       </Dialog>

@@ -5,6 +5,7 @@ import { db, schema, type Tx } from "./db";
 import { ApiError, todayInAppTz } from "./http";
 import { personalDataIn } from "@/lib/personal-data";
 import { assertNotBeforeStart } from "./books-guard";
+import { earlyActivationNote } from "./verification-guard";
 import { requirePerm, requireSuperAdmin, requireTemple, templeAccess, type Ctx } from "./context";
 import { diff, logActivity } from "./log";
 import { persistImage } from "./images";
@@ -590,11 +591,13 @@ export const coreCommands: Record<string, Handler> = {
   // ---- Admin Utama only --------------------------------------------------
   async setTempleStatus(ctx, p) {
     await requireSuperAdmin(ctx, "mengubah status pura");
-    const { templeId, status } = z.object({ templeId: id, status: z.enum(["active", "pending", "rejected"]) }).parse(p);
+    const { templeId, status, activationReason } = z.object({ templeId: id, status: z.enum(["active", "pending", "rejected"]), activationReason: z.string().max(500).optional() }).parse(p);
     return db.transaction(async (tx) => {
       const t = await one(tx.select().from(T.temples).where(eq(T.temples.id, templeId)));
       if (t.status === "archived") throw new ApiError(409, "Pura ini diarsipkan. Gunakan \"Aktifkan kembali\" (dengan alasan) di Back Office.");
+      const early = status === "active" && t.status !== "active" ? await earlyActivationNote(tx, templeId, activationReason) : "";
       await tx.update(T.temples).set({ status }).where(eq(T.temples.id, templeId));
+      if (early) await log(ctx, tx, { action: "Mengaktifkan pura sebelum verifikasi lengkap", entity: "settings", entityId: templeId, detail: `${t.name} — ${early}`, templeId });
       await log(ctx, tx, { action: status === "active" ? "Menyetujui pura" : status === "rejected" ? "Menolak pura" : "Menangguhkan pura", entity: "settings", entityId: templeId, detail: t.name, templeId });
       return null;
     });
@@ -630,4 +633,5 @@ export async function housekeeping() {
   // Waiting punia emails (e.g. postponed yesterday because of the daily quota).
   if ((await import("./email")).puniaEmailEnabled()) await (await import("./email-queue")).processEmailQueue(10);
   await (await import("./email-queue")).cleanupEmailQueue();
+  await (await import("./commands-admin")).cleanupRejectedRegistrations();
 }

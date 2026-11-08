@@ -17,12 +17,7 @@ export interface Verification {
   updatedAt: string;
 }
 
-/** How far the checklist is: reference, video call, account in the name of the pura/banjar, trial. */
-export function verificationProgress(v?: Verification) {
-  if (!v) return { done: 0, total: 4 };
-  const done = [v.referenceContactedAt, v.videoCallAt, v.accountCheckedAt && v.accountHolderType !== "lain", v.trialStart].filter(Boolean).length;
-  return { done, total: 4 };
-}
+export { verificationProgress } from "@/lib/verification";
 
 const HOLDER = { pura: "Atas nama pura", banjar: "Atas nama banjar", lain: "Atas nama lain (perlu tindak lanjut)" } as const;
 

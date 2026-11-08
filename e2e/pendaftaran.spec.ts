@@ -1,4 +1,5 @@
 import { expect, request as pw, test } from "@playwright/test";
+import { execFileSync } from "child_process";
 import postgres from "postgres";
 import { clearRateLimits, command, signInApi, signInUi } from "./helpers";
 
@@ -120,4 +121,30 @@ test("Admin Utama: status & catatan internal, lalu satu tombol menjadi banjar & 
   expect((await command(admin, "adminConvertRegistration", { id: r.id })).ok).toBe(false);
   const log = await (await admin.get("/api/admin/log")).text();
   expect(log).toContain("Menyetujui pengajuan pendaftaran");
+});
+
+// Decision Phase 3.4: rejected requests are deleted automatically 6 months after their last change.
+test("pengajuan Ditolak dihapus otomatis setelah 6 bulan; yang lain tetap; tercatat jumlahnya", async () => {
+  const db = postgres(process.env.E2E_DATABASE_URL!, { max: 1, onnotice: () => {} });
+  const row = (id: string, status: string, monthsAgo: number) => ({
+    id, banjar_name: `CONTOH Banjar Hapus ${id}`, temple_name: "CONTOH Pura Hapus", applicant_name: "Pemohon (contoh)", applicant_position: "Kelian",
+    whatsapp: "080000000000", google_email: `${id}@contoh.id`, referrer_name: "Ref (contoh)", referrer_contact: "080000000001", reason: "uji hapus otomatis",
+    consent_at: new Date(), status, updated_at: new Date(Date.now() - monthsAgo * 31 * 86400_000),
+  });
+  try {
+    await db`insert into registration_requests ${db([row("rg_tolak_lama", "ditolak", 7), row("rg_tolak_baru", "ditolak", 5), row("rg_baru_lama", "baru", 7)])}`;
+    const out = execFileSync("npx", ["tsx", "--require", "./scripts/allow-server-only.cjs", "-e", 'import("./src/server/commands-admin").then((m) => (m.cleanupRejectedRegistrations ?? m.default.cleanupRejectedRegistrations)()).then((n) => { console.log("DIHAPUS=" + n); process.exit(0); })'], {
+      env: { ...process.env, DATABASE_URL: process.env.E2E_DATABASE_URL!, DATABASE_URL_UNPOOLED: process.env.E2E_DATABASE_URL! },
+      encoding: "utf8",
+    });
+    expect(out).toContain("DIHAPUS=1");
+    const left = (await db<{ id: string }[]>`select id from registration_requests where id like 'rg_%_%' and id in ('rg_tolak_lama','rg_tolak_baru','rg_baru_lama')`).map((r) => r.id).sort();
+    expect(left).toEqual(["rg_baru_lama", "rg_tolak_baru"]);
+    const [log] = await db<{ detail: string }[]>`select detail from activity_log where action = 'Menghapus pengajuan pendaftaran yang ditolak' order by at desc limit 1`;
+    expect(log.detail).toContain("1 pengajuan berstatus Ditolak");
+    expect(log.detail).not.toContain("rg_tolak_lama@contoh.id");
+  } finally {
+    await db`delete from registration_requests where id in ('rg_tolak_baru','rg_baru_lama')`;
+    await db.end();
+  }
 });

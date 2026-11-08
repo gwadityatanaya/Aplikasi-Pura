@@ -1,4 +1,5 @@
 import "server-only";
+import { earlyActivationNote } from "./verification-guard";
 import { z } from "zod";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db, schema as T } from "./db";
@@ -6,7 +7,7 @@ import { ApiError, todayInAppTz } from "./http";
 import { decodeImage, persistImage } from "./images";
 import { requireSuperAdmin, requireTemple } from "./context";
 import { resolveAddress, type AddressInput } from "./wilayah";
-import { diff } from "./log";
+import { diff, logActivity } from "./log";
 import { id, isoDate, log, one, optId, optText, text, type Handler } from "./commands";
 import * as m from "./map";
 import { categoriesFor } from "@/lib/categories";
@@ -66,13 +67,15 @@ export const adminCommands: Record<string, Handler> = {
         id: optId, name: text(120).min(4, "Nama pura minimal 4 huruf"),
         ...addressFields, description: text(600).default(""), phone: text(20).default(""), status: z.enum(["active", "pending"]).default("active"),
         banjarIds: z.array(id).min(1, "Pilih minimal satu banjar pengempon").max(10),
+        /** Required when a non-active temple is activated before its verification checklist is 4/4 */
+        activationReason: z.string().trim().max(500).optional(),
       })
       .parse(p);
     return db.transaction(async (tx) => {
       const banjars = await tx.select().from(T.banjars).where(inArray(T.banjars.id, i.banjarIds));
       if (banjars.length !== i.banjarIds.length) throw new ApiError(400, "Banjar tidak ditemukan.");
       const { rest, address } = splitAddress(i);
-      const { id: tid, banjarIds, ...base } = rest;
+      const { id: tid, banjarIds, activationReason, ...base } = rest;
       const values = { ...base, ...address };
       let templeId = tid;
       if (templeId) {
@@ -80,11 +83,15 @@ export const adminCommands: Record<string, Handler> = {
         const before = (await tx.select().from(T.templeBanjars).where(eq(T.templeBanjars.templeId, templeId))).map((r) => r.banjarId).sort();
         // An archived temple stays archived; it is reactivated only through unarchiveTemple.
         if (cur.status === "archived" || cur.status === "rejected") values.status = cur.status as typeof values.status;
+        // Activating before the verification checklist is complete is allowed, but only with a
+        // reason, which is written to the Log (decision Phase 3.4).
+        const earlyActivation = cur.status !== "active" && values.status === "active" ? await earlyActivationNote(tx, templeId, activationReason) : "";
         await tx.update(T.temples).set(values).where(eq(T.temples.id, templeId));
         await tx.delete(T.templeBanjars).where(eq(T.templeBanjars.templeId, templeId));
         const changes = diff(cur, values, Object.keys(values)) ?? {};
         if (JSON.stringify(before) !== JSON.stringify([...banjarIds].sort())) Object.assign(changes, { banjarPengempon: { dari: before, menjadi: banjarIds } });
         await log(ctx, tx, { action: "Mengubah data pura", entity: "settings", entityId: templeId, detail: values.name, changes, templeId });
+        if (earlyActivation) await log(ctx, tx, { action: "Mengaktifkan pura sebelum verifikasi lengkap", entity: "settings", entityId: templeId, detail: `${values.name} — ${earlyActivation}`, templeId });
       } else {
         templeId = await insertTemple(tx, values);
         await log(ctx, tx, { action: "Menambah pura", entity: "settings", entityId: templeId, detail: `${values.name} (banjar: ${banjars.map((b) => b.name).join(", ")})`, templeId });
@@ -686,4 +693,19 @@ async function templeData(tx: Tx, t: typeof T.temples.$inferSelect) {
   if (files || t.photo) found.push("foto/nota");
   if (bal.n) found.push("saldo awal kas");
   return found;
+}
+
+/**
+ * Registration requests that were REJECTED are deleted 6 months after their last change (decision
+ * Phase 3.4) — the applicant's name, WA and email are not kept longer than needed. The Log keeps
+ * only the count (it never held personal data of applicants).
+ */
+export async function cleanupRejectedRegistrations() {
+  const gone = await db
+    .delete(T.registrationRequests)
+    .where(and(eq(T.registrationRequests.status, "ditolak"), sql`${T.registrationRequests.updatedAt} < now() - interval '6 months'`))
+    .returning({ id: T.registrationRequests.id });
+  if (gone.length)
+    await logActivity({ actor: { id: null, name: "Sistem (pembersihan otomatis)" }, action: "Menghapus pengajuan pendaftaran yang ditolak", entity: "registration", detail: `${gone.length} pengajuan berstatus Ditolak lebih dari 6 bulan dihapus otomatis.`, templeId: null });
+  return gone.length;
 }
