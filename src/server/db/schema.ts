@@ -384,6 +384,40 @@ export const attachments = pgTable("attachments", {
   createdAt: ts("created_at").notNull().defaultNow(),
 });
 
+/**
+ * "Ajukan pendaftaran": a banjar asks to use the app (public form, no login). Only Admin Utama can
+ * read it. It never creates access by itself; Admin Utama turns it into a banjar + pura by hand.
+ */
+export const registrationRequests = pgTable("registration_requests", {
+  id: text("id").primaryKey(),
+  banjarName: text("banjar_name").notNull(),
+  province: text("province").notNull().default(""),
+  regency: text("regency").notNull().default(""),
+  district: text("district").notNull().default(""),
+  village: text("village").notNull().default(""),
+  provinceCode: text("province_code"),
+  regencyCode: text("regency_code"),
+  districtCode: text("district_code"),
+  villageCode: text("village_code"),
+  templeName: text("temple_name").notNull(),
+  applicantName: text("applicant_name").notNull(),
+  applicantPosition: text("applicant_position").notNull(),
+  whatsapp: text("whatsapp").notNull(),
+  googleEmail: text("google_email").notNull(),
+  referrerName: text("referrer_name").notNull(),
+  referrerContact: text("referrer_contact").notNull(),
+  reason: text("reason").notNull(),
+  consentAt: ts("consent_at").notNull(),
+  /** baru | verifikasi | disetujui | ditolak */
+  status: text("status").notNull().default("baru"),
+  internalNote: text("internal_note").notNull().default(""),
+  convertedBanjarId: text("converted_banjar_id"),
+  convertedTempleId: text("converted_temple_id"),
+  decidedBy: text("decided_by"),
+  createdAt: ts("created_at").notNull().defaultNow(),
+  updatedAt: ts("updated_at").notNull().defaultNow(),
+}, (t) => [index("registration_status").on(t.status, t.createdAt)]);
+
 /** A correction of a locked opening balance: append-only, with reason and two witnesses. */
 export const openingCorrections = pgTable("opening_corrections", {
   id: text("id").primaryKey(),

@@ -29,6 +29,7 @@ export function PublicFooter() {
               <li><Link className="hover:text-emerald-700" href="/umat">Punia Saya</Link></li>
               <li><Link className="hover:text-emerald-700" href="/kebijakan-privasi">Kebijakan Privasi</Link></li>
               <li><Link className="hover:text-emerald-700" href="/pasang">Pasang di HP</Link></li>
+              <li><Link className="hover:text-emerald-700" href="/ajukan-pendaftaran">Ajukan pendaftaran banjar</Link></li>
             </ul>
           </div>
         </div>

@@ -42,6 +42,7 @@ test("halaman publik pas dengan lebar layar", async ({ page }) => {
   await checkPage(page, `/pura/${slug}`, "halaman-pura");
   await checkPage(page, "/pasang", "pasang-di-hp");
   await checkPage(page, "/masuk", "masuk");
+  await checkPage(page, "/ajukan-pendaftaran", "ajukan-pendaftaran");
 });
 
 test("dashboard pengurus pas dengan lebar layar", async ({ page }) => {

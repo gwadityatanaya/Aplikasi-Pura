@@ -6,7 +6,7 @@ import type { PgDatabase } from "drizzle-orm/pg-core";
 export const BACKUP_TABLES = [
   "users", "banjars", "temples", "temple_banjars", "banjar_members", "memberships", "accounts", "categories", "activities", "campaigns", "transactions",
   "donations", "reports", "notifications", "attachments", "activity_log", "help_tickets", "help_replies",
-  "opening_corrections", "reconciliations",
+  "opening_corrections", "reconciliations", "registration_requests",
 ] as const;
 
 type AnyDb = PgDatabase<any, any, any>;

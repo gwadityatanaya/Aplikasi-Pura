@@ -32,6 +32,16 @@ const sections: { title: string; body: React.ReactNode }[] = [
     ),
   },
   {
+    title: "Formulir pengajuan pendaftaran banjar",
+    body: (
+      <ul className="list-disc space-y-1 pl-5">
+        <li>Data di formulir <b>Ajukan pendaftaran</b> (nama banjar, wilayah, nama pura, nama dan jabatan pemohon, nomor WhatsApp, email, pemberi referensi dan kontaknya, alasan) hanya dilihat <b>Admin Utama</b> untuk memverifikasi pendaftaran, termasuk menghubungi Anda dan pemberi referensi. Tidak ditampilkan di halaman publik.</li>
+        <li>Kami tidak meminta KTP atau nomor identitas. Mengirim formulir tidak memberi akses apa pun ke aplikasi.</li>
+        <li>Log Aktivitas hanya mencatat nama banjar dan pura dari pengajuan, bukan data pribadi pemohon.</li>
+      </ul>
+    ),
+  },
+  {
     title: "Email konfirmasi punia",
     body: (
       <ul className="list-disc space-y-1 pl-5">

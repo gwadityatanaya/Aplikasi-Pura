@@ -2,6 +2,7 @@
 import { WilayahPicker, emptyAddress, type AddressValue } from "@/components/app/wilayah-picker";
 import { ARCHIVE_COMMAND, ArchiveDialog, type ArchiveTarget } from "@/components/app/archive-dialog";
 import { HelpInbox } from "@/components/app/help-inbox";
+import { RegistrationInbox } from "@/components/app/registration-inbox";
 import { BankAccountsDialog } from "@/components/app/bank-accounts-dialog";
 import { useRouter } from "next/navigation";
 import { templeLocation } from "@/lib/temple";
@@ -51,11 +52,12 @@ export default function BackOfficePage() {
   const me = useStore((s) => s.session?.userId);
   const run = useStore((s) => s.run);
   const refreshState = useStore((s) => s.refresh);
-  const [tab, setTab] = useState<"pura" | "banjar" | "akun" | "bantuan" | "cadangan">("pura");
+  const [tab, setTab] = useState<"pura" | "banjar" | "akun" | "pengajuan" | "bantuan" | "cadangan">("pura");
+  const [newRegs, setNewRegs] = useState(0);
   // Links such as /app/admin?tab=bantuan (from the help email) open that part directly.
   useEffect(() => {
     const t = new URLSearchParams(window.location.search).get("tab");
-    if (t === "bantuan" || t === "banjar" || t === "akun" || t === "cadangan") setTab(t);
+    if (t === "bantuan" || t === "banjar" || t === "akun" || t === "cadangan" || t === "pengajuan") setTab(t);
   }, []);
   const [data, setData] = useState<AdminData | null>(null);
   const [q, setQ] = useState("");
@@ -83,6 +85,11 @@ export default function BackOfficePage() {
   useEffect(() => {
     if (isAdmin) load();
   }, [load, isAdmin]);
+  // New registration requests: shown on the "Pengajuan" tab before it is opened.
+  useEffect(() => {
+    if (!isAdmin) return;
+    api<{ requests: { status: string }[] }>("/api/admin/pendaftaran").then(({ json }) => json.ok && setNewRegs(json.requests.filter((r) => r.status === "baru").length));
+  }, [isAdmin]);
 
   const banjarName = useCallback((id: string) => data?.banjars.find((b) => b.id === id)?.name ?? "—", [data]);
   const userById = useCallback((id: string) => data?.users.find((u) => u.id === id), [data]);
@@ -129,7 +136,7 @@ export default function BackOfficePage() {
       )}
 
       <div className="no-scrollbar -mx-4 overflow-x-auto px-4">
-        <Segmented value={tab} onChange={setTab} ariaLabel="Bagian Back Office" options={[{ value: "pura", label: "Pura" }, { value: "banjar", label: "Banjar" }, { value: "akun", label: "Akun" }, { value: "bantuan", label: access.help.inbox ? `Bantuan (${access.help.inbox})` : "Bantuan" }, { value: "cadangan", label: "Cadangan data" }]} />
+        <Segmented value={tab} onChange={setTab} ariaLabel="Bagian Back Office" options={[{ value: "pura", label: "Pura" }, { value: "banjar", label: "Banjar" }, { value: "akun", label: "Akun" }, { value: "pengajuan", label: newRegs ? `Pengajuan (${newRegs})` : "Pengajuan" }, { value: "bantuan", label: access.help.inbox ? `Bantuan (${access.help.inbox})` : "Bantuan" }, { value: "cadangan", label: "Cadangan data" }]} />
       </div>
       {!data && <div className="mt-4 space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20" />)}</div>}
 
@@ -263,6 +270,7 @@ export default function BackOfficePage() {
       )}
 
       {tab === "bantuan" && <HelpInbox />}
+      {data && tab === "pengajuan" && <RegistrationInbox banjars={data.banjars} onChanged={load} onCount={setNewRegs} />}
 
       {data && tab === "cadangan" && (
         <div className="mt-4 grid gap-4 md:grid-cols-2">

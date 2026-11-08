@@ -1,0 +1,30 @@
+CREATE TABLE "registration_requests" (
+	"id" text PRIMARY KEY NOT NULL,
+	"banjar_name" text NOT NULL,
+	"province" text DEFAULT '' NOT NULL,
+	"regency" text DEFAULT '' NOT NULL,
+	"district" text DEFAULT '' NOT NULL,
+	"village" text DEFAULT '' NOT NULL,
+	"province_code" text,
+	"regency_code" text,
+	"district_code" text,
+	"village_code" text,
+	"temple_name" text NOT NULL,
+	"applicant_name" text NOT NULL,
+	"applicant_position" text NOT NULL,
+	"whatsapp" text NOT NULL,
+	"google_email" text NOT NULL,
+	"referrer_name" text NOT NULL,
+	"referrer_contact" text NOT NULL,
+	"reason" text NOT NULL,
+	"consent_at" timestamp with time zone NOT NULL,
+	"status" text DEFAULT 'baru' NOT NULL,
+	"internal_note" text DEFAULT '' NOT NULL,
+	"converted_banjar_id" text,
+	"converted_temple_id" text,
+	"decided_by" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE INDEX "registration_status" ON "registration_requests" USING btree ("status","created_at");

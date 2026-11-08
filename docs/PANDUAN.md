@@ -257,6 +257,16 @@ Semua dilakukan di **Back Office** (menu kiri, atau **Lainnya** di HP). Semua pe
 6. **Mencabut/menonaktifkan** — tekan ikon hapus di daftar pengurus untuk mencabut peran, atau tab **Akun → Nonaktifkan** untuk menutup akunnya sama sekali. Aksesnya **langsung** hilang di semua perangkat.
 7. **Ganti email pengurus** (mis. pengurus ganti HP/akun Google) — tab **Akun** → cari orangnya → **Ganti email** → ketik email baru. Akunnya **tetap sama**: peran, pura yang dipegang, dan riwayatnya tidak berubah. Orang itu langsung dikeluarkan dari semua perangkat, lalu masuk lagi dengan email baru. Perubahan tercatat di Log Aktivitas (email lama, email baru, oleh siapa, kapan). Email Admin Utama sendiri tidak diganti dari sini.
 
+### Pengajuan pendaftaran dari banjar lain
+
+Banjar yang ingin memakai PURA mengisi formulir publik **Ajukan pendaftaran** (alamat `/ajukan-pendaftaran`, juga ada tautannya di bagian bawah setiap halaman publik). Tidak perlu masuk dan tidak meminta KTP atau nomor identitas. Isinya: nama banjar, wilayah (provinsi → desa/kelurahan), nama pura, nama dan jabatan pemohon, nomor WhatsApp, email Google, pemberi referensi dan kontaknya, alasan, dan persetujuan penggunaan data.
+
+- **Anti-spam:** paling banyak 3 pengajuan per jaringan per hari; nomor WhatsApp atau email yang masih menunggu verifikasi tidak bisa mengajukan lagi.
+- Pemohon diberi tahu bahwa pendaftaran **diverifikasi manual** dan bisa memakan waktu, dan bahwa pengajuan **belum memberi akses apa pun**.
+- **Back Office → Pengajuan** (lencana menunjukkan pengajuan baru; hanya Admin Utama yang bisa melihat): buka pengajuan → ubah **status** (Baru, Sedang diverifikasi, Ditolak) dan tulis **catatan internal**.
+- Setelah yakin, tekan **Jadikan banjar & pura**: pilih banjar yang sudah ada atau buat banjar baru, periksa nama pura, lalu **Ya, buat**. Wilayah terisi otomatis. Pura dibuat dengan status **menunggu** (belum tampil di publik), dan **tidak ada akun atau peran yang dibuat** — lanjutkan seperti biasa: isi rekening, daftarkan pengurus, lalu aktifkan pura lewat **Ubah data**.
+- Log Aktivitas hanya mencatat nama banjar dan pura, bukan data pribadi pemohon.
+
 ### Jabatan pengurus (Ketua, Sekretaris, Bendahara, Kelian Banjar)
 
 Jabatan dipakai untuk tanda tangan laporan. Jabatan disimpan **per kepengurusan**: satu orang bisa menjadi Ketua di satu pura dan Bendahara di pura lain.

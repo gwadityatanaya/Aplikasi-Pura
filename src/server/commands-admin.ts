@@ -51,10 +51,7 @@ export const adminCommands: Record<string, Handler> = {
         await log(ctx, tx, { action: "Mengubah banjar", entity: "settings", entityId: bid, detail: values.name, changes: diff(cur, values, Object.keys(values)), templeId: null });
         return null;
       }
-      const newId = uid("bj");
-      let slug = slugify(values.name) || newId;
-      if ((await tx.select().from(T.banjars).where(eq(T.banjars.slug, slug)))[0]) slug = `${slug}-${newId.slice(-4)}`;
-      await tx.insert(T.banjars).values({ ...values, id: newId, slug });
+      const newId = await insertBanjar(tx, values);
       await log(ctx, tx, { action: "Menambah banjar", entity: "settings", entityId: newId, detail: values.name, templeId: null });
       return { id: newId };
     });
@@ -89,22 +86,7 @@ export const adminCommands: Record<string, Handler> = {
         if (JSON.stringify(before) !== JSON.stringify([...banjarIds].sort())) Object.assign(changes, { banjarPengempon: { dari: before, menjadi: banjarIds } });
         await log(ctx, tx, { action: "Mengubah data pura", entity: "settings", entityId: templeId, detail: values.name, changes, templeId });
       } else {
-        templeId = uid("t");
-        let slug = slugify(values.name) || templeId;
-        if ((await tx.select().from(T.temples).where(eq(T.temples.slug, slug)))[0]) slug = `${slug}-${templeId.slice(-4)}`;
-        await tx.insert(T.temples).values({
-          ...values, id: templeId, slug, cover: "emerald",
-          transparency: { ...m.DEFAULT_TRANSPARENCY },
-          branding: { headerTitle: `Laporan Keuangan ${values.name}`, signatoryName: "", signatoryRole: "Pengurus Pura", footerNote: "Laporan ini disusun secara transparan untuk krama pengempon pura." },
-        });
-        const today = todayInAppTz();
-        await tx.insert(T.accounts).values([
-          { id: uid("acc"), templeId, name: "Kas Tunai Pura", type: "cash", openingBalance: 0, openingDate: today },
-          { id: uid("acc"), templeId, name: "Rekening Pura", type: "bank", openingBalance: 0, openingDate: today },
-        ]);
-        await tx.insert(T.categories).values(categoriesFor(templeId).map((c) => ({ ...c, archived: false })));
-        const year = today.slice(0, 4);
-        await tx.insert(T.activities).values({ id: uid("a"), templeId, name: "Operasional Pura", description: "Kebutuhan rutin pura.", startDate: `${year}-01-01`, endDate: `${year}-12-31`, budget: 0, fundType: "general", status: "ongoing", color: "#8A5CB8", auto: true });
+        templeId = await insertTemple(tx, values);
         await log(ctx, tx, { action: "Menambah pura", entity: "settings", entityId: templeId, detail: `${values.name} (banjar: ${banjars.map((b) => b.name).join(", ")})`, templeId });
       }
       await tx.insert(T.templeBanjars).values(banjarIds.map((banjarId) => ({ templeId: templeId!, banjarId })));
@@ -430,6 +412,54 @@ export const adminCommands: Record<string, Handler> = {
     });
   },
 
+  // ---- Pengajuan pendaftaran (Admin Utama) ------------------------------------
+  /** Status and internal note of a registration request (never visible to the applicant). */
+  async adminUpdateRegistration(ctx, p) {
+    await requireSuperAdmin(ctx, "mengelola pengajuan pendaftaran");
+    const i = z.object({ id, status: z.enum(["baru", "verifikasi", "disetujui", "ditolak"]).optional(), internalNote: z.string().trim().max(2000).optional() }).parse(p);
+    return db.transaction(async (tx) => {
+      const r = await one(tx.select().from(T.registrationRequests).where(eq(T.registrationRequests.id, i.id)).for("update"), "Pengajuan tidak ditemukan.");
+      if (i.status === "disetujui" && !r.convertedTempleId) throw new ApiError(409, "Gunakan tombol \"Jadikan banjar & pura\" untuk menyetujui.");
+      const values = { ...(i.status ? { status: i.status } : {}), ...(i.internalNote !== undefined ? { internalNote: i.internalNote } : {}), updatedAt: new Date(), decidedBy: ctx.user.id };
+      await tx.update(T.registrationRequests).set(values).where(eq(T.registrationRequests.id, r.id));
+      await log(ctx, tx, {
+        action: i.status && i.status !== r.status ? "Mengubah status pengajuan pendaftaran" : "Mengubah catatan pengajuan pendaftaran",
+        entity: "registration", entityId: r.id, detail: `${r.banjarName} — ${r.templeName}`,
+        changes: i.status && i.status !== r.status ? { status: { dari: r.status, menjadi: i.status } } : undefined, templeId: null,
+      });
+      return null;
+    });
+  },
+
+  /**
+   * "Jadikan banjar & pura": creates the banjar (or uses an existing one) and the pura from the
+   * request, in one database transaction. It does NOT create any account or role: the pengurus are
+   * still registered by Admin Utama afterwards, as for every temple.
+   */
+  async adminConvertRegistration(ctx, p) {
+    await requireSuperAdmin(ctx, "menyetujui pengajuan pendaftaran");
+    const i = z.object({ id, banjarId: optId, banjarName: text(120).min(3).optional(), templeName: text(120).min(4).optional() }).parse(p);
+    return db.transaction(async (tx) => {
+      const r = await one(tx.select().from(T.registrationRequests).where(eq(T.registrationRequests.id, i.id)).for("update"), "Pengajuan tidak ditemukan.");
+      if (r.convertedTempleId) throw new ApiError(409, "Pengajuan ini sudah dijadikan banjar & pura.");
+      if (r.status === "ditolak") throw new ApiError(409, "Pengajuan yang ditolak tidak bisa disetujui. Ubah statusnya dulu jika keliru.");
+      const address = { province: r.province, regency: r.regency, district: r.district, village: r.village, provinceCode: r.provinceCode, regencyCode: r.regencyCode, districtCode: r.districtCode, villageCode: r.villageCode };
+      let banjarId = i.banjarId;
+      if (banjarId) await one(tx.select({ id: T.banjars.id }).from(T.banjars).where(eq(T.banjars.id, banjarId)), "Banjar tidak ditemukan.");
+      else {
+        banjarId = await insertBanjar(tx, { name: i.banjarName ?? r.banjarName, ...address, address: "" });
+        await log(ctx, tx, { action: "Menambah banjar", entity: "settings", entityId: banjarId, detail: `${i.banjarName ?? r.banjarName} (dari pengajuan pendaftaran)`, templeId: null });
+      }
+      // A new temple starts as "menunggu" (not public) until Admin Utama activates it.
+      const templeId = await insertTemple(tx, { name: i.templeName ?? r.templeName, ...address, address: "", status: "pending" });
+      await tx.insert(T.templeBanjars).values({ templeId, banjarId });
+      await tx.update(T.registrationRequests).set({ status: "disetujui", convertedBanjarId: banjarId, convertedTempleId: templeId, updatedAt: new Date(), decidedBy: ctx.user.id }).where(eq(T.registrationRequests.id, r.id));
+      await log(ctx, tx, { action: "Menambah pura", entity: "settings", entityId: templeId, detail: `${i.templeName ?? r.templeName} (dari pengajuan pendaftaran)`, templeId });
+      await log(ctx, tx, { action: "Menyetujui pengajuan pendaftaran", entity: "registration", entityId: r.id, detail: `${r.banjarName} — ${r.templeName}`, templeId: null });
+      return { banjarId, templeId };
+    });
+  },
+
   // ---- Arsip & hapus permanen (Admin Utama) --------------------------------
   // Archiving keeps every record (reports, Riwayat Audit Pura, Log Aktivitas) and can be undone.
   // Deleting is only possible for an empty temple / a banjar without temples, and the database
@@ -555,6 +585,36 @@ export const adminCommands: Record<string, Handler> = {
     });
   },
 };
+
+/** A new banjar row with a unique slug (Back Office and "Jadikan banjar & pura"). */
+async function insertBanjar(tx: Tx, values: Omit<typeof T.banjars.$inferInsert, "id" | "slug">) {
+  const newId = uid("bj");
+  let slug = slugify(values.name) || newId;
+  if ((await tx.select().from(T.banjars).where(eq(T.banjars.slug, slug)))[0]) slug = `${slug}-${newId.slice(-4)}`;
+  await tx.insert(T.banjars).values({ ...values, id: newId, slug });
+  return newId;
+}
+
+/** A new temple with its starting cash box, bank account, categories and "Operasional Pura". */
+async function insertTemple(tx: Tx, values: Omit<typeof T.temples.$inferInsert, "id" | "slug" | "transparency" | "branding">) {
+  const templeId = uid("t");
+  let slug = slugify(values.name) || templeId;
+  if ((await tx.select().from(T.temples).where(eq(T.temples.slug, slug)))[0]) slug = `${slug}-${templeId.slice(-4)}`;
+  await tx.insert(T.temples).values({
+    ...values, id: templeId, slug, cover: "emerald",
+    transparency: { ...m.DEFAULT_TRANSPARENCY },
+    branding: { headerTitle: `Laporan Keuangan ${values.name}`, signatoryName: "", signatoryRole: "Pengurus Pura", footerNote: "Laporan ini disusun secara transparan untuk krama pengempon pura." },
+  });
+  const today = todayInAppTz();
+  await tx.insert(T.accounts).values([
+    { id: uid("acc"), templeId, name: "Kas Tunai Pura", type: "cash", openingBalance: 0, openingDate: today },
+    { id: uid("acc"), templeId, name: "Rekening Pura", type: "bank", openingBalance: 0, openingDate: today },
+  ]);
+  await tx.insert(T.categories).values(categoriesFor(templeId).map((c) => ({ ...c, archived: false })));
+  const year = today.slice(0, 4);
+  await tx.insert(T.activities).values({ id: uid("a"), templeId, name: "Operasional Pura", description: "Kebutuhan rutin pura.", startDate: `${year}-01-01`, endDate: `${year}-12-31`, budget: 0, fundType: "general", status: "ongoing", color: "#8A5CB8", auto: true });
+  return templeId;
+}
 
 /** temples.bank_* always mirror the primary bank account (older screens and reports read them). */
 async function syncPrimary(tx: Tx, templeId: string) {
