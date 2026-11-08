@@ -189,6 +189,9 @@ export interface Activity {
   fundType: FundType;
   status: "planned" | "ongoing" | "done";
   color: string;
+  /** Set when archived: hidden from new choices, data and reports stay */
+  archivedAt?: string;
+  archiveReason?: string;
 }
 
 export type TxStatus = "draft" | "confirmed";

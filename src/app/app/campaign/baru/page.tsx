@@ -148,7 +148,7 @@ function Wizard() {
                 <Field label="Kegiatan terkait" htmlFor="c-act" hint="Donasi disahkan otomatis tercatat ke kegiatan ini.">
                   <Select id="c-act" value={f.activityId ?? ""} onChange={(e) => set("activityId", e.target.value)}>
                     <option value="">— Tidak ada —</option>
-                    {ws.activities.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                    {ws.activities.filter((a) => !a.archivedAt).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                   </Select>
                 </Field>
               </>

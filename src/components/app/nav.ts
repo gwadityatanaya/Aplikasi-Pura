@@ -31,7 +31,7 @@ export const NAV: NavItem[] = [
   { href: "/app", label: "Beranda", icon: Home, group: "main" },
   { href: "/app/punia", label: "Verifikasi Punia", icon: HandCoins, perm: "tx.view", group: "main" },
   { href: "/app/transaksi", label: "Pemasukan & Pengeluaran", icon: ReceiptText, perm: "tx.view", group: "main" },
-  { href: "/app/kegiatan", label: "Kegiatan / Odalan", icon: Layers, group: "main" },
+  { href: "/app/kegiatan", label: "Kegiatan", icon: Layers, group: "main" },
   { href: "/app/campaign", label: "Penggalangan Dana", icon: Megaphone, group: "main" },
   { href: "/app/laporan", label: "Laporan", icon: FileBarChart2, perm: "report.view", group: "main" },
   { href: "/app/presentasi", label: "Mode Presentasi", icon: Presentation, perm: "report.view", group: "main" },

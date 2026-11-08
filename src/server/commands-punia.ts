@@ -47,7 +47,10 @@ async function assertNotDuplicate(tx: Tx, o: { hash: string | null; templeId: st
 
 /** Activity / campaign must belong to the same temple. */
 async function checkGrouping(tx: Tx, templeId: string, activityId: string | null, campaignId: string | null) {
-  if (activityId) await one(tx.select().from(T.activities).where(and(eq(T.activities.id, activityId), eq(T.activities.templeId, templeId))), "Kegiatan tidak ditemukan.");
+  if (activityId) {
+    const a = await one(tx.select().from(T.activities).where(and(eq(T.activities.id, activityId), eq(T.activities.templeId, templeId))), "Kegiatan tidak ditemukan.");
+    if (a.archivedAt) throw new ApiError(409, "Kegiatan ini sudah diarsipkan dan tidak bisa dipilih lagi.");
+  }
   if (campaignId) await one(tx.select().from(T.campaigns).where(and(eq(T.campaigns.id, campaignId), eq(T.campaigns.templeId, templeId))), "Kegiatan/campaign tidak ditemukan.");
 }
 

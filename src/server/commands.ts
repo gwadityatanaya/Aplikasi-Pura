@@ -115,6 +115,7 @@ async function checkRefs(tx: Tx, templeId: string, i: z.infer<typeof txInput>) {
   if (i.activityId) {
     const a = await tx.select().from(T.activities).where(and(eq(T.activities.id, i.activityId), eq(T.activities.templeId, templeId)));
     if (!a[0]) throw new ApiError(400, "Kegiatan tidak ditemukan.");
+    if (a[0].archivedAt) throw new ApiError(409, "Kegiatan ini sudah diarsipkan. Pilih kegiatan lain, atau aktifkan kembali kegiatan itu.");
   }
   if (i.campaignId) {
     const c = await tx.select().from(T.campaigns).where(and(eq(T.campaigns.id, i.campaignId), eq(T.campaigns.templeId, templeId)));
@@ -277,6 +278,49 @@ export const coreCommands: Record<string, Handler> = {
     });
   },
 
+  // A kegiatan made by mistake: delete it if nothing is linked to it, otherwise archive it (hidden
+  // from new choices, records and reports stay). Pengurus Pura, Pengurus Banjar, Admin Utama in
+  // mode darurat — never a Pemeriksa. The database refuses the delete as well (migration 0016).
+  async archiveActivity(ctx, p) {
+    const templeId = requireTemple(ctx);
+    await requirePerm(ctx, "activity.archive", "mengarsipkan kegiatan");
+    const i = z.object({ id, reason: text(300).min(5, "Tuliskan alasan pengarsipan (minimal 5 huruf).") }).parse(p);
+    return db.transaction(async (tx) => {
+      const a = await one(tx.select().from(T.activities).where(and(eq(T.activities.id, i.id), eq(T.activities.templeId, templeId))).for("update"), "Kegiatan tidak ditemukan.");
+      if (a.archivedAt) throw new ApiError(409, "Kegiatan ini sudah diarsipkan.");
+      await tx.update(T.activities).set({ archivedAt: new Date(), archiveReason: i.reason }).where(eq(T.activities.id, a.id));
+      await log(ctx, tx, { action: "Mengarsipkan kegiatan", entity: "activity", entityId: a.id, detail: `${a.name} — alasan: ${i.reason}` });
+      return null;
+    });
+  },
+
+  async unarchiveActivity(ctx, p) {
+    const templeId = requireTemple(ctx);
+    await requirePerm(ctx, "activity.archive", "mengaktifkan kembali kegiatan");
+    const i = z.object({ id }).parse(p);
+    return db.transaction(async (tx) => {
+      const a = await one(tx.select().from(T.activities).where(and(eq(T.activities.id, i.id), eq(T.activities.templeId, templeId))).for("update"), "Kegiatan tidak ditemukan.");
+      if (!a.archivedAt) throw new ApiError(409, "Kegiatan ini tidak sedang diarsipkan.");
+      await tx.update(T.activities).set({ archivedAt: null, archiveReason: null }).where(eq(T.activities.id, a.id));
+      await log(ctx, tx, { action: "Mengaktifkan kembali kegiatan", entity: "activity", entityId: a.id, detail: a.name });
+      return null;
+    });
+  },
+
+  async deleteActivity(ctx, p) {
+    const templeId = requireTemple(ctx);
+    await requirePerm(ctx, "activity.archive", "menghapus kegiatan");
+    const i = z.object({ id }).parse(p);
+    return db.transaction(async (tx) => {
+      const a = await one(tx.select().from(T.activities).where(and(eq(T.activities.id, i.id), eq(T.activities.templeId, templeId))).for("update"), "Kegiatan tidak ditemukan.");
+      const found = await activityData(tx, a.id);
+      if (found.length) throw new ApiError(409, `Kegiatan ini sudah memiliki data terkait (${found.join(", ")}), jadi tidak bisa dihapus. Arsipkan saja.`);
+      await tx.delete(T.activities).where(eq(T.activities.id, a.id));
+      await log(ctx, tx, { action: "Menghapus kegiatan", entity: "activity", entityId: a.id, detail: `${a.name} (kosong, salah dibuat)` });
+      return null;
+    });
+  },
+
   // ---- Campaigns ---------------------------------------------------------
   async saveCampaign(ctx, p) {
     const templeId = requireTemple(ctx);
@@ -286,6 +330,12 @@ export const coreCommands: Record<string, Handler> = {
     return db.transaction(async (tx) => {
       const acc = await tx.select().from(T.accounts).where(and(eq(T.accounts.id, input.accountId), eq(T.accounts.templeId, templeId)));
       if (!acc[0]) throw new ApiError(400, "Rekening tidak ditemukan.");
+      if (input.activityId) {
+        const [act] = await tx.select().from(T.activities).where(and(eq(T.activities.id, input.activityId), eq(T.activities.templeId, templeId)));
+        if (!act) throw new ApiError(400, "Kegiatan tidak ditemukan.");
+        const kept = cid && (await tx.select({ a: T.campaigns.activityId }).from(T.campaigns).where(eq(T.campaigns.id, cid)))[0]?.a === act.id;
+        if (act.archivedAt && !kept) throw new ApiError(409, "Kegiatan ini sudah diarsipkan dan tidak bisa dipilih lagi.");
+      }
       const coverImage = await persistImage(input.coverImage, { templeId, isPublic: true, userId: ctx.user.id }, tx);
       const values = { ...input, coverImage, status };
       if (cid) {
@@ -480,6 +530,14 @@ export const coreCommands: Record<string, Handler> = {
   },
 
 };
+
+/** Records linked to a kegiatan (the same list the database trigger checks before a delete). */
+export async function activityData(tx: Tx, activityId: string) {
+  const n = async (table: typeof T.transactions | typeof T.donations | typeof T.campaigns) =>
+    (await tx.select({ n: sql<number>`count(*)::int` }).from(table).where(eq(table.activityId, activityId)))[0].n;
+  const [txs, dons, camps] = await Promise.all([n(T.transactions), n(T.donations), n(T.campaigns)]);
+  return [txs && `${txs} transaksi`, dons && `${dons} punia`, camps && `${camps} penggalangan dana`].filter(Boolean) as string[];
+}
 
 async function canWriteTx(ctx: Ctx) {
   return !ctx.templeArchived && can(ctx.role, "tx.create");

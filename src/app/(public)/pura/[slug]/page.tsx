@@ -127,7 +127,7 @@ export default function TemplePage() {
 
           {active.length > 0 && (
             <section aria-labelledby="kegiatan">
-              <h2 id="kegiatan" className="text-xl font-bold text-forest">Penggalangan dana / odalan</h2>
+              <h2 id="kegiatan" className="text-xl font-bold text-forest">Penggalangan dana</h2>
               <div className="mt-3 grid gap-4 sm:grid-cols-2">
                 {active.map((c) => <CampaignCard key={c.id} campaign={c} donations={donations} href={`/donasi/${c.slug}`} />)}
               </div>

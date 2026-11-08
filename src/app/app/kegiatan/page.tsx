@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarRange, Layers, Lock, Plus } from "lucide-react";
+import { Archive, CalendarRange, Layers, Lock, Plus } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
 import { ActivityForm } from "@/components/app/activity-form";
 import { useCan, useWorkspace } from "@/components/app/hooks";
@@ -20,6 +20,9 @@ export default function ActivitiesPage() {
   const ws = useWorkspace();
   const can = useCan();
   const [open, setOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const active = ws.activities.filter((a) => !a.archivedAt);
+  const archived = ws.activities.filter((a) => a.archivedAt);
   return (
     <div>
       <PageHeader
@@ -28,7 +31,7 @@ export default function ActivitiesPage() {
         actions={can("activity.manage") && <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" /> Kegiatan baru</Button>}
       />
       <div className="grid gap-4 md:grid-cols-2">
-        {ws.activities.map((a, i) => {
+        {(showArchived ? archived : active).map((a, i) => {
           const s = activitySummary(a, ws.transactions);
           const st = ACT_STATUS[a.status];
           return (
@@ -43,7 +46,7 @@ export default function ActivitiesPage() {
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-1.5">
-                    <Badge tone={st.tone}>{st.label}</Badge>
+                    {a.archivedAt ? <Badge tone="dark"><Archive className="h-3 w-3" /> Diarsipkan</Badge> : <Badge tone={st.tone}>{st.label}</Badge>}
                     {a.fundType === "restricted" ? <Badge tone="gold"><Lock className="h-3 w-3" /> Dana khusus</Badge> : <Badge tone="gray">Dana umum</Badge>}
                   </div>
                   <div className="mt-4 grid grid-cols-3 gap-2 text-sm">
@@ -63,6 +66,11 @@ export default function ActivitiesPage() {
           );
         })}
       </div>
+      {archived.length > 0 && (
+        <div className="mt-5">
+          <Button variant="ghost" onClick={() => setShowArchived(!showArchived)}><Archive className="h-4 w-4" /> {showArchived ? "Kembali ke kegiatan aktif" : `Lihat kegiatan diarsipkan (${archived.length})`}</Button>
+        </div>
+      )}
       {ws.activities.length === 0 && <Card><EmptyState icon={Layers} title="Belum ada kegiatan" description="Buat kegiatan seperti Piodalan atau Pemeliharaan Pura untuk laporan yang lebih rapi." /></Card>}
       <ActivityForm open={open} onClose={() => setOpen(false)} />
     </div>

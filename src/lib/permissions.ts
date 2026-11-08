@@ -10,6 +10,7 @@ export type Permission =
   | "donation.correct"
   | "campaign.manage"
   | "activity.manage"
+  | "activity.archive"
   | "report.view"
   | "report.publish"
   | "report.export"
@@ -55,11 +56,12 @@ const MATRIX: Record<Role, Permission[]> = {
   admin_view: ["tx.view", "report.view", "report.export", "audit.view", "bank.manage", "admin.manage", "log.view"],
   pengurus: [
     "tx.view", "tx.create", "tx.draft", "tx.confirm", "tx.reverse", "donation.manage", "donation.correct", "campaign.manage",
-    "activity.manage", "report.view", "report.publish", "report.export", "settings.manage", "audit.view",
+    "activity.manage", "activity.archive", "report.view", "report.publish", "report.export", "settings.manage", "audit.view",
   ],
   // Pengurus Banjar: sahkan / tolak / koreksi punia at every temple its banjar supports
   // (incl. temples without pengurus). No other ledger changes.
-  banjar: ["tx.view", "donation.manage", "donation.correct", "report.view", "report.export", "audit.view"],
+  // + archive or delete a kegiatan created by mistake (no other changes to kegiatan).
+  banjar: ["tx.view", "donation.manage", "donation.correct", "activity.archive", "report.view", "report.export", "audit.view"],
   pemeriksa: ["tx.view", "report.view", "report.export", "audit.view"],
   banjar_arsip: ["tx.view", "report.view", "report.export", "audit.view"],
 };
@@ -70,7 +72,7 @@ export const READ_ONLY_ROLES: Role[] = ["pemeriksa", "banjar_arsip"];
 /** Permissions that change a temple's data — refused while the temple is archived (read-only). */
 export const WRITE_PERMS = new Set<Permission>([
   "tx.create", "tx.draft", "tx.confirm", "tx.reverse", "donation.manage", "donation.correct",
-  "campaign.manage", "activity.manage", "report.publish", "settings.manage",
+  "campaign.manage", "activity.manage", "activity.archive", "report.publish", "settings.manage",
 ]);
 
 export function can(role: Role | undefined, perm: Permission) {
@@ -87,8 +89,9 @@ export const PERMISSION_LABEL: Record<Permission, string> = {
   "tx.reverse": "Membuat koreksi",
   "donation.manage": "Mengesahkan, menolak & input manual punia",
   "donation.correct": "Mengoreksi punia yang sudah disahkan",
-  "campaign.manage": "Mengelola kegiatan/odalan & campaign",
+  "campaign.manage": "Mengelola kegiatan & penggalangan dana",
   "activity.manage": "Mengelola kegiatan",
+  "activity.archive": "Mengarsipkan atau menghapus kegiatan yang salah dibuat",
   "report.view": "Melihat laporan",
   "report.publish": "Mempublikasikan laporan",
   "report.export": "Mengunduh laporan (PDF/Excel)",

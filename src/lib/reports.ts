@@ -256,7 +256,7 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
       const tables: ReportTable[] = [{ title: "Per tujuan punia", head: ["Tujuan", "Jumlah", "Nominal"], body: purposes, foot: ["Total", list.length, total], money: [2] }];
       if (camps.length) {
         tables.push({
-          title: "Per kegiatan / odalan",
+          title: "Per kegiatan",
           head: ["Kegiatan", "Jumlah", "Nominal"],
           body: camps.map((id) => { const g = list.filter((d) => d.campaignId === id); return [campName(id), g.length, g.reduce((x, d) => x + d.amount, 0)]; }),
           money: [2],

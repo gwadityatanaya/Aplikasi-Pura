@@ -69,6 +69,7 @@ export const toCategory = (r: Row<typeof schema.categories>): Category => ({
 export const toActivity = (r: Row<typeof schema.activities>): Activity => ({
   id: r.id, templeId: r.templeId, name: r.name, description: r.description, startDate: r.startDate, endDate: r.endDate, budget: r.budget,
   fundType: r.fundType as Activity["fundType"], status: r.status as Activity["status"], color: r.color,
+  archivedAt: r.archivedAt?.toISOString(), archiveReason: u(r.archiveReason),
 });
 
 export const toTx = (r: Row<typeof schema.transactions>): Transaction => ({

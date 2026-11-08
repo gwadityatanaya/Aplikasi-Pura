@@ -201,6 +201,9 @@ export const activities = pgTable("activities", {
   color: text("color").notNull().default("#087F6D"),
   /** The "Operasional Pura" activity created with every new temple; does not count as data. */
   auto: boolean("auto").notNull().default(false),
+  /** Archived: hidden from new choices; its records and reports stay. Can be reactivated. */
+  archivedAt: ts("archived_at"),
+  archiveReason: text("archive_reason"),
 });
 
 export const transactions = pgTable("transactions", {

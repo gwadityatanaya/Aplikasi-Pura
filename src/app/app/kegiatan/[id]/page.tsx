@@ -2,9 +2,10 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { Layers, Lock, Pencil, Plus } from "lucide-react";
+import { Archive, Layers, Lock, Pencil, Plus } from "lucide-react";
 import { PageHeader } from "@/components/app/page-header";
 import { ActivityForm } from "@/components/app/activity-form";
+import { ActivityArchiveActions } from "@/components/app/activity-archive";
 import { TxRow } from "@/components/app/tx-row";
 import { useCan, useWorkspace } from "@/components/app/hooks";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
@@ -34,14 +35,21 @@ export default function ActivityDetailPage() {
         title={a.name}
         description={`${formatDate(a.startDate)} – ${formatDate(a.endDate)}`}
         actions={
-          can("activity.manage") && (
+          (can("activity.manage") || can("activity.archive")) && (
             <>
-              <Button variant="outline" onClick={() => setEdit(true)}><Pencil className="h-4 w-4" /> Ubah</Button>
-              <Link href="/app/transaksi/baru?type=expense" className={buttonClass("primary")}><Plus className="h-4 w-4" /> Catat transaksi</Link>
+              {can("activity.manage") && !a.archivedAt && <Button variant="outline" onClick={() => setEdit(true)}><Pencil className="h-4 w-4" /> Ubah</Button>}
+              {can("activity.archive") && <ActivityArchiveActions a={a} />}
+              {can("activity.manage") && !a.archivedAt && <Link href="/app/transaksi/baru?type=expense" className={buttonClass("primary")}><Plus className="h-4 w-4" /> Catat transaksi</Link>}
             </>
           )
         }
       />
+      {a.archivedAt && (
+        <p className="mb-4 flex items-start gap-2 rounded-2xl bg-stone-100 p-3 text-[15px] text-stone-800" role="status">
+          <Archive className="mt-0.5 h-5 w-5 shrink-0" />
+          <span>Kegiatan ini <b>diarsipkan</b> sejak {formatDate(a.archivedAt)}{a.archiveReason ? ` — alasan: ${a.archiveReason}` : ""}. Tidak bisa dipilih untuk catatan baru; data dan laporannya tetap ada.</span>
+        </p>
+      )}
       <div className="mb-4 flex flex-wrap gap-2">
         {a.fundType === "restricted" ? <Badge tone="gold"><Lock className="h-3 w-3" /> Dana khusus — hanya untuk kegiatan ini</Badge> : <Badge tone="gray">Dana umum</Badge>}
       </div>

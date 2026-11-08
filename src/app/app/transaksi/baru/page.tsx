@@ -75,7 +75,7 @@ function TxForm() {
   };
 
   const cats = useMemo(() => ws.categories.filter((c) => c.type === type && !c.archived), [ws.categories, type]);
-  const activities = ws.activities.filter((a) => a.status !== "done");
+  const activities = ws.activities.filter((a) => a.status !== "done" && (!a.archivedAt || a.id === f.activityId));
   const steps = type === "transfer" ? ["Nominal", "Rekening", "Periksa"] : ["Nominal", "Keperluan", "Kas & bukti", "Periksa"];
 
 
