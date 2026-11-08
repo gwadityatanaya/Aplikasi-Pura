@@ -63,6 +63,21 @@ const daysAgo = (n: number) => {
   return d.toISOString().slice(0, 10);
 };
 
+/**
+ * Final check: everything shown to a prospective client is clearly fictional. Fails loudly
+ * (the demo is not "done") if a name or account slipped through without the CONTOH / (contoh) mark.
+ */
+async function assertCleanDemoData() {
+  const bad: string[] = [];
+  for (const r of await db.select({ name: T.temples.name }).from(T.temples)) if (!r.name.startsWith("CONTOH ")) bad.push(`pura "${r.name}"`);
+  for (const r of await db.select({ name: T.banjars.name }).from(T.banjars)) if (!r.name.startsWith("CONTOH ")) bad.push(`banjar "${r.name}"`);
+  for (const r of await db.select({ name: T.users.name, admin: T.users.isSuperAdmin }).from(T.users)) if (!r.admin && !r.name.endsWith("(contoh)")) bad.push(`orang "${r.name}"`);
+  for (const r of await db.select({ bank: T.accounts.bankName, no: T.accounts.accountNumber }).from(T.accounts).where(eq(T.accounts.type, "bank")))
+    if (!(r.bank ?? "").includes("CONTOH") || /[1-9]\d*[1-9]/.test((r.no ?? "").replace(/\D/g, ""))) bad.push(`rekening "${r.bank} ${r.no}"`);
+  for (const r of await db.select({ title: T.campaigns.title }).from(T.campaigns)) if (!r.title.startsWith("CONTOH ")) bad.push(`penggalangan "${r.title}"`);
+  if (bad.length) throw new Error(`Data contoh belum bersih: ${bad.join(", ")}`);
+}
+
 async function main() {
   if (!process.argv.includes("--ya"))
     throw new Error("Perintah ini mengisi data FIKTIF. Jalankan ulang dengan: npm run db:seed-demo -- --ya");
@@ -73,7 +88,7 @@ async function main() {
   let [admin] = await db.select().from(T.users).where(eq(T.users.isSuperAdmin, true));
   if (!admin) {
     const email = (process.env.ADMIN_EMAIL || "admin@contoh.id").trim().toLowerCase();
-    [admin] = await db.insert(T.users).values({ id: uid("u"), name: "Admin Utama", callName: "Admin", email, isSuperAdmin: true, avatarColor: "#17212B" }).returning();
+    [admin] = await db.insert(T.users).values({ id: uid("u"), name: "Admin Utama (contoh)", callName: "Admin", email, isSuperAdmin: true, avatarColor: "#17212B" }).returning();
     console.log(`• Admin Utama dibuat: ${email}`);
   }
 
@@ -176,6 +191,28 @@ async function main() {
       input: { type: "expense", amount, date: daysAgo(days), categoryId: cat(c), description: desc, accountId: cash.id, status: "confirmed" },
     });
 
+  // A fundraising campaign with its kegiatan (Pura Taman Tunjung), so the public page shows one.
+  const kadekTaman = await userByEmail("kadek.taman@contoh.id");
+  const [tamanBank] = await db.select().from(T.accounts).where(sql`${T.accounts.templeId} = ${temples.taman} and ${T.accounts.type} = 'bank'`);
+  await run(kadekTaman, temples.taman, "saveCampaign", {
+    status: "active",
+    input: {
+      title: "CONTOH Perbaikan Bale Kulkul", description: "DATA CONTOH — penggalangan dana fiktif untuk mencoba aplikasi. Jangan mentransfer ke rekening ini.",
+      cover: "ocean", coverImage: null, activityId: null, target: 15_000_000, startDate: daysAgo(30), endDate: null,
+      purpose: "Kayu, genteng, dan upah tukang (contoh)", accountId: tamanBank.id, instructions: "", manualVerification: true, showDonorList: true, defaultPrivacy: "public",
+    },
+    newActivity: { name: "CONTOH Perbaikan Bale Kulkul", description: "", startDate: daysAgo(30), endDate: daysAgo(-60), budget: 15_000_000, fundType: "restricted", status: "ongoing", color: "#0E7490" },
+  });
+
+  // One registration request from a fictional banjar, so the Back Office tab can be shown.
+  await db.insert(T.registrationRequests).values({
+    id: uid("rg"), banjarName: "CONTOH Banjar Adat Sari Mekar", province: "Bali", regency: "Kabupaten Badung", district: "Mengwi", village: "Mengwi", ...mengwi,
+    templeName: "CONTOH Pura Dalem Sari Mekar", applicantName: "I Putu Pemohon (contoh)", applicantPosition: "Kelian Banjar", whatsapp: "080000000000",
+    googleEmail: "pemohon@contoh.id", referrerName: "I Ketut Wirawan (contoh)", referrerContact: "080000000001",
+    reason: "DATA CONTOH — ingin mencoba pencatatan punia yang terbuka.", consentAt: new Date(),
+  });
+
+  await assertCleanDemoData();
   console.log("✓ Data contoh selesai dibuat.");
   console.log("  Banjar: Kertha Sari (5 pura) dan Tunjung Mekar (2 pura, 1 dipakai bersama).");
   console.log("  Pengurus Banjar: ketut.banjar@contoh.id, gede.banjar@contoh.id");

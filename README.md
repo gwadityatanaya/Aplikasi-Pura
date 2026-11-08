@@ -37,7 +37,7 @@ Email (SMTP) and Google are both optional: `/api/auth/options` tells the login p
 |---|---|
 | `npm run db:migrate` | Creates/updates tables (idempotent) |
 | `npm run db:seed-demo -- --ya` | Fictional data: 2 banjar, 6 temples (one shared, one without pengurus), staff, umat. Refuses a non-empty DB |
-| `npm run db:reset-demo -- --ya-hapus-data-demo` | Wipes and re-seeds the DEMO database. Refuses if any temple name does not start with "CONTOH " |
+| `npm run db:reset-demo -- --cek` / `-- --ya-hapus-data-demo` | Checks / wipes and re-seeds the DEMO database (`DEMO_DATABASE_URL` if set, else `DATABASE_URL`). Refuses if any temple or banjar name does not start with "CONTOH "; verifies the fresh data is all marked CONTOH / (contoh) |
 | `npm run wilayah:update -- <wilayah.sql\|csv> --sumber "…" --lisensi "…"` | Rebuilds the bundled region list `src/data/wilayah/wilayah.json` (validated: every code has its parent) |
 | `npm run test:e2e` | Playwright end-to-end tests. Needs `E2E_DATABASE_URL` pointing to a throw-away DB whose name contains `test`/`e2e` |
 | `npm run backup` / `npm run restore -- <file>` | Full JSON backup incl. photos / restore into an empty DB |

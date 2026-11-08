@@ -105,7 +105,7 @@ Cara membuatnya:
 1. Ikuti **Langkah 1–6** untuk PILOT seperti biasa.
 2. Ulangi **Langkah 1** dengan nama project Neon `pura-demo` (database baru, kosong).
 3. Di Vercel: **Add New… → Project → Import** repo **Aplikasi-Pura** yang sama sekali lagi, beri nama proyek `pura-demo`, dan isi Environment Variables dengan alamat database **demo** serta `NEXT_PUBLIC_DEMO_MODE` = `true`.
-4. Isi data contoh dari laptop (lihat [Menjalankan di laptop](#menjalankan-di-laptop)): di file `.env` isi `DATABASE_URL` dengan alamat database **demo**, lalu `npm run db:seed-demo -- --ya`. Perintah ini **menolak** berjalan jika database sudah berisi pura, jadi tidak akan pernah mengisi database pilot yang sudah dipakai.
+4. Isi data contoh dari laptop (lihat [Menjalankan di laptop](#menjalankan-di-laptop)): di file `.env` isi `DEMO_DATABASE_URL` dengan alamat database **demo**, lalu `npm run db:reset-demo -- --ya-hapus-data-demo` (lihat "Mengisi ulang data demo" di bawah). Cara lama `npm run db:seed-demo -- --ya` (memakai `DATABASE_URL`) masih bisa. Perintah ini **menolak** berjalan jika database sudah berisi pura, jadi tidak akan pernah mengisi database pilot yang sudah dipakai.
 5. Google: di OAuth client yang sama, tambahkan **dua** redirect URI (lihat Langkah 5).
 
 Data contoh mudah dikenali: semua nama pura dan banjar berawalan **CONTOH**, nama orang bertanda **(contoh)**, bank bernama **Bank CONTOH (fiktif)**, dan nomor rekening berupa **000-000-000x**.
@@ -114,11 +114,26 @@ Wilayah di data contoh adalah **wilayah nyata** (mis. Bali › Kabupaten Badung 
 
 **Situs demo hanya untuk orang tertentu.** Bagikan alamatnya secara pribadi, jangan di grup umum. Dengan `NEXT_PUBLIC_DEMO_MODE=true`, situs demo otomatis meminta mesin pencari (Google dan lainnya) **tidak mengindeks** halaman mana pun: lewat `robots.txt`, tanda `noindex` di setiap halaman, dan header `X-Robots-Tag`. Jadi situs demo tidak akan muncul di hasil pencarian.
 
-**Mengisi ulang data demo** (jika sudah berantakan setelah dipakai latihan): dari laptop, isi `DATABASE_URL` di `.env` dengan alamat database **demo**, lalu jalankan
-```
-npm run db:reset-demo -- --ya-hapus-data-demo
-```
-Perintah ini menghapus seluruh isi database demo lalu mengisinya lagi dengan data contoh yang baru. Pengamannya: perintah **menolak** berjalan jika ada satu saja pura yang namanya tidak berawalan "CONTOH". Jadi perintah ini tidak bisa menghapus database pilot. Akun Admin Utama demo dibuat ulang dari `ADMIN_EMAIL`.
+**Mengisi ulang data demo** (sebelum presentasi ke calon klien, atau jika data sudah berantakan setelah latihan). Dari laptop:
+
+1. Di file `.env`, tambahkan baris **`DEMO_DATABASE_URL`** berisi alamat database **demo** (dari project Neon `pura-demo`, versi *unpooled*). `DATABASE_URL` boleh tetap berisi alamat pilot — perintah ini **hanya** memakai `DEMO_DATABASE_URL` jika diisi. Jika ingin, isi juga `ADMIN_EMAIL` dengan email Google yang akan dipakai sebagai Admin Utama di situs demo.
+2. Periksa dulu (tidak menghapus apa pun):
+   ```
+   npm run db:reset-demo -- --cek
+   ```
+   Pastikan baris **"Database tujuan"** menunjuk database demo (hanya nama server dan database yang ditampilkan, tanpa kata sandi), dan muncul "aman diisi ulang".
+3. Isi ulang:
+   ```
+   npm run db:reset-demo -- --ya-hapus-data-demo
+   ```
+   Seluruh isi database demo dihapus lalu diisi lagi dengan data contoh yang baru (punia, pengeluaran, satu penggalangan dana "CONTOH Perbaikan Bale Kulkul", dan satu pengajuan pendaftaran fiktif di Back Office).
+
+**Pengaman:**
+- Perintah **menolak** berjalan jika ada satu saja **pura atau banjar** yang namanya tidak berawalan "CONTOH". Jadi perintah ini tidak bisa menghapus database pilot, walau alamatnya salah ketik.
+- Setelah mengisi, skrip **memeriksa ulang** bahwa semua pura, banjar, dan penggalangan berawalan CONTOH, semua nama orang (kecuali Admin Utama) berakhiran **(contoh)**, dan semua rekening bernama **Bank CONTOH (fiktif)** dengan nomor 000-000-000x. Jika ada yang tidak sesuai, skrip berhenti dengan pesan merah.
+- Tidak ada nama lembaga, bank, atau tokoh nyata di data contoh. Yang nyata hanya **nama wilayah** (provinsi sampai desa) supaya pilihan alamat bisa dicoba.
+- Akun Admin Utama demo bernama **"Admin Utama (contoh)"** dan dibuat dari `ADMIN_EMAIL` (atau `admin@contoh.id` jika kosong).
+- Jangan pernah menjalankan `db:seed-demo` atau `db:reset-demo` dengan alamat database pilot. Kalaupun terjadi, keduanya menolak.
 
 ---
 
