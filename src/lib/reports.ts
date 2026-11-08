@@ -253,7 +253,7 @@ export function buildReport(ws: WS, f: ReportFilters): ReportDoc {
         .map((k) => { const g = list.filter((d) => (d.purpose ?? "umum") === k); return [PURPOSE_LABEL[k], g.length, g.reduce((x, d) => x + d.amount, 0)] as (string | number)[]; })
         .filter((r) => (r[1] as number) > 0);
       const camps = Array.from(new Set(list.map((d) => d.campaignId).filter(Boolean))) as string[];
-      const channel = { transfer: "Transfer", tunai: "Tunai", whatsapp: "WhatsApp", simulasi: "Simulasi" } as const;
+      const channel = { transfer: "Transfer", qris: "QRIS", tunai: "Tunai", whatsapp: "WhatsApp", simulasi: "Simulasi" } as const;
       const tables: ReportTable[] = [{ title: "Per tujuan punia", head: ["Tujuan", "Jumlah", "Nominal"], body: purposes, foot: ["Total", list.length, total], money: [2] }];
       if (camps.length) {
         tables.push({

@@ -16,6 +16,7 @@ import { AnimatedRupiah } from "@/components/ui/animated-number";
 import { CampaignEndNotice, CampaignStatusBadge, daysLeftLabel } from "@/components/shared/campaign-card";
 import { campaignPhase, hasTarget } from "@/lib/campaign";
 import { ShareActions } from "@/components/shared/share";
+import { BankChoice } from "@/components/public/bank-choice";
 import { DonationFeed, DonorList } from "@/components/public/donations";
 import { usePublicData } from "@/lib/public";
 import { campaignStats } from "@/lib/ledger";
@@ -134,22 +135,7 @@ export default function CampaignPage() {
               <div className="border-t border-line bg-ivory/70 p-6">
                 <h2 className="font-bold">Cara berpunia</h2>
                 {campaign.instructions && <p className="mt-1 text-[15px] leading-relaxed text-charcoal/80">{campaign.instructions}</p>}
-                <div className="mt-3 rounded-2xl bg-gradient-to-br from-emerald-600 to-forest p-4 text-white">
-                  <p className="flex items-center gap-2 text-sm text-white/80"><Landmark className="h-4 w-4" /> {temple.bankName}</p>
-                  <p className="tabular mt-2 text-xl font-bold tracking-wider">{temple.bankAccountNumber}</p>
-                  <p className="text-sm text-white/80">a.n. {temple.bankAccountHolder}</p>
-                </div>
-                <Button
-                  variant="outline"
-                  className="mt-2 w-full"
-                  onClick={() => {
-                    navigator.clipboard?.writeText((temple.bankAccountNumber ?? "").replace(/\D/g, ""));
-                    toast.success("Nomor rekening disalin");
-                  }}
-                >
-                  <Copy className="h-4 w-4" /> Salin nomor rekening
-                </Button>
-                <p className="mt-2 text-xs text-muted">Pastikan nama penerima sesuai sebelum mentransfer.</p>
+                <div className="mt-3"><BankChoice temple={temple} /></div>
               </div>
             )}
           </Card>

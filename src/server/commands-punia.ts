@@ -81,8 +81,10 @@ async function verifyOne(ctx: Ctx, tx: Tx, donationId: string, templeId: string)
   const campaign = d.campaignId ? (await tx.select().from(T.campaigns).where(eq(T.campaigns.id, d.campaignId)))[0] : undefined;
   const accounts = await tx.select().from(T.accounts).where(and(eq(T.accounts.templeId, templeId), eq(T.accounts.archived, false)));
   const cash = accounts.find((a) => a.type === "cash");
-  const bank = accounts.find((a) => a.type === "bank");
-  const accountId = d.channel === "tunai" ? (cash ?? bank ?? accounts[0])?.id : (campaign?.accountId ?? bank?.id ?? accounts[0]?.id);
+  const bank = accounts.find((a) => a.type === "bank" && a.isPrimary) ?? accounts.find((a) => a.type === "bank");
+  // The account the umat chose is booked even if it was deactivated since (its history stays).
+  const chosen = d.accountId ? (await tx.select({ id: T.accounts.id }).from(T.accounts).where(and(eq(T.accounts.id, d.accountId), eq(T.accounts.templeId, templeId))))[0] : undefined;
+  const accountId = chosen?.id ?? (d.channel === "tunai" ? (cash ?? bank ?? accounts[0])?.id : (campaign?.accountId ?? bank?.id ?? accounts[0]?.id));
   if (!accountId) return { ok: false, reason: "Pura belum memiliki kas/rekening pencatatan." };
   const categoryName = campaign ? "Donasi Penggalangan Dana" : PURPOSE_CATEGORY[(d.purpose as keyof typeof PURPOSE_CATEGORY) ?? "umum"];
   const cats = await tx.select().from(T.categories).where(and(eq(T.categories.templeId, templeId), eq(T.categories.type, "income")));
@@ -114,6 +116,8 @@ export const puniaCommands: Record<string, Handler> = {
       .object({
         templeId: id, amount, transferDate: isoDate, evidence: z.string().min(30, "Unggah foto bukti transfer").max(3_500_000), anonymous: z.boolean(),
         purpose, activityId: optId, campaignId: optId, referenceNo: refNo, message: optText(300),
+        // Which bank account the umat paid into (required when the temple has more than one), and how.
+        accountId: optId, via: z.enum(["transfer", "qris"]).default("transfer"),
       })
       .parse(p);
     checkDate(i.transferDate);
@@ -125,7 +129,18 @@ export const puniaCommands: Record<string, Handler> = {
       // FOR SHARE: an archive running at the same moment waits for this punia (and then refuses).
       const t = await one(tx.select().from(T.temples).where(eq(T.temples.id, i.templeId)).for("share"), "Pura tidak ditemukan.");
       if (t.status !== "active") throw new ApiError(409, "Pura ini belum aktif menerima punia.");
-      if (!t.bankAccountNumber) throw new ApiError(409, "Pura ini belum memiliki info rekening. Punia belum bisa dikirim lewat aplikasi.");
+      const banks = m.publicBankAccounts(await tx.select().from(T.accounts).where(eq(T.accounts.templeId, t.id)), t.id);
+      if (!banks.length) throw new ApiError(409, "Pura ini belum memiliki info rekening. Punia belum bisa dikirim lewat aplikasi.");
+      let accountId: string;
+      if (i.via === "qris") {
+        if (!t.qrisImage || !banks.some((b) => b.id === t.qrisAccountId)) throw new ApiError(409, "QRIS pura ini belum tersedia. Pilih transfer ke rekening.");
+        accountId = t.qrisAccountId!;
+      } else if (banks.length === 1) accountId = banks[0].id;
+      else {
+        if (!i.accountId) throw new ApiError(400, "Pilih rekening tujuan yang Anda transfer.");
+        if (!banks.some((b) => b.id === i.accountId)) throw new ApiError(400, "Rekening tujuan tidak ditemukan atau sudah tidak aktif.");
+        accountId = i.accountId;
+      }
       await checkGrouping(tx, t.id, i.activityId, i.campaignId);
       await assertNotDuplicate(tx, { hash, templeId: t.id, amount: i.amount, transferDate: i.transferDate, referenceNo: i.referenceNo });
       const evidence = await persistImage(i.evidence, { templeId: t.id, isPublic: false, userId: ctx.user.id }, tx);
@@ -135,7 +150,7 @@ export const puniaCommands: Record<string, Handler> = {
         .values({
           id: donationId, templeId: t.id, campaignId: i.campaignId, activityId: i.activityId, purpose: i.purpose, donorName: ctx.user.name, amount: i.amount,
           date: todayInAppTz(), transferDate: i.transferDate, referenceNo: i.referenceNo, privacy: i.anonymous ? "anonymous" : "public", status: "pending",
-          message: i.message, evidence, evidenceHash: hash, channel: "transfer", submittedBy: ctx.user.id, submitterEmail: ctx.user.email.toLowerCase(),
+          message: i.message, evidence, evidenceHash: hash, channel: i.via, accountId, submittedBy: ctx.user.id, submitterEmail: ctx.user.email.toLowerCase(),
         })
         .returning();
       await notify(tx, { templeId: t.id, kind: "donation_pending", title: "Punia baru menunggu verifikasi", body: `${rupiah(i.amount)} (${PURPOSE_LABEL[i.purpose]})${i.anonymous ? " — anonim" : ""}.`, href: `/app/punia?id=${donationId}` });

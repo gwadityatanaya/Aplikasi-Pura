@@ -101,6 +101,9 @@ export const temples = pgTable("temples", {
   bankName: text("bank_name"),
   bankAccountNumber: text("bank_account_number"),
   bankAccountHolder: text("bank_account_holder"),
+  /** QRIS image (public attachment URL) and the bank account it pays into — Admin Utama only */
+  qrisImage: text("qris_image"),
+  qrisAccountId: text("qris_account_id"),
   createdAt: ts("created_at").notNull().defaultNow(),
 });
 
@@ -176,8 +179,13 @@ export const accounts = pgTable("accounts", {
   openingBalance: money("opening_balance").notNull().default(0),
   openingDate: date("opening_date", { mode: "string" }).notNull(),
   isPublic: boolean("is_public").notNull().default(false),
+  /** Nonaktif: hidden from new choices; its past transactions and balance stay. */
   archived: boolean("archived").notNull().default(false),
-});
+  /** Short name of a bank account for umat, e.g. "Kas Umum", "Pembangunan" */
+  label: text("label").notNull().default(""),
+  /** The temple's main bank account (at most one per temple); also mirrored on temples.bank_* */
+  isPrimary: boolean("is_primary").notNull().default(false),
+}, (t) => [uniqueIndex("accounts_one_primary").on(t.templeId).where(sql`${t.isPrimary}`)]);
 
 export const categories = pgTable("categories", {
   id: text("id").primaryKey(),
@@ -273,6 +281,8 @@ export const campaigns = pgTable("campaigns", {
 export const donations = pgTable("donations", {
   id: text("id").primaryKey(),
   templeId: text("temple_id").notNull().references(() => temples.id),
+  /** The bank account the umat says they paid into (chosen when there is more than one) */
+  accountId: text("account_id"),
   campaignId: text("campaign_id").references(() => campaigns.id),
   activityId: text("activity_id"),
   purpose: text("purpose").notNull().default("umum"), // umum | odalan | pembangunan | lainnya

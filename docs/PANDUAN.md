@@ -244,7 +244,11 @@ Semua dilakukan di **Back Office** (menu kiri, atau **Lainnya** di HP). Semua pe
 
 1. **Tambah banjar** — tab **Banjar → Tambah banjar**. Isi nama banjar, lalu wilayahnya (opsional, lihat [Mengisi alamat](#mengisi-alamat-provinsi--kabupaten--kecamatan--desa) di bawah). Kode wilayah banjar dipakai nanti untuk ringkasan per desa/kecamatan/kabupaten.
 2. **Tambah pura** — tab **Pura → Tambah pura**. **Wajib** hanya **nama pura** dan **banjar pengempon** (boleh lebih dari satu). Alamat/lokasi, telepon/WA kontak, dan catatan **opsional** — bagian yang kosong tidak ditampilkan ke umat. **Pura tidak perlu email**: email hanya dipakai pengurus (orang) untuk masuk. Pura boleh didaftarkan tanpa pengurus sama sekali.
-3. **Isi rekening pura** — pada kartu pura tekan **Rekening**: nama bank, nomor rekening, dan **nama pemilik rekening** (ditampilkan ke umat agar mereka bisa mencocokkan di m-banking). Hanya Admin Utama yang bisa mengubahnya. **Umat baru bisa berpunia ke pura yang rekeningnya sudah diisi.**
+3. **Isi rekening pura** — pada kartu pura tekan **Rekening**: label singkat (mis. *Kas Umum*, *Pembangunan*), nama bank, nomor rekening, dan **nama pemilik rekening** (ditampilkan ke umat agar mereka bisa mencocokkan di m-banking). **Umat baru bisa berpunia ke pura yang rekeningnya sudah diisi.**
+   - **Lebih dari satu rekening boleh.** Satu ditandai **Utama** (tampil paling atas); **Jadikan utama** untuk menggantinya. Pura yang dulu hanya punya satu rekening tidak perlu diubah apa pun — rekening lamanya otomatis menjadi rekening utama.
+   - **Nonaktifkan** (alasan wajib): rekening tidak lagi tampil ke umat dan tidak bisa dipakai untuk catatan baru, tetapi **transaksi lama dan saldonya tetap ada**. Bisa **Aktifkan** lagi.
+   - **QRIS (opsional):** unggah gambar QRIS pura (diperkecil otomatis) dan pilih **rekening tujuannya**. QRIS tampil di halaman Berpunia dengan pengingat *"Pastikan nama merchant sesuai nama pura"* dan keterangan bahwa aplikasi hanya mencatat. Punia lewat QRIS dicatat seperti transfer dengan sumber **QRIS**.
+   - Hanya Admin Utama yang bisa menambah, mengubah, menonaktifkan rekening, dan mengganti QRIS. Semua tercatat di Log Aktivitas. Pengurus hanya mengisi **saldo awal** tiap rekening (Pengaturan → Kas & saldo awal).
 4. **Daftarkan pengurus pura** — pada kartu pura tekan **Pengurus** → ketik email orang tersebut → pilih **Pengurus Pura** atau **Pemeriksa**. Orang itu cukup membuka aplikasi dan masuk dengan Google/tautan email memakai alamat itu — tidak ada undangan atau kata sandi.
 5. **Daftarkan Pengurus Banjar** — tab **Banjar → Pengurus Banjar** → ketik email.
 6. **Mencabut/menonaktifkan** — tekan ikon hapus di daftar pengurus untuk mencabut peran, atau tab **Akun → Nonaktifkan** untuk menutup akunnya sama sekali. Aksesnya **langsung** hilang di semua perangkat.
@@ -285,7 +289,7 @@ Pengurus pura lalu mengisi sendiri di **Pengaturan**: deskripsi & kontak pura (o
 ## Alur punia sehari-hari
 
 **Umat:**
-1. Buka halaman pura → **Berpunia** → salin nomor rekening → transfer lewat m-banking.
+1. Buka halaman pura → **Berpunia** → salin nomor rekening → transfer lewat m-banking. Jika pura punya **beberapa rekening**, umat **memilih rekening yang ia transfer** (label, bank, nomor, dan nama pemilik tampil di tiap pilihan). Jika ada **QRIS**, umat bisa memilih tab **QRIS**.
 2. Isi nominal, tanggal transfer, unggah foto/tangkapan layar bukti, pilih **TAMPIL** atau **ANONIM**, tujuan (umum / odalan / pembangunan / lainnya), dan kegiatan jika ada → **Kirim punia**.
 3. Pantau di **Punia Saya → Riwayat punia**. Jika ditolak, alasannya terlihat dan bisa **Perbaiki & kirim ulang**.
 
@@ -294,6 +298,8 @@ Pengurus pura lalu mengisi sendiri di **Pengaturan**: deskripsi & kontak pura (o
 2. Cocokkan bukti dengan mutasi rekening → **Sahkan**, atau **Tolak** dengan alasan. Bisa pilih beberapa sekaligus lalu **Sahkan terpilih**. "Sahkan" artinya catatan itu benar dan masuk buku kas — aplikasi tidak memindahkan uang.
 3. Tanda **"Kemungkinan dobel"** muncul jika ada punia lain dengan nominal dan tanggal sama. Bukti yang **persis sama** atau nominal + tanggal + nomor referensi yang sama otomatis ditolak sistem.
 4. *(Opsional, hemat waktu)* **Cocokkan mutasi (CSV):** unduh mutasi rekening dari internet banking dalam format CSV, lalu unggah di halaman Verifikasi Punia. Aplikasi menandai punia yang nominalnya sama dan tanggalnya selisih paling lama 2 hari, lalu Anda bisa mengesahkan semuanya sekaligus. File mutasi hanya dibaca di perangkat Anda dan tidak disimpan. Tetap periksa nama pengirimnya.
+   - Pura dengan **beberapa rekening**: pilih dulu **Mutasi dari rekening** mana file itu — hanya punia yang dikirim ke rekening tersebut yang dicocokkan. Di daftar punia tertulis **"Ke rekening: …"**, dan saat disahkan pemasukannya dicatat ke rekening yang dipilih umat.
+   - Dashboard menampilkan **saldo per rekening** di bawah total bank; total kas + bank tetap tampil.
 5. Punia tunai atau lewat WhatsApp: **Input punia manual**. Tulis **nama donatur** secara bebas (donatur tidak perlu punya akun), pilih **TAMPIL** atau **ANONIM**. Punia langsung tercatat dan disahkan, kecuali email donaturnya adalah email Anda sendiri — itu harus disahkan pengurus lain.
    - Di setiap punia manual tertulis kecil **"dicatat oleh [nama Anda]"**. Tulisan ini hanya terlihat oleh pengurus pura, Pengurus Banjar, dan Admin Utama — **tidak** oleh umat.
 6. **Salah catat?** Buka punia yang sudah disahkan → **Koreksi punia ini** → tulis alasannya (wajib). Yang boleh mengoreksi: Pengurus Pura, dan **Pengurus Banjar** untuk semua pura yang diempon banjarnya (termasuk pura tanpa pengurus). Tidak ada yang boleh mengoreksi punia yang dikirim dari email/akunnya sendiri — dijaga aplikasi **dan** database. Koreksi tercatat di Log Aktivitas dan Riwayat Audit Pura, tanpa nama donatur anonim. Catatan asli **tidak diubah**: aplikasi membuat **entri koreksi** yang membatalkan pemasukannya, dan punia itu ditandai "Dikoreksi — tidak dihitung". Jika nominalnya yang salah, catat ulang punia yang benar.

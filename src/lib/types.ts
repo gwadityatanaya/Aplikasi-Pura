@@ -83,6 +83,11 @@ export interface Temple {
   bankName?: string;
   bankAccountNumber?: string;
   bankAccountHolder?: string;
+  /** Active bank accounts umat can pick when sending punia (primary first) */
+  bankAccounts?: PublicBankAccount[];
+  /** QRIS image set by Admin Utama, and the bank account it pays into */
+  qrisImage?: string;
+  qrisAccountId?: ID;
   /** Banjar Pengempon */
   banjarIds?: ID[];
   /** Number of active Pengurus Pura (0 = "Pengurus pura belum terdaftar") */
@@ -162,7 +167,22 @@ export interface Account {
   openingBalance: number;
   openingDate: string;
   isPublic?: boolean;
+  /** Nonaktif — hidden from new choices; past transactions and balance stay */
   archived?: boolean;
+  /** Short name for umat, e.g. "Kas Umum", "Pembangunan" */
+  label?: string;
+  /** The temple's main bank account */
+  isPrimary?: boolean;
+}
+
+/** A bank account umat can transfer to (public view: no balances). */
+export interface PublicBankAccount {
+  id: ID;
+  label: string;
+  bankName: string;
+  accountNumber: string;
+  accountHolder: string;
+  isPrimary: boolean;
 }
 
 export type TxType = "income" | "expense" | "transfer";
@@ -292,7 +312,9 @@ export interface Donation {
   status: DonationStatus;
   message?: string;
   evidence?: string;
-  channel: "transfer" | "tunai" | "whatsapp" | "simulasi";
+  channel: "transfer" | "qris" | "tunai" | "whatsapp" | "simulasi";
+  /** The bank account the umat paid into (when the temple has more than one) */
+  accountId?: ID;
   simulated?: boolean;
   /** Public API only: number of private donations aggregated into this row */
   count?: number;

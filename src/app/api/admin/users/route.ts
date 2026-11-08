@@ -1,4 +1,4 @@
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db, schema } from "@/server/db";
 import { getCtx, requireSuperAdmin } from "@/server/context";
 import { json, route } from "@/server/http";
@@ -11,13 +11,14 @@ export const dynamic = "force-dynamic";
 export const GET = route(async (req: Request) => {
   const ctx = await getCtx(req);
   await requireSuperAdmin(ctx, "membuka Back Office");
-  const [users, memberships, temples, banjars, templeBanjars, banjarMembers] = await Promise.all([
+  const [users, memberships, temples, banjars, templeBanjars, banjarMembers, banks] = await Promise.all([
     db.select().from(schema.users).orderBy(desc(schema.users.isSuperAdmin), schema.users.name),
     db.select().from(schema.memberships),
     db.select().from(schema.temples).orderBy(schema.temples.name),
     db.select().from(schema.banjars).orderBy(schema.banjars.name),
     db.select().from(schema.templeBanjars),
     db.select().from(schema.banjarMembers),
+    db.select().from(schema.accounts).where(eq(schema.accounts.type, "bank")),
   ]);
   const pending = await pendingCounts(temples.map((t) => t.id));
   return json({
@@ -29,6 +30,8 @@ export const GET = route(async (req: Request) => {
       banjarIds: templeBanjars.filter((r) => r.templeId === t.id).map((r) => r.banjarId),
       pengurusCount: memberships.filter((x) => x.templeId === t.id && x.role === "pengurus" && x.status === "active").length,
       pendingCount: pending.get(t.id) ?? 0,
+      // Every bank account incl. inactive ones (no balances here).
+      bankAccountsAll: banks.filter((a) => a.templeId === t.id).map(m.toAccount).sort((a, b) => Number(!!b.isPrimary) - Number(!!a.isPrimary)),
     })),
     banjars: banjars.map(m.toBanjar),
     banjarMembers: banjarMembers.map(m.toBanjarMember),

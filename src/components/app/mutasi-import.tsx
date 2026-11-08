@@ -8,7 +8,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { Field, Select } from "@/components/ui/field";
 import { useStore } from "@/lib/store";
 import { formatDate, rupiah } from "@/lib/format";
-import type { Donation } from "@/lib/types";
+import type { Account, Donation } from "@/lib/types";
 
 /** Splits CSV text into rows. Handles quotes and , ; or tab separators. */
 export function parseCsv(text: string): string[][] {
@@ -74,8 +74,16 @@ const dayDiff = (a: string, b: string) => Math.abs((Date.parse(a) - Date.parse(b
  * Bank statement (mutasi) CSV → marks pending punia whose amount matches a credit within 2 days.
  * Everything happens on this device; the statement itself is never uploaded or stored.
  */
-export function MutasiImport({ open, onClose, pending, isOwn }: { open: boolean; onClose: () => void; pending: Donation[]; isOwn: (d: Donation) => boolean }) {
+export function MutasiImport({ open, onClose, pending: allPending, isOwn, accounts = [] }: { open: boolean; onClose: () => void; pending: Donation[]; isOwn: (d: Donation) => boolean; accounts?: Account[] }) {
   const verify = useStore((s) => s.verifyPunia);
+  // A statement belongs to ONE bank account: only punia sent to that account are matched.
+  const banks = accounts.filter((a) => a.type === "bank" && !a.archived);
+  const primary = banks.find((a) => a.isPrimary) ?? banks[0];
+  const [accountId, setAccountId] = useState(primary?.id ?? "");
+  const pending = useMemo(
+    () => (banks.length > 1 ? allPending.filter((d) => (d.accountId ?? primary?.id) === accountId) : allPending),
+    [allPending, accountId, banks.length, primary?.id]
+  );
   const [rows, setRows] = useState<string[][]>([]);
   const [dateCol, setDateCol] = useState(0);
   const [amountCol, setAmountCol] = useState(0);
@@ -126,6 +134,13 @@ export function MutasiImport({ open, onClose, pending, isOwn }: { open: boolean;
       footer={approvable.length > 0 && <Button size="lg" className="w-full" loading={busy} onClick={approve}><CheckCheck className="h-5 w-5" /> Sahkan {approvable.length} punia yang cocok</Button>}
     >
       <div className="space-y-4">
+        {banks.length > 1 && (
+          <Field label="Mutasi dari rekening" htmlFor="mx-acc" hint="Hanya punia yang dikirim ke rekening ini yang dicocokkan.">
+            <Select id="mx-acc" value={accountId} onChange={(e) => setAccountId(e.target.value)}>
+              {banks.map((a) => <option key={a.id} value={a.id}>{a.label || a.name} · {a.bankName} {a.accountNumber}</option>)}
+            </Select>
+          </Field>
+        )}
         <label className="press flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line p-5 font-semibold text-emerald-800 hover:border-emerald-400">
           <FileUp className="h-5 w-5" /> Pilih file CSV mutasi
           <input type="file" accept=".csv,text/csv,text/plain" className="sr-only" onChange={(e) => load(e.target.files?.[0])} />

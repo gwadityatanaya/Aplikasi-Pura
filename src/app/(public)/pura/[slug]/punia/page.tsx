@@ -4,7 +4,7 @@ import { campaignOpen } from "@/lib/campaign";
 import { Suspense, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, Copy, Landmark, MapPin } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Landmark, MapPin } from "lucide-react";
 import { Button, buttonClass } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -13,6 +13,7 @@ import { ImageUpload } from "@/components/ui/file-upload";
 import { MoneyInput, QuickAmounts } from "@/components/ui/money-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PrivacyPicker } from "@/components/public/donations";
+import { BankChoice, type PayVia } from "@/components/public/bank-choice";
 import { useRequireLogin } from "@/components/umat/use-umat";
 import { usePublicData } from "@/lib/public";
 import { useStore } from "@/lib/store";
@@ -36,6 +37,8 @@ function PuniaForm() {
   const [purpose, setPurpose] = useState<PuniaPurpose>("umum");
   const [campaignId, setCampaignId] = useState(params.get("campaign") ?? "");
   const [referenceNo, setReferenceNo] = useState("");
+  const [accountId, setAccountId] = useState("");
+  const [via, setVia] = useState<PayVia>("transfer");
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -71,12 +74,14 @@ function PuniaForm() {
     if (amount < 1000) e.amount = "Isi nominal punia (minimal Rp1.000).";
     if (!transferDate || transferDate > todayISO()) e.transferDate = "Tanggal transfer tidak boleh di masa depan.";
     if (!evidence) e.evidence = "Unggah foto atau tangkapan layar bukti transfer.";
+    if (via === "transfer" && (temple!.bankAccounts?.length ?? 0) > 1 && !accountId) e.accountId = "Pilih rekening yang Anda transfer.";
     setErrors(e);
     if (Object.keys(e).length) return toast.error(Object.values(e)[0]);
     setBusy(true);
     const r = await run("submitPunia", {
       templeId: temple!.id, amount, transferDate, evidence, anonymous: privacy !== "public", purpose,
       campaignId: campaignId || null, referenceNo: referenceNo || null, message: message || null,
+      via, accountId: via === "transfer" ? accountId || null : null,
     });
     setBusy(false);
     if (!r.ok) return toast.error(r.error);
@@ -91,16 +96,8 @@ function PuniaForm() {
       <p className="text-muted">Berpunia sebagai <b>{me?.name}</b></p>
 
       <Card className="mt-5 p-5">
-        <p className="font-bold"><span className="mr-2 inline-grid h-7 w-7 place-items-center rounded-full bg-emerald-600 text-sm text-white">1</span>Transfer ke rekening pura</p>
-        <div className="mt-3 rounded-2xl bg-gradient-to-br from-emerald-600 to-forest p-4 text-white">
-          <p className="flex items-center gap-2 text-sm text-white/80"><Landmark className="h-4 w-4" /> {temple.bankName}</p>
-          <p className="tabular mt-1 text-2xl font-bold tracking-wider">{temple.bankAccountNumber}</p>
-          <p className="mt-1">a.n. <strong>{temple.bankAccountHolder}</strong></p>
-        </div>
-        <Button variant="outline" className="mt-2 w-full" onClick={() => { navigator.clipboard?.writeText((temple.bankAccountNumber ?? "").replace(/\D/g, "")); toast.success("Nomor rekening disalin"); }}>
-          <Copy className="h-4 w-4" /> Salin nomor rekening
-        </Button>
-        <p className="mt-2 text-sm text-muted">Periksa nama pemilik rekening di m-banking sebelum menekan kirim.</p>
+        <p className="mb-3 font-bold"><span className="mr-2 inline-grid h-7 w-7 place-items-center rounded-full bg-emerald-600 text-sm text-white">1</span>{via === "qris" ? "Bayar lewat QRIS" : "Transfer ke rekening pura"}</p>
+        <BankChoice temple={temple} value={accountId} onChange={(v) => { setAccountId(v); setErrors((x) => ({ ...x, accountId: "" })); }} via={via} onVia={setVia} error={errors.accountId} />
       </Card>
 
       <Card className="mt-4 space-y-5 p-5">
@@ -124,9 +121,9 @@ function PuniaForm() {
           </Select>
         </Field>
         {active.length > 0 && (
-          <Field label="Untuk kegiatan / odalan (opsional)" htmlFor="pn-camp">
+          <Field label="Untuk penggalangan dana (opsional)" htmlFor="pn-camp">
             <Select id="pn-camp" value={campaignId} onChange={(e) => setCampaignId(e.target.value)}>
-              <option value="">— Tidak terkait kegiatan —</option>
+              <option value="">— Tidak terkait penggalangan —</option>
               {active.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
             </Select>
           </Field>

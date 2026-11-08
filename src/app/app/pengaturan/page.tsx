@@ -205,6 +205,7 @@ function Accounts() {
   const save = useStore((s) => s.saveAccount);
   const [edit, setEdit] = useState<Partial<Account> | null>(null);
   const ro = !can("settings.manage");
+  const isAdmin = useStore((s) => s.access.isSuperAdmin);
   const hasTx = (id?: string) => !!id && ws.transactions.some((t) => t.accountId === id || t.toAccountId === id);
   const t = ws.temple!;
   return (
@@ -213,19 +214,24 @@ function Accounts() {
       <CardBody className="space-y-3">
         <div className="rounded-2xl border border-emerald-200 bg-mint/40 p-4">
           <p className="flex items-center gap-2 font-bold"><Landmark className="h-5 w-5 text-emerald-700" /> Rekening resmi untuk punia</p>
-          {t.bankAccountNumber ? (
-            <p className="mt-1 text-[15px]">{t.bankName} · <span className="tabular font-semibold">{t.bankAccountNumber}</span> · a.n. {t.bankAccountHolder}</p>
+          {ws.accounts.some((a) => a.type === "bank" && !a.archived && a.accountNumber) ? (
+            <ul className="mt-1 space-y-0.5 text-[15px]">
+              {ws.accounts.filter((a) => a.type === "bank" && !a.archived && a.accountNumber).map((a) => (
+                <li key={a.id}><b>{a.label || a.name}</b>{a.isPrimary ? " (utama)" : ""}: {a.bankName} · <span className="tabular font-semibold">{a.accountNumber}</span> · a.n. {a.accountHolder}</li>
+              ))}
+            </ul>
           ) : (
             <p className="mt-1 text-[15px] text-amber-800">Belum diisi — umat belum bisa berpunia lewat aplikasi.</p>
           )}
-          <p className="mt-1 text-sm text-muted">Hanya Admin Utama yang dapat mengubah rekening ini (tercatat di Log Aktivitas).</p>
+          {t.qrisImage && <p className="mt-1 text-[15px]">QRIS tersedia.</p>}
+          <p className="mt-1 text-sm text-muted">Hanya Admin Utama yang dapat menambah, mengubah, atau menonaktifkan rekening dan QRIS (tercatat di Log Aktivitas). Pengurus mengisi saldo awal tiap rekening di bawah.</p>
         </div>
         {ws.accounts.map((a) => (
           <div key={a.id} className="flex flex-wrap items-center gap-3 rounded-2xl border border-line p-4">
             <span className="grid h-11 w-11 place-items-center rounded-xl bg-ivory text-emerald-700"><Landmark className="h-5 w-5" /></span>
             <div className="min-w-0 flex-1">
-              <p className="font-bold">{a.name}</p>
-              <p className="text-sm text-muted">{a.type === "cash" ? "Kas tunai" : "Rekening bank"} · saldo awal {rupiah(a.openingBalance)}</p>
+              <p className="flex flex-wrap items-center gap-2 font-bold">{a.label || a.name} {a.isPrimary && <Badge tone="gold">Utama</Badge>} {a.archived && <Badge tone="gray">Nonaktif</Badge>}</p>
+              <p className="text-sm text-muted">{a.type === "cash" ? "Kas tunai" : `Rekening bank${a.bankName ? ` · ${a.bankName} ${a.accountNumber ?? ""}` : ""}`} · saldo awal {rupiah(a.openingBalance)}</p>
             </div>
             <div className="text-right"><p className="text-xs text-muted">Saldo menurut catatan</p><p className="tabular font-extrabold">{rupiah(accountBalance(a, ws.transactions))}</p></div>
             {!ro && <Button variant="ghost" size="icon" onClick={() => setEdit(a)} aria-label={`Ubah ${a.name}`}><Pencil className="h-4 w-4" /></Button>}
@@ -237,7 +243,7 @@ function Accounts() {
         {edit && (
           <div className="space-y-4">
             <Field label="Nama" htmlFor="ac-name"><Input id="ac-name" value={edit.name ?? ""} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder="Kas Tunai Pura" /></Field>
-            <Field label="Jenis" htmlFor="ac-type"><Select id="ac-type" value={edit.type} disabled={hasTx(edit.id)} onChange={(e) => setEdit({ ...edit, type: e.target.value as Account["type"] })}><option value="cash">Kas tunai</option><option value="bank">Rekening bank</option></Select></Field>
+            <Field label="Jenis" htmlFor="ac-type"><Select id="ac-type" value={edit.type} disabled={hasTx(edit.id) || (!isAdmin && edit.type === "bank")} onChange={(e) => setEdit({ ...edit, type: e.target.value as Account["type"] })}><option value="cash">Kas tunai</option><option value="bank" disabled={!isAdmin}>Rekening bank (ditambah Admin Utama)</option></Select></Field>
             <Field label="Saldo awal" hint={hasTx(edit.id) ? "Saldo awal terkunci karena sudah ada transaksi. Gunakan transaksi koreksi bila perlu." : "Jumlah uang saat mulai memakai PURA."}>
               {hasTx(edit.id) ? <Input disabled value={rupiah(edit.openingBalance ?? 0)} /> : <MoneyInput value={edit.openingBalance ?? 0} onChange={(v) => setEdit({ ...edit, openingBalance: v })} />}
             </Field>

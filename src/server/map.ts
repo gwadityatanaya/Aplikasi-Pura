@@ -1,7 +1,7 @@
 import "server-only";
 import type { schema } from "./db";
 import type {
-  Account, Activity, AppNotification, AuditEntry, Banjar, BanjarMember, Campaign, Category, Donation, Membership, PublishedReport, Temple,
+  Account, Activity, AppNotification, AuditEntry, Banjar, BanjarMember, Campaign, Category, Donation, Membership, PublicBankAccount, PublishedReport, Temple,
   Transaction, TransparencySettings, User,
 } from "@/lib/types";
 
@@ -38,6 +38,7 @@ export const toTemple = (r: Row<typeof schema.temples>): Temple => ({
   archivedAt: r.archivedAt?.toISOString(), archiveReason: u(r.archiveReason),
   transparency: { ...DEFAULT_TRANSPARENCY, ...r.transparency }, branding: r.branding,
   bankName: u(r.bankName), bankAccountNumber: u(r.bankAccountNumber), bankAccountHolder: u(r.bankAccountHolder),
+  qrisImage: u(r.qrisImage), qrisAccountId: u(r.qrisAccountId),
 });
 
 export const toBanjar = (r: Row<typeof schema.banjars>): Banjar => ({
@@ -60,6 +61,7 @@ export const toMembership = (r: Row<typeof schema.memberships>): Membership => (
 export const toAccount = (r: Row<typeof schema.accounts>): Account => ({
   id: r.id, templeId: r.templeId, name: r.name, type: r.type as Account["type"], bankName: u(r.bankName), accountNumber: u(r.accountNumber),
   accountHolder: u(r.accountHolder), openingBalance: r.openingBalance, openingDate: r.openingDate, isPublic: r.isPublic, archived: r.archived,
+  label: r.label || undefined, isPrimary: r.isPrimary,
 });
 
 export const toCategory = (r: Row<typeof schema.categories>): Category => ({
@@ -94,7 +96,7 @@ export const toDonation = (r: Row<typeof schema.donations>): Donation => ({
   transferDate: u(r.transferDate), referenceNo: u(r.referenceNo), submittedBy: u(r.submittedBy), submitterEmail: u(r.submitterEmail),
   inputBy: u(r.inputBy), donorName: r.donorName, amount: r.amount, date: r.date,
   privacy: r.privacy as Donation["privacy"], status: r.status as Donation["status"], message: u(r.message), evidence: u(r.evidence),
-  channel: r.channel as Donation["channel"], transactionId: u(r.transactionId), verifiedAt: iso(r.verifiedAt), verifiedBy: u(r.verifiedBy),
+  channel: r.channel as Donation["channel"], accountId: u(r.accountId), transactionId: u(r.transactionId), verifiedAt: iso(r.verifiedAt), verifiedBy: u(r.verifiedBy),
   rejectedReason: u(r.rejectedReason), correctedAt: iso(r.correctedAt), correctedBy: u(r.correctedBy), correctionReason: u(r.correctionReason),
   createdAt: r.createdAt.toISOString(),
 });
@@ -113,3 +115,11 @@ export const toAudit = (r: Row<typeof schema.activityLog>): AuditEntry => ({
   entity: r.entity as AuditEntry["entity"], entityId: u(r.entityId), detail: r.detail, at: r.at.toISOString(),
   actorEmail: u(r.actorEmail), ip: u(r.ip), userAgent: u(r.userAgent), changes: r.changes ?? undefined,
 });
+
+/** Active bank accounts with full details that umat may transfer to — primary first. */
+export function publicBankAccounts(rows: Row<typeof schema.accounts>[], templeId: string): PublicBankAccount[] {
+  return rows
+    .filter((a) => a.templeId === templeId && a.type === "bank" && !a.archived && a.isPublic && a.bankName && a.accountNumber && a.accountHolder)
+    .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || a.label.localeCompare(b.label))
+    .map((a) => ({ id: a.id, label: a.label || a.name, bankName: a.bankName!, accountNumber: a.accountNumber!, accountHolder: a.accountHolder!, isPrimary: a.isPrimary }));
+}

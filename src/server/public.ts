@@ -85,8 +85,15 @@ export async function loadPublic(): Promise<PublicData> {
       banjarNames: banjarRows.filter((b) => banjarIds.includes(b.id)).map((b) => b.name),
       pengurusCount: undefined,
       hasPengurus: pengurus.some((p) => p.templeId === t.id),
-      acceptsPunia: !!(t.bankName && t.bankAccountNumber && t.bankAccountHolder),
+      bankAccounts: m.publicBankAccounts(accRows, t.id),
+      acceptsPunia: false,
     };
+    out.acceptsPunia = !!out.bankAccounts?.length;
+    // QRIS only while its bank account is still active.
+    if (!out.bankAccounts?.some((a) => a.id === t.qrisAccountId)) {
+      out.qrisImage = undefined;
+      out.qrisAccountId = undefined;
+    }
     const own = txs.filter((x) => x.templeId === t.id);
     if (tp.showBalance !== false) {
       out.balance = summarize({ transactions: own, accounts: accounts.filter((a) => a.templeId === t.id) }, t.id).closingBalance;

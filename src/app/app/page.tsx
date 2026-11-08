@@ -28,7 +28,7 @@ import { ChartLegend, FlowChart } from "@/components/shared/charts";
 import { TxRow } from "@/components/app/tx-row";
 import { useCan, useWorkspace } from "@/components/app/hooks";
 import { useCurrentUser } from "@/lib/store";
-import { activitySummary, campaignStats, flowSeries, summarize, type Period } from "@/lib/ledger";
+import { accountBalance, activitySummary, campaignStats, flowSeries, summarize, type Period } from "@/lib/ledger";
 import { cn, formatDateLong, formatPercent, greeting, rupiah, todayISO } from "@/lib/format";
 
 export default function DashboardPage() {
@@ -107,6 +107,17 @@ export default function DashboardPage() {
                 <AnimatedRupiah value={stats.total.bank} className="tabular mt-1 block text-lg font-bold" />
               </div>
             </div>
+            {/* More than one bank account: the balance of each (the total above stays). */}
+            {ws.accounts.filter((a) => a.type === "bank").length > 1 && (
+              <ul className="mt-3 space-y-1 rounded-2xl bg-white/10 p-3 text-sm ring-1 ring-white/10" aria-label="Saldo per rekening">
+                {ws.accounts.filter((a) => a.type === "bank").map((a) => (
+                  <li key={a.id} className="flex justify-between gap-3">
+                    <span className="min-w-0 truncate text-white/80">{a.label || a.name}{a.archived ? " (nonaktif)" : ""}</span>
+                    <span className="tabular font-semibold">{rupiah(accountBalance(a, ws.transactions))}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
             <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-white/15 pt-4 text-sm">
               <span className="flex items-center gap-1.5 text-white/80">
                 <ArrowDownLeft className="h-4 w-4 text-emerald-300" /> Masuk bulan ini <strong className="tabular text-white">{rupiah(stats.month.income)}</strong>

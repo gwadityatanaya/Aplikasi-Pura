@@ -111,11 +111,14 @@ export async function one<R>(rows: Promise<R[]>, msg = "Data tidak ditemukan.") 
 async function checkRefs(tx: Tx, templeId: string, i: z.infer<typeof txInput>) {
   const acc = await tx.select().from(T.accounts).where(and(eq(T.accounts.id, i.accountId), eq(T.accounts.templeId, templeId)));
   if (!acc[0]) throw new ApiError(400, "Kas/rekening tidak ditemukan.");
+  // A deactivated account keeps its history, but takes no new entries.
+  if (acc[0].archived) throw new ApiError(409, "Kas/rekening ini sudah nonaktif. Pilih kas/rekening lain.");
   if (i.type === "transfer") {
     if (!i.toAccountId) throw new ApiError(400, "Pilih rekening tujuan.");
     if (i.toAccountId === i.accountId) throw new ApiError(400, "Rekening asal dan tujuan tidak boleh sama.");
     const to = await tx.select().from(T.accounts).where(and(eq(T.accounts.id, i.toAccountId), eq(T.accounts.templeId, templeId)));
     if (!to[0]) throw new ApiError(400, "Rekening tujuan tidak ditemukan.");
+    if (to[0].archived) throw new ApiError(409, "Rekening tujuan sudah nonaktif.");
   } else {
     if (!i.categoryId) throw new ApiError(400, "Pilih jenis/kategori.");
     const cat = await tx.select().from(T.categories).where(and(eq(T.categories.id, i.categoryId), eq(T.categories.templeId, templeId)));
@@ -537,8 +540,15 @@ export const coreCommands: Record<string, Handler> = {
       const values: Partial<typeof input> & Pick<typeof input, "name" | "type" | "openingBalance" | "openingDate"> = ctx.user.isSuperAdmin
         ? input
         : { name: input.name, type: input.type, openingBalance: input.openingBalance, openingDate: input.openingDate, archived: input.archived };
+      // Bank accounts (rekening) are added, edited and deactivated by Admin Utama only (Back Office);
+      // pengurus manage the cash box and the opening balances.
+      if (!ctx.user.isSuperAdmin) {
+        if (!aid && input.type === "bank") throw new ApiError(403, "Rekening bank hanya bisa ditambah oleh Admin Utama (Back Office → Pura → Rekening).");
+      }
       if (aid) {
         const cur = await one(tx.select().from(T.accounts).where(and(eq(T.accounts.id, aid), eq(T.accounts.templeId, templeId))));
+        if (!ctx.user.isSuperAdmin && (cur.type === "bank" || input.type === "bank") && (input.type !== cur.type || !!input.archived !== cur.archived))
+          throw new ApiError(403, "Rekening bank hanya bisa diubah jenisnya atau dinonaktifkan oleh Admin Utama.");
         const used = await tx.select({ id: T.transactions.id }).from(T.transactions).where(and(eq(T.transactions.templeId, templeId), or(eq(T.transactions.accountId, aid), eq(T.transactions.toAccountId, aid)))).limit(1);
         if (used[0] && (values.openingBalance !== cur.openingBalance || values.openingDate !== cur.openingDate || values.type !== cur.type))
           throw new ApiError(409, "Saldo awal dan jenis rekening terkunci karena sudah ada transaksi.");

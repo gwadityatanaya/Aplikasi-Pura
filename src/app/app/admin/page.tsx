@@ -2,6 +2,7 @@
 import { WilayahPicker, emptyAddress, type AddressValue } from "@/components/app/wilayah-picker";
 import { ARCHIVE_COMMAND, ArchiveDialog, type ArchiveTarget } from "@/components/app/archive-dialog";
 import { HelpInbox } from "@/components/app/help-inbox";
+import { BankAccountsDialog } from "@/components/app/bank-accounts-dialog";
 import { useRouter } from "next/navigation";
 import { templeLocation } from "@/lib/temple";
 import Link from "next/link";
@@ -22,9 +23,9 @@ import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { api, useAccess, useStore, type Result } from "@/lib/store";
 import { BANJAR_POSITIONS, POSITION_LABEL, ROLE_LABEL, ROLE_TONE, TEMPLE_POSITIONS } from "@/lib/permissions";
 import { cn, relativeTime } from "@/lib/format";
-import type { Banjar, BanjarMember, Membership, Position, Temple, User } from "@/lib/types";
+import type { Account, Banjar, BanjarMember, Membership, Position, Temple, User } from "@/lib/types";
 
-type AdminTemple = Temple & { banjarIds: string[]; pengurusCount: number; pendingCount: number };
+type AdminTemple = Temple & { banjarIds: string[]; pengurusCount: number; pendingCount: number; bankAccountsAll: Account[] };
 interface AdminData {
   users: User[];
   memberships: Membership[];
@@ -58,8 +59,7 @@ export default function BackOfficePage() {
   const [q, setQ] = useState("");
   const [templeForm, setTempleForm] = useState<typeof emptyTemple | null>(null);
   const [banjarForm, setBanjarForm] = useState<typeof emptyBanjar | null>(null);
-  const [bankFor, setBankFor] = useState<{ t: AdminTemple; bankName: string; bankAccountNumber: string; bankAccountHolder: string } | null>(null);
-  const [bankConfirm, setBankConfirm] = useState(false);
+  const [bankFor, setBankFor] = useState<string | null>(null);
   const [staffFor, setStaffFor] = useState<{ kind: "temple"; t: AdminTemple } | { kind: "banjar"; b: Banjar } | null>(null);
   const [newStaff, setNewStaff] = useState({ email: "", name: "", role: "pengurus" as "pengurus" | "pemeriksa" });
   const [removeStaff, setRemoveStaff] = useState<{ kind: "temple" | "banjar"; id: string; label: string } | null>(null);
@@ -150,6 +150,8 @@ export default function BackOfficePage() {
                         {(t.status === "pending" || t.status === "rejected") && <Badge tone="gray">Nonaktif</Badge>}
                         {t.pengurusCount === 0 ? <Badge tone="amber">Pengurus pura belum terdaftar</Badge> : t.pengurusCount === 1 ? <Badge tone="amber">Hanya 1 pengurus</Badge> : <Badge tone="green">{t.pengurusCount} pengurus</Badge>}
                         {t.bankAccountNumber ? <Badge tone="emerald"><Landmark className="h-3 w-3" /> {t.bankName} · a.n. {t.bankAccountHolder}</Badge> : <Badge tone="red">Rekening belum diisi</Badge>}
+                        {t.bankAccountsAll.filter((a) => !a.archived).length > 1 && <Badge tone="emerald">{t.bankAccountsAll.filter((a) => !a.archived).length} rekening</Badge>}
+                        {t.qrisImage && <Badge tone="emerald">QRIS</Badge>}
                         {t.pendingCount > 0 && <Badge tone="gold">{t.pendingCount} punia menunggu</Badge>}
                       </div>
                       {t.status === "archived" && <p className="mt-1.5 text-sm text-muted">Diarsipkan{t.archiveReason ? `: ${t.archiveReason}` : ""}. Hanya bisa dilihat; tidak tampil di publik.</p>}
@@ -158,7 +160,7 @@ export default function BackOfficePage() {
                   <div className="mt-3 flex flex-wrap gap-2 pl-9">
                     <Button size="sm" onClick={async () => { const r = await setActive(t.id); if (!r.ok) return toast.error(r.error); router.push("/app"); }}><Eye className="h-4 w-4" /> Buka dashboard</Button>
                     <Button size="sm" variant="outline" onClick={() => setTempleForm({ id: t.id, name: t.name, ...pickAddress(t), address: t.address, description: t.description, phone: t.phone, status: t.status === "active" ? "active" : "pending", banjarIds: t.banjarIds })}><Pencil className="h-4 w-4" /> Ubah data</Button>
-                    <Button size="sm" variant="outline" onClick={() => setBankFor({ t, bankName: t.bankName ?? "", bankAccountNumber: t.bankAccountNumber ?? "", bankAccountHolder: t.bankAccountHolder ?? "" })}><Landmark className="h-4 w-4" /> Rekening</Button>
+                    <Button size="sm" variant="outline" onClick={() => setBankFor(t.id)}><Landmark className="h-4 w-4" /> Rekening</Button>
                     <Button size="sm" variant="outline" onClick={() => { setNewStaff({ email: "", name: "", role: "pengurus" }); setStaffFor({ kind: "temple", t }); }}><Users className="h-4 w-4" /> Pengurus</Button>
                     {t.status === "archived"
                       ? <Button size="sm" variant="outline" onClick={() => setArchiveFor({ kind: "temple", action: "unarchive", id: t.id, name: t.name })}><ArchiveRestore className="h-4 w-4" /> Aktifkan kembali</Button>
@@ -358,29 +360,8 @@ export default function BackOfficePage() {
         }}
       />
 
-      {/* Bank */}
-      <Dialog open={!!bankFor} onClose={() => setBankFor(null)} title="Info rekening pura" description={bankFor?.t.name} footer={<Button size="lg" className="w-full" onClick={() => setBankConfirm(true)}>Simpan rekening</Button>}>
-        {bankFor && (
-          <div className="space-y-4">
-            <p className="rounded-xl bg-mint/60 p-3 text-sm text-emerald-900">Rekening ini ditampilkan ke umat untuk transfer punia. Hanya Admin Utama yang dapat mengubahnya, dan setiap perubahan tercatat di Log Aktivitas.</p>
-            <Field label="Nama bank" htmlFor="bk-name"><Input id="bk-name" value={bankFor.bankName} onChange={(e) => setBankFor({ ...bankFor, bankName: e.target.value })} placeholder="Bank NTB Syariah, BRI, …" /></Field>
-            <Field label="Nomor rekening" htmlFor="bk-no"><Input id="bk-no" inputMode="numeric" value={bankFor.bankAccountNumber} onChange={(e) => setBankFor({ ...bankFor, bankAccountNumber: e.target.value })} /></Field>
-            <Field label="Nama pemilik rekening (atas nama)" htmlFor="bk-holder" hint="Ditampilkan ke umat, misalnya &quot;Pengurus Pura Dalem …&quot;."><Input id="bk-holder" value={bankFor.bankAccountHolder} onChange={(e) => setBankFor({ ...bankFor, bankAccountHolder: e.target.value })} /></Field>
-          </div>
-        )}
-      </Dialog>
-      <ConfirmDialog
-        open={bankConfirm}
-        onClose={() => setBankConfirm(false)}
-        title="Simpan info rekening?"
-        description={bankFor && <>Umat akan mentransfer punia ke <strong>{bankFor.bankName} {bankFor.bankAccountNumber}</strong> a.n. <strong>{bankFor.bankAccountHolder}</strong>. Pastikan sudah benar.</>}
-        confirmLabel="Ya, simpan"
-        onConfirm={async () => {
-          if (!bankFor) return;
-          setBankConfirm(false);
-          if (await done(run("setTempleBank", { templeId: bankFor.t.id, bankName: bankFor.bankName, bankAccountNumber: bankFor.bankAccountNumber, bankAccountHolder: bankFor.bankAccountHolder }), "Info rekening disimpan")) setBankFor(null);
-        }}
-      />
+      {/* Bank accounts & QRIS */}
+      <BankAccountsDialog temple={data?.temples.find((t) => t.id === bankFor) ?? null} onClose={() => setBankFor(null)} run={(name, payload, msg) => done(run(name, payload), msg)} />
 
       {/* Staff */}
       <Dialog open={!!staffFor} onClose={() => setStaffFor(null)} title={staffFor?.kind === "temple" ? `Pengurus ${staffFor.t.name}` : `Pengurus Banjar — ${staffFor?.kind === "banjar" ? staffFor.b.name : ""}`} description="Daftarkan lewat email. Orang tersebut masuk dengan Google atau tautan email memakai alamat yang sama.">

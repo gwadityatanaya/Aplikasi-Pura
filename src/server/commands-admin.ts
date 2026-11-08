@@ -3,6 +3,7 @@ import { z } from "zod";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db, schema as T } from "./db";
 import { ApiError, todayInAppTz } from "./http";
+import { decodeImage, persistImage } from "./images";
 import { requireSuperAdmin, requireTemple } from "./context";
 import { resolveAddress, type AddressInput } from "./wilayah";
 import { diff } from "./log";
@@ -111,25 +112,117 @@ export const adminCommands: Record<string, Handler> = {
     });
   },
 
-  /** Official account for punia transfers. Only Admin Utama may change it; every change is logged. */
+  /**
+   * Official account for punia transfers (the PRIMARY bank account). Only Admin Utama may change it;
+   * every change is logged. Kept for the single-account flow; more accounts: adminSaveBankAccount.
+   */
   async setTempleBank(ctx, p) {
     await requireSuperAdmin(ctx, "mengubah info rekening pura");
-    const i = z
-      .object({
-        templeId: id, bankName: optText(80), bankAccountNumber: z.string().trim().max(40).regex(/^[0-9\s.-]*$/, "Nomor rekening hanya angka").optional().nullable().transform((v) => v || null),
-        bankAccountHolder: optText(120),
-      })
-      .parse(p);
+    const i = z.object({ templeId: id, bankName: optText(80), bankAccountNumber: accountNumber, bankAccountHolder: optText(120) }).parse(p);
     const filled = [i.bankName, i.bankAccountNumber, i.bankAccountHolder].filter(Boolean).length;
     if (filled !== 0 && filled !== 3) throw new ApiError(400, "Isi nama bank, nomor rekening, dan nama pemilik rekening sekaligus (atau kosongkan semuanya).");
     return db.transaction(async (tx) => {
       const cur = await one(tx.select().from(T.temples).where(eq(T.temples.id, i.templeId)).for("update"), "Pura tidak ditemukan.");
       const values = { bankName: i.bankName, bankAccountNumber: i.bankAccountNumber, bankAccountHolder: i.bankAccountHolder };
+      const [acc] = await tx.select().from(T.accounts).where(and(eq(T.accounts.templeId, i.templeId), eq(T.accounts.type, "bank"), eq(T.accounts.isPrimary, true))).limit(1);
+      const [anyBank] = acc ? [acc] : await tx.select().from(T.accounts).where(and(eq(T.accounts.templeId, i.templeId), eq(T.accounts.type, "bank"), eq(T.accounts.archived, false))).limit(1);
+      const details = { bankName: i.bankName, accountNumber: i.bankAccountNumber, accountHolder: i.bankAccountHolder, isPublic: filled === 3 };
+      if (anyBank) await tx.update(T.accounts).set({ ...details, isPrimary: true }).where(eq(T.accounts.id, anyBank.id));
+      else if (filled === 3) await tx.insert(T.accounts).values({ ...details, id: uid("acc"), templeId: i.templeId, name: "Rekening Pura", type: "bank", openingBalance: 0, openingDate: todayInAppTz(), isPrimary: true });
       await tx.update(T.temples).set(values).where(eq(T.temples.id, i.templeId));
-      // Keep the bookkeeping bank account labelled with the same details.
-      const [acc] = await tx.select().from(T.accounts).where(and(eq(T.accounts.templeId, i.templeId), eq(T.accounts.type, "bank"))).limit(1);
-      if (acc) await tx.update(T.accounts).set({ bankName: i.bankName, accountNumber: i.bankAccountNumber, accountHolder: i.bankAccountHolder, isPublic: filled === 3 }).where(eq(T.accounts.id, acc.id));
       await log(ctx, tx, { action: "Mengubah info rekening pura", entity: "settings", entityId: i.templeId, detail: cur.name, changes: diff(cur, values, Object.keys(values)), templeId: i.templeId });
+      return null;
+    });
+  },
+
+  // ---- Rekening ganda & QRIS (Admin Utama only; every change logged) ------------------------
+  /** Adds or edits one bank account of a temple: bank, number, holder, short label, shown to umat. */
+  async adminSaveBankAccount(ctx, p) {
+    await requireSuperAdmin(ctx, "mengelola rekening pura");
+    const i = z
+      .object({
+        templeId: id, id: optId, label: text(40).min(2, "Isi label singkat, mis. Kas Umum"), bankName: text(80).min(2, "Isi nama bank"),
+        accountNumber: accountNumber.refine((v) => !!v, "Isi nomor rekening"), accountHolder: text(120).min(3, "Isi nama pemilik rekening"),
+        isPublic: z.boolean().default(true),
+      })
+      .parse(p);
+    return db.transaction(async (tx) => {
+      const t = await one(tx.select().from(T.temples).where(eq(T.temples.id, i.templeId)).for("update"), "Pura tidak ditemukan.");
+      const values = { label: i.label, bankName: i.bankName, accountNumber: i.accountNumber!, accountHolder: i.accountHolder, isPublic: i.isPublic };
+      let accId = i.id;
+      if (accId) {
+        const cur = await one(tx.select().from(T.accounts).where(and(eq(T.accounts.id, accId), eq(T.accounts.templeId, t.id), eq(T.accounts.type, "bank"))), "Rekening tidak ditemukan.");
+        await tx.update(T.accounts).set(values).where(eq(T.accounts.id, accId));
+        await log(ctx, tx, { action: "Mengubah rekening pura", entity: "settings", entityId: accId, detail: `${t.name} — ${i.label}`, changes: diff(cur, values, Object.keys(values)), templeId: t.id });
+      } else {
+        const hasPrimary = (await tx.select({ id: T.accounts.id }).from(T.accounts).where(and(eq(T.accounts.templeId, t.id), eq(T.accounts.isPrimary, true))))[0];
+        accId = uid("acc");
+        await tx.insert(T.accounts).values({ ...values, id: accId, templeId: t.id, name: `Rekening ${i.label}`, type: "bank", openingBalance: 0, openingDate: todayInAppTz(), isPrimary: !hasPrimary });
+        await log(ctx, tx, { action: "Menambah rekening pura", entity: "settings", entityId: accId, detail: `${t.name} — ${i.label} (${i.bankName})`, templeId: t.id });
+      }
+      await syncPrimary(tx, t.id);
+      return { id: accId };
+    });
+  },
+
+  async adminSetPrimaryBankAccount(ctx, p) {
+    await requireSuperAdmin(ctx, "mengubah rekening utama");
+    const { id: accId } = z.object({ id }).parse(p);
+    return db.transaction(async (tx) => {
+      const a = await one(tx.select().from(T.accounts).where(and(eq(T.accounts.id, accId), eq(T.accounts.type, "bank"))), "Rekening tidak ditemukan.");
+      if (a.archived) throw new ApiError(409, "Rekening nonaktif tidak bisa dijadikan utama.");
+      await tx.update(T.accounts).set({ isPrimary: false }).where(and(eq(T.accounts.templeId, a.templeId), eq(T.accounts.isPrimary, true)));
+      await tx.update(T.accounts).set({ isPrimary: true }).where(eq(T.accounts.id, a.id));
+      await syncPrimary(tx, a.templeId);
+      await log(ctx, tx, { action: "Mengganti rekening utama", entity: "settings", entityId: a.id, detail: a.label || a.name, templeId: a.templeId });
+      return null;
+    });
+  },
+
+  /** Nonaktif: hidden from umat and new records; past transactions and the balance stay. */
+  async adminSetBankAccountActive(ctx, p) {
+    await requireSuperAdmin(ctx, "menonaktifkan rekening");
+    const i = z.object({ id, active: z.boolean(), reason: optText(300) }).parse(p);
+    if (!i.active && (!i.reason || i.reason.length < 5)) throw new ApiError(400, "Tuliskan alasan menonaktifkan rekening (minimal 5 huruf).");
+    return db.transaction(async (tx) => {
+      const a = await one(tx.select().from(T.accounts).where(and(eq(T.accounts.id, i.id), eq(T.accounts.type, "bank"))).for("update"), "Rekening tidak ditemukan.");
+      await tx.update(T.accounts).set({ archived: !i.active, ...(i.active ? {} : { isPrimary: false }) }).where(eq(T.accounts.id, a.id));
+      if (!i.active) {
+        // Another active account becomes primary; a QRIS that paid into this account is switched off.
+        const [next] = await tx.select().from(T.accounts).where(and(eq(T.accounts.templeId, a.templeId), eq(T.accounts.type, "bank"), eq(T.accounts.archived, false))).limit(1);
+        if (a.isPrimary && next) await tx.update(T.accounts).set({ isPrimary: true }).where(eq(T.accounts.id, next.id));
+        await tx.update(T.temples).set({ qrisAccountId: null, qrisImage: null }).where(and(eq(T.temples.id, a.templeId), eq(T.temples.qrisAccountId, a.id)));
+      } else {
+        const hasPrimary = (await tx.select({ id: T.accounts.id }).from(T.accounts).where(and(eq(T.accounts.templeId, a.templeId), eq(T.accounts.isPrimary, true))))[0];
+        if (!hasPrimary) await tx.update(T.accounts).set({ isPrimary: true }).where(eq(T.accounts.id, a.id));
+      }
+      await syncPrimary(tx, a.templeId);
+      await log(ctx, tx, { action: i.active ? "Mengaktifkan kembali rekening" : "Menonaktifkan rekening", entity: "settings", entityId: a.id, detail: `${a.label || a.name}${i.reason ? ` — alasan: ${i.reason}` : ""}`, templeId: a.templeId });
+      return null;
+    });
+  },
+
+  /** QRIS image (resized on the device) and the bank account it pays into; null image removes it. */
+  async adminSetQris(ctx, p) {
+    await requireSuperAdmin(ctx, "mengubah QRIS pura");
+    const i = z.object({ templeId: id, image: z.string().max(900_000).nullable(), accountId: optId }).parse(p);
+    return db.transaction(async (tx) => {
+      const t = await one(tx.select().from(T.temples).where(eq(T.temples.id, i.templeId)).for("update"), "Pura tidak ditemukan.");
+      if (!i.image) {
+        await tx.update(T.temples).set({ qrisImage: null, qrisAccountId: null }).where(eq(T.temples.id, t.id));
+        await log(ctx, tx, { action: "Menghapus QRIS pura", entity: "settings", entityId: t.id, detail: t.name, templeId: t.id });
+        return null;
+      }
+      const [acc] = i.accountId ? await tx.select().from(T.accounts).where(and(eq(T.accounts.id, i.accountId), eq(T.accounts.templeId, t.id), eq(T.accounts.type, "bank"), eq(T.accounts.archived, false))) : [];
+      if (!acc) throw new ApiError(400, "Pilih rekening tujuan QRIS (rekening aktif pura ini).");
+      let image = i.image;
+      if (image.startsWith("data:")) {
+        const { buf } = decodeImage(image, "QRIS");
+        if (buf.length > 600_000) throw new ApiError(413, "Gambar QRIS terlalu besar.");
+        image = (await persistImage(image, { templeId: t.id, isPublic: true, userId: ctx.user.id }, tx))!;
+      } else if (image !== t.qrisImage) throw new ApiError(400, "Gambar QRIS tidak dikenal.");
+      await tx.update(T.temples).set({ qrisImage: image, qrisAccountId: acc.id }).where(eq(T.temples.id, t.id));
+      await log(ctx, tx, { action: "Memperbarui QRIS pura", entity: "settings", entityId: t.id, detail: `${t.name} — ke rekening ${acc.label || acc.name}`, templeId: t.id });
       return null;
     });
   },
@@ -462,6 +555,17 @@ export const adminCommands: Record<string, Handler> = {
     });
   },
 };
+
+/** temples.bank_* always mirror the primary bank account (older screens and reports read them). */
+async function syncPrimary(tx: Tx, templeId: string) {
+  const [p] = await tx.select().from(T.accounts).where(and(eq(T.accounts.templeId, templeId), eq(T.accounts.isPrimary, true), eq(T.accounts.archived, false))).limit(1);
+  await tx
+    .update(T.temples)
+    .set(p && p.isPublic ? { bankName: p.bankName, bankAccountNumber: p.accountNumber, bankAccountHolder: p.accountHolder } : { bankName: null, bankAccountNumber: null, bankAccountHolder: null })
+    .where(eq(T.temples.id, templeId));
+}
+
+const accountNumber = z.string().trim().max(40).regex(/^[0-9\s.-]*$/, "Nomor rekening hanya angka").optional().nullable().transform((v) => v || null);
 
 /** Archive / delete: the name typed again as confirmation, and a reason (both required). */
 const confirmInput = z.object({

@@ -26,7 +26,7 @@ const STATUS: Record<Donation["status"], { label: string; tone: "amber" | "green
   verified: { label: "Disahkan", tone: "green" },
   rejected: { label: "Ditolak", tone: "red" },
 };
-const CHANNEL: Record<Donation["channel"], string> = { transfer: "Transfer (aplikasi)", tunai: "Tunai", whatsapp: "WhatsApp", simulasi: "Simulasi" };
+const CHANNEL: Record<Donation["channel"], string> = { transfer: "Transfer (aplikasi)", qris: "QRIS (aplikasi)", tunai: "Tunai", whatsapp: "WhatsApp", simulasi: "Simulasi" };
 
 function PuniaQueue() {
   const ws = useWorkspace();
@@ -165,6 +165,10 @@ function PuniaQueue() {
                     {formatDate(d.transferDate ?? d.date)} · {CHANNEL[d.channel]} · {PURPOSE_LABEL[d.purpose ?? "umum"]}
                     {d.campaignId && ` · ${ws.campaigns.find((c) => c.id === d.campaignId)?.title ?? "Kegiatan"}`}
                   </p>
+                  {d.accountId && ws.accounts.filter((a) => a.type === "bank").length > 1 && (() => {
+                    const a = ws.accounts.find((x) => x.id === d.accountId);
+                    return a ? <p className="text-sm font-semibold text-emerald-800">Ke rekening: {a.label || a.name} · {a.bankName} {a.accountNumber}</p> : null;
+                  })()}
                   {d.referenceNo && <p className="text-sm text-muted">Ref: {d.referenceNo}</p>}
                 </button>
                 {d.evidence && <ImageIcon className="h-5 w-5 shrink-0 text-muted" aria-label="Ada bukti" />}
@@ -204,7 +208,7 @@ function PuniaQueue() {
       )}
       {rejecting && <RejectDialog d={rejecting} onClose={() => setRejecting(undefined)} />}
       {correcting && <CorrectDialog d={correcting} onClose={() => setCorrecting(undefined)} />}
-      {mutasi && <MutasiImport open onClose={() => setMutasi(false)} pending={pending} isOwn={isOwn} />}
+      {mutasi && <MutasiImport open onClose={() => setMutasi(false)} pending={pending} isOwn={isOwn} accounts={ws.accounts} />}
       <ManualPuniaDialog open={manual} onClose={() => { setManual(false); if (params.get("input")) router.replace("/app/punia"); }} />
     </div>
   );
